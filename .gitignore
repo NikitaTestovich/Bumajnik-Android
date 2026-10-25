@@ -1,0 +1,37 @@
+.worktrees/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.tooling/
+AppAndroidBudjets.zip
+*.iml
+.idea/
+
+# Local builds, exports, and credentials
+*.apk
+*.aab
+*.zip
+*.csv
+!android/app/src/androidTest/assets/*.csv
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+.env
+.env.*
+google-services.json
+service-account*.json
+credentials.json
+*.db
+*.sqlite
+*.sqlite3
+*.log
+Thumbs.db
+.DS_Store
+
+# Internal working notes
+.superpowers/
+docs/superpowers/

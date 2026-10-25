@@ -1,0 +1,111 @@
+package com.personalfinance.tracker.data.csv
+
+import com.personalfinance.tracker.domain.model.FamilyTransaction
+import com.personalfinance.tracker.domain.model.FinanceTransaction
+import com.personalfinance.tracker.domain.model.TransactionType
+import java.math.BigDecimal
+import java.math.RoundingMode
+
+data class FamilyOwnerTotals(val incomeMinorUnits: Long = 0, val expensesMinorUnits: Long = 0)
+data class FamilyReportTotals(
+    val incomeMinorUnits: Long,
+    val expensesMinorUnits: Long,
+    val byOwner: Map<String, FamilyOwnerTotals>,
+    val expensesByOwnerAndCategory: Map<String, Map<String, Long>>,
+)
+
+object FamilyReportCalculator {
+    fun missingRebaseCurrencies(rows: List<FamilyTransaction>, currentBase: String, rates: Map<String, BigDecimal>): Set<String> =
+        rows.asSequence().map(FamilyTransaction::importBaseCurrency).filter { it != currentBase }.toSet() - rates.keys
+
+    fun calculate(
+        rows: List<FamilyTransaction>,
+        currentBase: String,
+        ratesFromImportBases: Map<String, BigDecimal>,
+    ): FamilyReportTotals = calculate(rows, emptyList(), currentBase, ratesFromImportBases)
+
+    fun missingCurrencies(
+        importedRows: List<FamilyTransaction>,
+        personalTransactions: List<FinanceTransaction>,
+        currentBase: String,
+        rates: Map<String, BigDecimal>,
+    ): Set<String> {
+        val uniqueImportedRows = withoutPersonalDuplicates(importedRows, personalTransactions)
+        val familyCurrencies = missingRebaseCurrencies(uniqueImportedRows, currentBase, rates)
+        val personalCurrencies = personalTransactions.asSequence()
+            .map { it.money.currencyCode }
+            .filter { it != currentBase }
+            .toSet() - rates.keys
+        return familyCurrencies + personalCurrencies
+    }
+
+    fun calculate(
+        importedRows: List<FamilyTransaction>,
+        personalTransactions: List<FinanceTransaction>,
+        currentBase: String,
+        rates: Map<String, BigDecimal>,
+        categoryNamesById: Map<String, String> = emptyMap(),
+        uncategorizedLabel: String = "Uncategorized",
+    ): FamilyReportTotals {
+        val missing = missingCurrencies(importedRows, personalTransactions, currentBase, rates)
+        require(missing.isEmpty()) { "Missing rebase rates for ${missing.sorted().joinToString()}" }
+        require(rates.values.all { it > BigDecimal.ZERO }) { "Exchange rates must be positive" }
+        val uniqueImportedRows = withoutPersonalDuplicates(importedRows, personalTransactions)
+        val totals = mutableMapOf<String, FamilyOwnerTotals>()
+        val categoryTotals = mutableMapOf<String, MutableMap<String, Long>>()
+
+        fun add(owner: String, type: TransactionType, converted: Long, category: String?) {
+            val previous = totals[owner] ?: FamilyOwnerTotals()
+            totals[owner] = when (type) {
+                TransactionType.INCOME -> previous.copy(incomeMinorUnits = Math.addExact(previous.incomeMinorUnits, converted))
+                TransactionType.EXPENSE -> {
+                    val label = category?.takeIf(String::isNotBlank) ?: uncategorizedLabel
+                    val ownerCategories = categoryTotals.getOrPut(owner) { mutableMapOf() }
+                    ownerCategories[label] = Math.addExact(ownerCategories[label] ?: 0L, converted)
+                    previous.copy(expensesMinorUnits = Math.addExact(previous.expensesMinorUnits, converted))
+                }
+            }
+        }
+
+        uniqueImportedRows.forEach { row ->
+            val savedRate = row.importRate ?: BigDecimal.ONE
+            val rebaseRate = if (row.importBaseCurrency == currentBase) BigDecimal.ONE
+            else rates.getValue(row.importBaseCurrency)
+            val converted = BigDecimal.valueOf(row.sourceMoney.minorUnits)
+                .multiply(savedRate)
+                .multiply(rebaseRate)
+                .setScale(0, RoundingMode.HALF_UP)
+                .longValueExact()
+            add(row.owner, row.type, converted, row.categoryName)
+        }
+        personalTransactions.forEach { transaction ->
+            val conversionRate = if (transaction.money.currencyCode == currentBase) BigDecimal.ONE
+            else rates.getValue(transaction.money.currencyCode)
+            val converted = BigDecimal.valueOf(transaction.money.minorUnits)
+                .multiply(conversionRate)
+                .setScale(0, RoundingMode.HALF_UP)
+                .longValueExact()
+            add(
+                transaction.owner,
+                transaction.type,
+                converted,
+                transaction.categoryId?.let(categoryNamesById::get) ?: uncategorizedLabel,
+            )
+        }
+        return FamilyReportTotals(
+            incomeMinorUnits = totals.values.fold(0L) { a, b -> Math.addExact(a, b.incomeMinorUnits) },
+            expensesMinorUnits = totals.values.fold(0L) { a, b -> Math.addExact(a, b.expensesMinorUnits) },
+            byOwner = totals.toSortedMap(),
+            expensesByOwnerAndCategory = categoryTotals.toSortedMap().mapValues { (_, categories) -> categories.toSortedMap() },
+        )
+    }
+
+    /** Prefer the device's canonical personal row when the same CSV record is also imported. */
+    private fun withoutPersonalDuplicates(
+        importedRows: List<FamilyTransaction>,
+        personalTransactions: List<FinanceTransaction>,
+    ): List<FamilyTransaction> {
+        val personalRecordIds = personalTransactions.asSequence().map(FinanceTransaction::id).toSet()
+        return importedRows.filterNot { it.id in personalRecordIds }
+    }
+}

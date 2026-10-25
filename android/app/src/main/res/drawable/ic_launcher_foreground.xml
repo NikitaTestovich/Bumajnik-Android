@@ -1,0 +1,17 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Rising bars -->
+    <path android:fillColor="#54D6B1" android:pathData="M20,68h13v20H20zM39,56h13v32H39zM58,44h13v44H58z" />
+    <!-- Wallet body -->
+    <path android:fillColor="#F4B942" android:pathData="M27,35c0,-4.4 3.6,-8 8,-8h39c3.3,0 6,2.7 6,6v8H37c-5.5,0 -10,4.5 -10,10v25c0,5.5 4.5,10 10,10h44v4c0,3.3 -2.7,6 -6,6H35c-4.4,0 -8,-3.6 -8,-8z" />
+    <path android:fillColor="#FFD875" android:pathData="M37,40h44c4.4,0 8,3.6 8,8v25c0,4.4 -3.6,8 -8,8H37c-5.5,0 -10,-4.5 -10,-10V50c0,-5.5 4.5,-10 10,-10z" />
+    <!-- Coin and wallet clasp -->
+    <path android:fillColor="#102A43" android:pathData="M69,51h21v20H69c-5.5,0 -10,-4.5 -10,-10s4.5,-10 10,-10z" />
+    <path android:fillColor="#F4B942" android:pathData="M72,56a5,5 0,1 0,0 10a5,5 0,1 0,0 -10" />
+    <path android:fillColor="#102A43" android:pathData="M40,17a11,11 0,1 0,0 22a11,11 0,1 0,0 -22" />
+    <path android:fillColor="#F4B942" android:pathData="M40,20a8,8 0,1 0,0 16a8,8 0,1 0,0 -16" />
+    <path android:fillColor="#102A43" android:pathData="M39,23h2v10h-2zM36,26h8v2h-8z" />
+</vector>
