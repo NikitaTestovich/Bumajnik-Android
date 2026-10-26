@@ -44,6 +44,7 @@ To update, install a newer APK over the existing app without uninstalling it. Up
 - [English user guide](docs/user-guide-en.md)
 - [Руководство пользователя на русском](docs/user-guide-ru.md)
 - [Development and bug reports](docs/CONTRIBUTING.md)
+- [Current product specification](docs/specification.md)
 - [Version 1.1 verification and device-test limits](docs/testing-1.1.md)
 
 The project remains open for iterative testing and fixes. When reporting a bug, use sample data and remove names, amounts, and files that reveal real finances.

@@ -14,4 +14,13 @@ Include the app version, Android version, the screen involved, steps to reproduc
 4. Build the debug APK and run the checks described in [the Android build guide](../android/README.md).
 5. Review the GitHub Desktop **Changes** list before committing. Keep SDK files, local builds, exports, and credentials out of the commit.
 
-The `README.md` and user guides should be updated when visible behavior changes. CSV files under `android/app/src/androidTest/assets/` are synthetic test fixtures; real exported CSV files are ignored by Git.
+## Checklist for every version
+
+Before publishing any new version:
+
+1. Update the [current product specification](specification.md) and each affected detailed specification in `docs/specs/` to match the delivered behavior.
+2. Update **both** the [English](user-guide-en.md) and [Russian](user-guide-ru.md) user guides. Refresh `README.md`, `android/README.md`, screenshots, and `CHANGELOG.md` when their content changes.
+3. Add meaningful automated tests for each new feature and behavior change. Run the relevant tests and the complete available suite. Record results and any untested physical-device behavior in `docs/testing-<version>.md`.
+4. Verify that an update over the previous compatible APK preserves data when the version, storage, package ID, or signing changes. Review the commit for personal information, secrets, local builds, and backup files.
+
+CSV files under `android/app/src/androidTest/assets/` are synthetic test fixtures; real exported CSV files are ignored by Git.
