@@ -520,7 +520,7 @@ class FinanceTrackerAcceptanceTest {
         awaitLiteral(text(R.string.family_import_done, 3, 0))
         ui.onNodeWithText(owner).performScrollTo().assertIsDisplayed()
         listOf(R.string.chart_income to "2000.00", R.string.chart_expense to "800.00").forEach { (metric, amount) ->
-            ui.onNodeWithContentDescription(text(R.string.chart_value_description, owner, text(metric), amount))
+            ui.onNodeWithContentDescription(text(R.string.chart_value_description, text(metric), owner, amount))
                 .performScrollTo().assertIsDisplayed()
         }
         val percent = java.text.NumberFormat.getPercentInstance(app.resources.configuration.locales[0])
@@ -555,7 +555,7 @@ class FinanceTrackerAcceptanceTest {
         awaitText(R.string.exchange_rate_title)
         fill(R.string.exchange_rate_label, "2", "EUR", "USD")
         click(R.string.exchange_rate_save)
-        ui.onNodeWithContentDescription(text(R.string.chart_value_description, profile.name, text(R.string.chart_income), "200.00"))
+        ui.onNodeWithContentDescription(text(R.string.chart_value_description, text(R.string.chart_income), profile.name, "200.00"))
             .performScrollTo().assertIsDisplayed()
     }
 

@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import com.personalfinance.tracker.R
 import com.personalfinance.tracker.ui.theme.FinancePalette
 import java.math.BigDecimal
@@ -45,7 +46,7 @@ fun normalizedBarFraction(value: Long, maximum: Long): Float =
 
 object FinanceCharts {
     @Composable
-    fun GroupedColumnChart(groups: List<FinanceBarGroup>, modifier: Modifier = Modifier) {
+    fun GroupedColumnChart(groups: List<FinanceBarGroup>, modifier: Modifier = Modifier, barWidth: Dp = 80.dp) {
         val maximum = groups.flatMap { it.bars }.maxOfOrNull { it.valueMinorUnits } ?: 0L
         val chartDescription = stringResource(R.string.chart_income_expense_comparison)
         Row(
@@ -73,7 +74,7 @@ object FinanceCharts {
                             val amount = formatChartAmount(bar.valueMinorUnits)
                             val description = stringResource(R.string.chart_value_description, group.label, bar.label, amount)
                             Column(
-                                modifier = Modifier.width(80.dp).clearAndSetSemantics { contentDescription = description },
+                                modifier = Modifier.width(barWidth).clearAndSetSemantics { contentDescription = description },
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {

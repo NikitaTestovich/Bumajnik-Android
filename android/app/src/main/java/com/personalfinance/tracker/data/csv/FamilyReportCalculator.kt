@@ -3,8 +3,10 @@ package com.personalfinance.tracker.data.csv
 import com.personalfinance.tracker.domain.model.FamilyTransaction
 import com.personalfinance.tracker.domain.model.FinanceTransaction
 import com.personalfinance.tracker.domain.model.TransactionType
+import com.personalfinance.tracker.data.repository.DefaultCategories
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.Locale
 
 data class FamilyOwnerTotals(val incomeMinorUnits: Long = 0, val expensesMinorUnits: Long = 0)
 data class FamilyReportTotals(
@@ -12,6 +14,7 @@ data class FamilyReportTotals(
     val expensesMinorUnits: Long,
     val byOwner: Map<String, FamilyOwnerTotals>,
     val expensesByOwnerAndCategory: Map<String, Map<String, Long>>,
+    val expensesByCategory: Map<String, Long>,
 )
 
 object FamilyReportCalculator {
@@ -53,6 +56,20 @@ object FamilyReportCalculator {
         val uniqueImportedRows = withoutPersonalDuplicates(importedRows, personalTransactions)
         val totals = mutableMapOf<String, FamilyOwnerTotals>()
         val categoryTotals = mutableMapOf<String, MutableMap<String, Long>>()
+        val combinedCategories = mutableMapOf<String, Long>()
+        val categoryLabels = mutableMapOf<String, String>()
+        fun normalized(label: String) = label.trim().replace(Regex("\\s+"), " ").lowercase(Locale.ROOT)
+        val standardNames = DefaultCategories.forLanguage("en").flatMap { seed ->
+            listOf(normalized(seed.nameRu) to seed, normalized(seed.nameEn) to seed)
+        }.toMap()
+        // Prefer the device's localized names, including for equivalent imported categories.
+        val preferredLabels = categoryNamesById.values.associateBy({ normalized(it) }, { it.trim() })
+        fun combinedLabel(label: String): String {
+            val seed = standardNames[normalized(label)]
+            val display = seed?.let { categoryNamesById[it.id] } ?: label.trim().replace(Regex("\\s+"), " ")
+            val key = seed?.let { "standard:${it.id}" } ?: "custom:${normalized(display)}"
+            return categoryLabels.getOrPut(key) { preferredLabels[normalized(display)] ?: display }
+        }
 
         fun add(owner: String, type: TransactionType, converted: Long, category: String?) {
             val previous = totals[owner] ?: FamilyOwnerTotals()
@@ -62,6 +79,8 @@ object FamilyReportCalculator {
                     val label = category?.takeIf(String::isNotBlank) ?: uncategorizedLabel
                     val ownerCategories = categoryTotals.getOrPut(owner) { mutableMapOf() }
                     ownerCategories[label] = Math.addExact(ownerCategories[label] ?: 0L, converted)
+                    val combined = combinedLabel(label)
+                    combinedCategories[combined] = Math.addExact(combinedCategories[combined] ?: 0L, converted)
                     previous.copy(expensesMinorUnits = Math.addExact(previous.expensesMinorUnits, converted))
                 }
             }
@@ -97,6 +116,7 @@ object FamilyReportCalculator {
             expensesMinorUnits = totals.values.fold(0L) { a, b -> Math.addExact(a, b.expensesMinorUnits) },
             byOwner = totals.toSortedMap(),
             expensesByOwnerAndCategory = categoryTotals.toSortedMap().mapValues { (_, categories) -> categories.toSortedMap() },
+            expensesByCategory = combinedCategories.toSortedMap(),
         )
     }
 

@@ -182,6 +182,17 @@ fun FamilyScreen(onBack: () -> Unit) {
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(stringResource(R.string.family_totals), style = MaterialTheme.typography.titleLarge)
+                        val balance = Math.subtractExact(report.incomeMinorUnits, report.expensesMinorUnits)
+                        Text(stringResource(R.string.family_balance), style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            "${if (balance > 0) "+" else if (balance < 0) "−" else ""}${BigDecimal.valueOf(balance, 2).abs().setScale(2).toPlainString()} $baseCurrency",
+                            style = MaterialTheme.typography.displaySmall,
+                            color = when {
+                                balance > 0 -> FinancePalette.income
+                                balance < 0 -> FinancePalette.expense
+                                else -> MaterialTheme.colorScheme.onSurface
+                            },
+                        )
                         Text(stringResource(R.string.home_income), style = MaterialTheme.typography.labelLarge)
                         Text("${amount(report.incomeMinorUnits)} $baseCurrency",
                             style = MaterialTheme.typography.headlineSmall, color = FinancePalette.income)
@@ -191,37 +202,44 @@ fun FamilyScreen(onBack: () -> Unit) {
                     }
                 }
                 Text(stringResource(R.string.family_by_owner), style = MaterialTheme.typography.titleLarge)
-                report.byOwner.forEach { (owner, totals) ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    ) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            Text(baseCurrency, style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            FinanceCharts.GroupedColumnChart(groups = listOf(
-                                FinanceBarGroup(owner, listOf(
-                                    FinanceBar(stringResource(R.string.chart_income), totals.incomeMinorUnits, FinancePalette.income),
-                                    FinanceBar(stringResource(R.string.chart_expense), totals.expensesMinorUnits, FinancePalette.expense),
-                                )),
-                            ))
-                            Text(stringResource(R.string.family_by_category), style = MaterialTheme.typography.titleMedium)
-                            val categoryTotals = report.expensesByOwnerAndCategory[owner].orEmpty()
-                            if (categoryTotals.isEmpty()) {
-                                Text(stringResource(R.string.reports_no_expenses))
-                            } else {
-                                FinanceCharts.CategoryBreakdownBars(items = categoryTotals.entries
-                                    .sortedByDescending { it.value }
-                                    .map { (category, value) ->
-                                        CategoryBreakdownItem(category, value,
-                                            if (totals.expensesMinorUnits <= 0L) 0f
-                                            else (value.toDouble() / totals.expensesMinorUnits.toDouble()).toFloat())
-                                    })
-                            }
-                            if (rows.any { it.owner == owner }) {
-                                TextButton(onClick = { ownerToClear = owner }) {
-                                    Text(stringResource(R.string.family_clear_member))
-                                }
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(baseCurrency, style = MaterialTheme.typography.labelLarge)
+                        FinanceCharts.GroupedColumnChart(groups = listOf(
+                            FinanceBarGroup(stringResource(R.string.chart_income), report.byOwner.map { (owner, totals) ->
+                                FinanceBar(owner, totals.incomeMinorUnits, FinancePalette.income)
+                            }),
+                            FinanceBarGroup(stringResource(R.string.chart_expense), report.byOwner.map { (owner, totals) ->
+                                FinanceBar(owner, totals.expensesMinorUnits, FinancePalette.expense)
+                            }),
+                        ), barWidth = 72.dp)
+                        Text(stringResource(R.string.family_chart_scroll), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Text(stringResource(R.string.family_by_category), style = MaterialTheme.typography.titleMedium)
+                        Text(baseCurrency, style = MaterialTheme.typography.labelLarge)
+                        if (report.expensesByCategory.isEmpty()) Text(stringResource(R.string.reports_no_expenses))
+                        else FinanceCharts.CategoryBreakdownBars(items = report.expensesByCategory.entries
+                            .sortedByDescending { it.value }
+                            .map { (category, value) ->
+                                CategoryBreakdownItem(category, value,
+                                    if (report.expensesMinorUnits <= 0L) 0f
+                                    else (value.toDouble() / report.expensesMinorUnits.toDouble()).toFloat())
+                            })
+                    }
+                }
+            }
+            // Keep removal available even if the selected period contains no imported records.
+            if (allRows.isNotEmpty()) {
+                Text(stringResource(R.string.family_imported_members), style = MaterialTheme.typography.titleMedium)
+                allRows.map { it.owner }.distinct().sorted().forEach { owner ->
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(12.dp)) {
+                            Text(owner, style = MaterialTheme.typography.titleSmall)
+                            TextButton(onClick = { ownerToClear = owner }) {
+                                Text(stringResource(R.string.family_clear_member))
                             }
                         }
                     }

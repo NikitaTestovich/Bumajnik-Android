@@ -11,6 +11,38 @@ import org.junit.Test
 
 class FamilyReportCalculatorTest {
     @Test
+    fun customCategoryMatchingInternalStandardIdDoesNotMergeDifferentNames() {
+        val date = LocalDate.of(2026, 10, 1)
+        val imported = listOf(
+            FamilyTransaction("a", "Alex", Money(1000, "USD"), date, "Housing and utilities", TransactionType.EXPENSE, null, "USD"),
+            FamilyTransaction("b", "Sam", Money(2000, "USD"), date, "housing_utilities", TransactionType.EXPENSE, null, "USD"),
+        )
+        val result = FamilyReportCalculator.calculate(imported, emptyList(), "USD", emptyMap(),
+            mapOf("housing_utilities" to "Housing and utilities", "custom-demo" to "housing_utilities"))
+        assertEquals(mapOf("Housing and utilities" to 1000L, "housing_utilities" to 2000L), result.expensesByCategory)
+    }
+
+    @Test
+    fun combinesFamilyCategoriesAcrossOwnersLanguagesAndWhitespace() {
+        val date = LocalDate.of(2026, 10, 1)
+        val imported = listOf(
+            FamilyTransaction("a", "Alex", Money(1000, "USD"), date, "Groceries", TransactionType.EXPENSE, null, "USD"),
+            FamilyTransaction("b", "Sam", Money(2000, "USD"), date, "  ХОББИ  ", TransactionType.EXPENSE, null, "USD"),
+        )
+        val personal = listOf(
+            FinanceTransaction("c", "Owner", TransactionType.EXPENSE, date, Money(3000, "USD"), "groceries"),
+            FinanceTransaction("d", "Owner", TransactionType.EXPENSE, date, Money(4000, "USD"), "custom-hobby"),
+        )
+        val result = FamilyReportCalculator.calculate(imported, personal, "USD", emptyMap(),
+            mapOf("groceries" to "Продукты", "custom-hobby" to "Хобби"))
+
+        assertEquals(4000L, result.expensesByCategory.getValue("Продукты"))
+        assertEquals(6000L, result.expensesByCategory.entries.single { it.key.equals("хобби", true) }.value)
+        assertEquals(2, result.expensesByCategory.size)
+        assertEquals(result.expensesMinorUnits, result.expensesByCategory.values.sum())
+    }
+
+    @Test
     fun aggregatesExpensesByOwnerAndCategoryAfterCurrencyConversion() {
         val imported = FamilyTransaction(
             id = "wife-food", owner = "Wife", sourceMoney = Money(1000, "EUR"),

@@ -83,7 +83,6 @@ fun HomeScreen(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(stringResource(R.string.navigation_home), style = MaterialTheme.typography.headlineMedium)
             val current = state
             val summary = current?.summary
             if (current == null || summary == null) {

@@ -4,6 +4,12 @@
 
 Finance Tracker stores your data locally on your Android phone. It needs no account and has no automatic synchronization or cloud backup. Family sharing uses files that you exchange yourself. Export a personal backup before clearing app data, uninstalling, or moving to another phone.
 
+## Updating without losing records
+
+Download the newer APK, open it on your phone and confirm **Update**. Keep the existing app installed and do not clear its storage. A compatible update retains your profile, transactions, categories, goal, exchange rates and saved family imports. The new APK must have the same application ID and signing certificate; the developer increases its version for each release. Version 1.1 keeps the existing database structure.
+
+Export a personal CSV backup before an update as an extra precaution. It covers personal transactions, not all settings or family imports. If Android reports a signature conflict, ask for a compatible APK instead of uninstalling: an uninstall deletes local data. The current test builds use the same local debug signing key. Moving to a release signed with a different key requires a planned data transfer; it cannot be installed directly over this test build. GitHub does not automatically update the app on your phone.
+
 ## First launch and navigation
 
 1. Enter **Your name**, choose a **Main currency** (USD, EUR, RUB, or BYN), and tap **Continue**. A name is required.
@@ -56,7 +62,9 @@ There is no shared account or live family sync. Each person exports a personal r
 4. Read **Added** and **Skipped duplicates**. Existing imported `record_id` values and repeated IDs within the file are skipped. Importing a revised row with the same ID does not update the saved row.
 5. Set **From** and **Through** (inclusive, `DD-MM-YYYY`) and tap **Apply period**. The start cannot precede the first available personal or imported record. Check the dates to include the records you want.
 
-**Family totals** and **By family member** include your personal entries and saved family entries for the period. Members are grouped by `owner`; use distinct names to keep members distinct. Each member's expenses are broken down by category. **Clear member data** removes only that member's imported entries after confirmation; personal entries and other members' records remain. If the same record ID exists in both the personal and family data for the period, the personal entry is counted once in preference to the imported copy.
+**Family totals** include your personal entries and saved family entries for the period. **Family balance** shows income minus expenses: a positive amount has a green plus, a negative amount has a red minus, and zero is neutral. **By family member** compares all income columns first, followed by all expense columns on the same scale. Swipe the chart horizontally to see every member. Members are grouped by `owner`; use distinct names to keep members distinct.
+
+Expense categories are combined across the family. Matching names ignore case and extra spaces; Russian and English names of standard categories are also combined. Custom categories with different names remain separate. **Imported family members** lists saved imports even outside the selected period. **Clear member data** removes only that member's imported entries after confirmation; personal entries and other members' records remain. If the same record ID exists in both personal and family data for the period, the personal entry is counted once in preference to the imported copy.
 
 Imported entries remain saved locally for later family reports, separately from personal entries. They do not enter Operations, personal reports, the savings forecast, or personal backups. The original amount, currency, owner, and import rate are preserved. Imported amounts use their saved import rates. If you later change your main currency, the family report can request rates from the old import base currency to the current currency; foreign personal entries may also require rates for the selected family period. Tap **Enter rates** and save them to see totals.
 
@@ -73,6 +81,21 @@ The remaining amount is `max(target − already saved, 0)`. With a positive aver
 The screen explains when there are no completed months, or when the average surplus is zero or negative and no finish time can be estimated. If the saved amount reaches the target, it shows **Goal reached**. The estimate assumes the past average continues.
 
 After changing the main currency, the app can convert the saved target and saved amount using the forecast-period rate for the old goal currency. Supply requested rates. If conversion cannot be calculated (for example, no completed forecast period exists), follow the prompt to re-enter both amounts in the new currency and **Save goal**.
+
+## App protection
+
+Open **More → Profile → App protection**. Protection is optional and starts disabled, including after an update. First configure a PIN, password or pattern in your phone settings so you can recover access if you forget the app code.
+
+1. Enter and repeat a code of **4–10 characters**. Letters, digits and symbols are allowed; case and spaces matter.
+2. Optionally enable **Biometric unlock** if your phone has an available, enrolled fingerprint or face method. Android performs biometric authentication; the app does not receive biometric data.
+3. Tap **Enable protection**. The app asks for authentication on a fresh launch, after 30 seconds in the background, or when the phone is locked. A short visit to the CSV picker does not require another code.
+4. Enter the app code or tap **Use biometrics**. After five wrong codes, wait 30 seconds. Restarting the app or changing the clock does not remove the delay. If you reboot the phone during a pending delay, the app may require a fresh 30 seconds.
+
+To change the code or biometric setting, enter the current code and save the protection settings. Leave both new-code fields empty to keep the code. To disable protection, enter the current code and tap **Disable protection**.
+
+If you forget the code, tap **Forgot app code?** and confirm the phone PIN, password or pattern in Android's dialog. This removes the application code and biometric setting while keeping all financial records. Set up protection again in your profile. Canceling the system dialog keeps protection enabled.
+
+When protection is enabled, screenshots and recent-app previews hide app content. This feature controls access to the app; it does not encrypt exported CSV files or add database encryption. Code verification data is protected in private app storage and excluded from CSV exports.
 
 ## Personal backup and restore
 
@@ -105,4 +128,4 @@ owner,record_id,date,category,income,expense,currency
 
 Amounts must be representable to two decimal places. Fields with commas, quotes, or line breaks are quoted, and embedded quotes doubled. Use app exports where possible; spreadsheet tools can change dates, separators, encoding, or identifiers. Check these fields if an import fails. CSV files are readable financial data; share them only with intended recipients.
 
-Android picker wording and installation prompts vary by device. The example screenshots in the project README were captured on an emulator with an empty demo profile.
+Android picker wording and installation prompts vary by device. The example screenshots in the project README were captured on an emulator with fictional demo data.

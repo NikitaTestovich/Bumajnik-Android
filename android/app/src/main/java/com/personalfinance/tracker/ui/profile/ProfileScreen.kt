@@ -96,6 +96,7 @@ fun ProfileScreen(
             Button(onClick = onOpenGoal, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.goal_open))
             }
+            com.personalfinance.tracker.ui.security.SecuritySettings()
             Text(stringResource(R.string.backup_title), style = MaterialTheme.typography.titleLarge)
             Text(stringResource(R.string.backup_description))
             Button(onClick = onExportBackup, enabled = !backupBusy, modifier = Modifier.fillMaxWidth()) {

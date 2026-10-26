@@ -1,5 +1,15 @@
 # Finance Tracker for Android
 
+## Version 1.1 verification (2026-10-26)
+
+The 1.1 debug APK (`versionCode=2`) was built with the existing toolchain and the same signing certificate as the saved 1.0 APK. Both APK signatures were verified. Installing 1.1 over 1.0 with `adb install -r` preserved the seeded profile, personal transactions, standard/custom categories, goal, family records and exchange rates. The database schema remains version 2. The root archive was checked to contain the exact same APK as the build output.
+
+All 89 JVM tests passed. The Android 17 emulator run reported 36 tests with no failures: 35 checks executed successfully, while the two-stage upgrade test was intentionally skipped in that generic run and passed separately before and after the update. Coverage includes six protection checks, a real system PIN recovery flow, actual CSV open/save dialogs, CSV data export/import and duplicate prevention. Earlier picker skips were caused by incomplete MIME-type package-visibility declarations; those declarations are corrected in 1.1.
+
+An independent code review identified lifecycle/cancellation and category grouping issues. Regression tests reproduced them before fixes; the complete suites then passed. Physical fingerprint/face authentication has not been tested on a connected phone for this version. A supported enrolled biometric is required to exercise that path on a real device.
+
+For the real credential test on a disposable emulator, configure a screen-lock PIN first and pass it as the `devicePin` instrumentation argument. Never run this suite against a phone containing real app data: the acceptance tests reset their test database.
+
 [English user guide](../docs/user-guide-en.md) · [Руководство на русском](../docs/user-guide-ru.md)
 
 The app supports Android 8.0 (API 26) and newer. Package ID: `com.personalfinance.tracker`.

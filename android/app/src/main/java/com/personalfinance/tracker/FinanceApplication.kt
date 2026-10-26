@@ -19,11 +19,16 @@ data class FinanceContainer(
 )
 
 class FinanceApplication : Application() {
+    lateinit var appLock: com.personalfinance.tracker.security.AppLockController
+        private set
     lateinit var container: FinanceContainer
         private set
 
     override fun onCreate() {
         super.onCreate()
+        appLock = com.personalfinance.tracker.security.AppLockController(
+            com.personalfinance.tracker.security.AppLockStore(this),
+        )
         val database = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java,
