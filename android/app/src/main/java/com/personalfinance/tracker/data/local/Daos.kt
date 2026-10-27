@@ -8,6 +8,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FinanceDao {
+    @Query("SELECT * FROM finance_transactions WHERE id = :id LIMIT 1")
+    suspend fun transactionById(id: String): FinanceTransactionEntity?
+
+    @Query("SELECT COALESCE(MAX(createdOrder), 0) FROM finance_transactions")
+    suspend fun maxCreatedOrder(): Long
+
     @Query("SELECT id FROM finance_transactions")
     suspend fun transactionIds(): List<String>
 
@@ -20,10 +26,10 @@ interface FinanceDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertRestoredCategory(category: CategoryEntity)
 
-    @Query("SELECT * FROM finance_transactions WHERE (:type IS NULL OR type = :type) ORDER BY date DESC, id ASC")
+    @Query("SELECT * FROM finance_transactions WHERE (:type IS NULL OR type = :type) ORDER BY date DESC, createdOrder DESC, id ASC")
     fun observeTransactions(type: String?): Flow<List<FinanceTransactionEntity>>
 
-    @Query("SELECT * FROM finance_transactions WHERE date >= :start AND date < :endExclusive AND (:type IS NULL OR type = :type) ORDER BY date DESC, id ASC")
+    @Query("SELECT * FROM finance_transactions WHERE date >= :start AND date < :endExclusive AND (:type IS NULL OR type = :type) ORDER BY date DESC, createdOrder DESC, id ASC")
     suspend fun transactionsBetween(start: String, endExclusive: String, type: String?): List<FinanceTransactionEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

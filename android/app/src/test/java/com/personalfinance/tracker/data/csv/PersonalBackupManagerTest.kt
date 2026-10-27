@@ -46,7 +46,7 @@ class PersonalBackupManagerTest {
         val result = manager.restoreBytes(bytes)
         assertEquals(BackupRestoreResult(1, 2, emptyList()), result)
         assertEquals(2, repository.observeTransactions(null).first().size)
-        assertEquals(local, repository.observeTransactions(null).first().single { it.id == id1 })
+        assertEquals(local.copy(createdOrder = 1), repository.observeTransactions(null).first().single { it.id == id1 })
         assertEquals(BackupRestoreResult(0, 3, emptyList()), manager.restoreBytes(bytes))
     }
 

@@ -75,7 +75,7 @@ class SummaryServiceTest {
 
         service.summarize(range, "USD", mapOf("EUR" to BigDecimal("1.25")))
 
-        assertEquals(source, repository.transactionsBetween(range, null).single())
+        assertEquals(source.copy(createdOrder = 1), repository.transactionsBetween(range, null).single())
     }
 
     @Test(expected = MissingExchangeRatesException::class)

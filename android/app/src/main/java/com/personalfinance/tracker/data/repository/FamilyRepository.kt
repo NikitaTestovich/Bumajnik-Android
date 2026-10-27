@@ -82,6 +82,7 @@ private fun FamilyTransaction.toEntity(batchId: String) = FamilyTransactionEntit
     categoryName = categoryName,
     importRate = importRate?.stripTrailingZeros()?.toPlainString(),
     importBaseCurrency = importBaseCurrency,
+    comment = comment,
     batchId = batchId,
 )
 
@@ -94,4 +95,5 @@ private fun FamilyTransactionEntity.toDomain() = FamilyTransaction(
     type = TransactionType.valueOf(type),
     importRate = importRate?.let(::BigDecimal),
     importBaseCurrency = importBaseCurrency,
+    comment = comment,
 )

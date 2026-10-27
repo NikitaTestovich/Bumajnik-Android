@@ -1,5 +1,6 @@
 package com.personalfinance.tracker.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -21,6 +22,8 @@ data class CategoryEntity(
     val nameRu: String?,
     val nameEn: String?,
     val isCustom: Boolean,
+    @ColumnInfo(defaultValue = "0") val isArchived: Boolean = false,
+    @ColumnInfo(defaultValue = "'other'") val iconKey: String = "other",
 )
 
 @Entity(
@@ -35,6 +38,8 @@ data class FinanceTransactionEntity(
     val minorUnits: Long,
     val currencyCode: String,
     val categoryId: String?,
+    @ColumnInfo(defaultValue = "''") val comment: String = "",
+    @ColumnInfo(defaultValue = "0") val createdOrder: Long = 0,
 )
 
 @Entity(
@@ -52,6 +57,7 @@ data class FamilyTransactionEntity(
     val importRate: String?,
     val importBaseCurrency: String = "USD",
     val batchId: String?,
+    @ColumnInfo(defaultValue = "''") val comment: String = "",
 )
 
 @Entity(tableName = "family_import_batches")
