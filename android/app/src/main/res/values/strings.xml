@@ -204,4 +204,15 @@
     <string-array name="category_icon_names">
         <item>Groceries</item><item>Home</item><item>Transport</item><item>Phone</item><item>Health</item><item>Education</item><item>Clothing</item><item>Dining</item><item>Entertainment</item><item>Household goods</item><item>Travel</item><item>Gifts</item><item>Pets</item><item>Sport</item><item>Beauty</item><item>Children</item><item>Insurance</item><item>Taxes</item><item>Tools</item><item>Other</item>
     </string-array>
+    <string name="home_customize">Customize home</string>
+    <string name="home_customize_hint">Hold the handle to drag. Use arrows to move blocks.</string>
+    <string name="home_quick_actions">Quick actions</string>
+    <string name="home_expense_breakdown">Monthly expenses</string>
+    <string name="home_drag">Drag %1$s</string>
+    <string name="home_move_up">Move up</string>
+    <string name="home_move_down">Move down</string>
+    <string name="home_reset">Restore defaults</string>
+    <string name="home_reset_confirm">Restore the default order and visibility?</string>
+    <string name="home_done">Done</string>
+    <string name="home_all_hidden">All blocks are hidden. Customize home to show them.</string>
 </resources>

@@ -204,4 +204,15 @@
     <string-array name="category_icon_names">
         <item>Продукты</item><item>Дом</item><item>Транспорт</item><item>Связь</item><item>Здоровье</item><item>Образование</item><item>Одежда</item><item>Кафе</item><item>Развлечения</item><item>Бытовые товары</item><item>Путешествия</item><item>Подарки</item><item>Питомцы</item><item>Спорт</item><item>Красота</item><item>Дети</item><item>Страхование</item><item>Налоги</item><item>Инструменты</item><item>Другое</item>
     </string-array>
+    <string name="home_customize">Моя главная</string>
+    <string name="home_customize_hint">Удерживайте ручку для перетаскивания или используйте стрелки.</string>
+    <string name="home_quick_actions">Быстрые действия</string>
+    <string name="home_expense_breakdown">Расходы за месяц</string>
+    <string name="home_drag">Перетащить: %1$s</string>
+    <string name="home_move_up">Вверх</string>
+    <string name="home_move_down">Вниз</string>
+    <string name="home_reset">Сбросить порядок</string>
+    <string name="home_reset_confirm">Восстановить порядок и видимость по умолчанию?</string>
+    <string name="home_done">Готово</string>
+    <string name="home_all_hidden">Все блоки скрыты. Откройте «Моя главная», чтобы включить их.</string>
 </resources>

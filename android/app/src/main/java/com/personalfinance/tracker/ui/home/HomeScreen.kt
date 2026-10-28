@@ -28,6 +28,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import com.personalfinance.tracker.data.preferences.HomeLayoutStore
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -59,6 +61,9 @@ fun HomeScreen(
     val transactions by repository.observeTransactions(null).collectAsState(initial = emptyList())
     val goal by repository.observeGoal().collectAsState(initial = null)
     val scope = rememberCoroutineScope()
+    val layoutStore = remember { HomeLayoutStore(context) }
+    val layout by layoutStore.layout.collectAsState()
+    var customizing by remember { mutableStateOf(false) }
     val viewModel = remember {
         HomeViewModel(
             repository = repository,
@@ -83,8 +88,13 @@ fun HomeScreen(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            OutlinedButton(onClick = { customizing = true }, modifier = Modifier.fillMaxWidth().testTag("home_customize")) { Text(stringResource(R.string.home_customize)) }
+            if (layout.none { it.visible }) Text(stringResource(R.string.home_all_hidden))
             val current = state
             val summary = current?.summary
+            layout.filter { it.visible }.forEach { setting ->
+            when (setting.id) {
+            HomeBlock.SUMMARY -> {
             if (current == null || summary == null) {
                 Text(
                     stringResource(R.string.home_need_rates, baseCurrency),
@@ -140,6 +150,8 @@ fun HomeScreen(
                 }
             }
 
+            }
+            HomeBlock.QUICK_ACTIONS -> {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(onClick = onAddIncome, modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.home_add_income))
@@ -149,6 +161,8 @@ fun HomeScreen(
                 }
             }
 
+            }
+            HomeBlock.GOAL -> {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.home_goal), style = MaterialTheme.typography.titleMedium)
@@ -180,6 +194,8 @@ fun HomeScreen(
                 }
             }
 
+            }
+            HomeBlock.LATEST -> {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(stringResource(R.string.home_latest), style = MaterialTheme.typography.titleMedium)
@@ -199,11 +215,17 @@ fun HomeScreen(
                 }
             }
 
+            }
+            HomeBlock.EXPENSES -> Unit // Rendered by the monthly-expenses integration task.
+            }
+            }
             OutlinedButton(onClick = onAllOperations, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.home_all_operations))
             }
         }
     }
+
+    if (customizing) HomeCustomizationSheet(layout, layoutStore::save, layoutStore::reset, { customizing = false })
 
     val missingCurrencies = state?.missingCurrencies.orEmpty()
     if (showRateDialog && missingCurrencies.isNotEmpty()) {
