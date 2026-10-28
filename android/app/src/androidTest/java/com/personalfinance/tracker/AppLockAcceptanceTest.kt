@@ -51,7 +51,7 @@ class AppLockAcceptanceTest {
         runBlocking { assertEquals(LockResult.SUCCESS, app.appLock.enable("Ab12", false, true)) }
         app.appLock.lockNow()
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        ui.waitUntil(10_000) { ui.onAllNodesWithTag("app_lock_screen").fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithTag("app_lock_screen").fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
     }
 
     @Test fun wrongCodeCannotOpenNavigationAndCorrectCodePreservesRecords() {
@@ -59,11 +59,11 @@ class AppLockAcceptanceTest {
         ui.onNodeWithText(app.getString(R.string.navigation_operations)).assertDoesNotExist()
         ui.onNodeWithTag("unlock_code").performTextInput("0000")
         ui.onNodeWithTag("unlock_button").performClick()
-        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.security_wrong_code)).fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.security_wrong_code)).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
         ui.onNodeWithTag("app_lock_screen").assertIsDisplayed()
         ui.onNodeWithTag("unlock_code").performTextReplacement("Ab12")
         ui.onNodeWithTag("unlock_button").performClick()
-        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.home_balance)).fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.home_balance)).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
         assertEquals(12345L, runBlocking { app.container.financeRepository.observeTransactions(null).first().single().money.minorUnits })
         scenario!!.onActivity { assertTrue(it.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE != 0) }
         // Screen-off is the production controller signal; navigation must disappear.
@@ -84,7 +84,7 @@ class AppLockAcceptanceTest {
 
     @Test fun profileCanEnableChangeAndDisableCodeWithCurrentAuthentication() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.home_balance)).fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.home_balance)).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
         var secure = false
         scenario!!.onActivity { secure = it.isDeviceSecure() }
         Assume.assumeTrue("Configure emulator PIN for settings tests", secure)
@@ -97,10 +97,10 @@ class AppLockAcceptanceTest {
         ui.onNodeWithTag("new_code").performScrollTo().performTextReplacement("Cd34")
         ui.onNodeWithTag("confirm_code").performScrollTo().performTextReplacement("Cd34")
         ui.onNodeWithTag("save_security").performScrollTo().performClick()
-        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.security_wrong_code)).fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.security_wrong_code)).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
         ui.onNodeWithTag("current_code").performScrollTo().performTextReplacement("Ab12")
         ui.onNodeWithTag("save_security").performScrollTo().performClick()
-        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.security_saved)).fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.security_saved)).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
         scenario!!.onActivity { app.appLock.lockNow() }
         ui.onNodeWithTag("unlock_code").performTextInput("Cd34")
         ui.onNodeWithTag("unlock_button").performClick()

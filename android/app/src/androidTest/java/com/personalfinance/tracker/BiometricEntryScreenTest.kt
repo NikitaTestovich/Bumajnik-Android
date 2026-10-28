@@ -1,6 +1,5 @@
 package com.personalfinance.tracker
 
-import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -11,6 +10,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.personalfinance.tracker.security.AppLockController
+import com.personalfinance.tracker.security.AppLockStore
 import com.personalfinance.tracker.security.LockResult
 import com.personalfinance.tracker.ui.security.AppLockScreen
 import com.personalfinance.tracker.ui.theme.FinanceTheme
@@ -20,32 +20,33 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-@Ignore("Compose hierarchy unavailable on current emulator; real UI acceptance is tracked for release verification")
 class BiometricEntryScreenTest {
     @get:Rule val ui = createComposeRule()
     private val app get() = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as FinanceApplication
+    private lateinit var lock: AppLockController
 
     @Before fun prepare() {
         runBlocking { app.appLock.recoverAfterDeviceCredential(app.appLock.generation) }
+        // A screen fixture owns its request lifecycle; do not leak an unterminated fake
+        // framework request into the next test through the Application singleton.
+        lock = AppLockController(AppLockStore(app))
     }
 
     @After fun cleanup() {
-        runBlocking { app.appLock.recoverAfterDeviceCredential(app.appLock.generation) }
+        runBlocking { lock.recoverAfterDeviceCredential(lock.generation) }
     }
 
     private fun launchLock(biometrics: Boolean, onRetry: () -> Unit = {}) : AppLockController {
-        val lock = app.appLock
         assertEquals(LockResult.SUCCESS, runBlocking { lock.enable("Ab12", biometrics, true) })
         lock.lockNow()
         lock.biometricEntry.beginSession(lock.generation, biometrics, true)
         ui.setContent { FinanceTheme { AppLockScreen(lock, onRetry, {}, {}) } }
-        ui.waitUntil(10_000) { ui.onAllNodesWithTag("app_lock_screen").fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithTag("app_lock_screen").fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
         return lock
     }
 
@@ -58,6 +59,8 @@ class BiometricEntryScreenTest {
 
         ui.runOnIdle { lock.biometricEntry.fallback(first) }
         ui.onNodeWithTag("unlock_code").assertIsDisplayed()
+        ui.onNodeWithTag("biometric_retry_button").assertIsNotEnabled()
+        ui.runOnIdle { lock.biometricEntry.terminal(first) }
         ui.onNodeWithTag("biometric_retry_button").performClick()
         ui.runOnIdle { assertTrue(retries == 1) }
     }
@@ -74,8 +77,10 @@ class BiometricEntryScreenTest {
     @Test fun newGenerationWithUnconfirmedCancellationShowsCode() {
         val lock = launchLock(true)
         val old = lock.biometricEntry.beginAttempt()!!
-        lock.lockNow()
-        lock.biometricEntry.beginSession(lock.generation, true, true)
+        ui.runOnIdle {
+            lock.lockNow()
+            lock.biometricEntry.beginSession(lock.generation, true, true)
+        }
         ui.onNodeWithTag("unlock_code").assertIsDisplayed()
         ui.onNodeWithTag("biometric_retry_button").assertIsNotEnabled()
         assertEquals(LockResult.UNAVAILABLE, runBlocking { lock.biometricSucceeded(lock.generation, old) })
