@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +27,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.testTag
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import com.personalfinance.tracker.ui.categories.CategoryIcon
 import com.personalfinance.tracker.R
 import com.personalfinance.tracker.domain.model.Category
 import com.personalfinance.tracker.domain.model.UserProfile
@@ -37,7 +42,9 @@ fun ProfileScreen(
     profile: UserProfile,
     categories: List<Category>,
     onSave: (name: String, languageTag: String, baseCurrency: String) -> Unit,
-    onAddCategory: (name: String, languageTag: String) -> Unit,
+    onAddCategory: suspend (name: String, languageTag: String, iconKey: String) -> Boolean,
+    onEditCategory: suspend (id: String, name: String, iconKey: String) -> Boolean,
+    onArchiveCategory: suspend (id: String) -> Boolean,
     onOpenFamily: () -> Unit,
     onOpenGoal: () -> Unit,
     onExportBackup: () -> Unit,
@@ -48,7 +55,10 @@ fun ProfileScreen(
     var name by remember(profile.name) { mutableStateOf(profile.name) }
     var language by remember(profile.languageTag) { mutableStateOf(profile.languageTag) }
     var currency by remember(profile.baseCurrency) { mutableStateOf(profile.baseCurrency) }
-    var categoryName by remember { mutableStateOf("") }
+    var editorOpen by remember { mutableStateOf(false) }
+    var editingCategory by remember { mutableStateOf<Category?>(null) }
+    var removingCategory by remember { mutableStateOf<Category?>(null) }
+    val scope = rememberCoroutineScope()
     var currencyMenu by remember { mutableStateOf(false) }
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -109,34 +119,40 @@ fun ProfileScreen(
             backupStatus?.let { Text(it) }
 
             Text(stringResource(R.string.profile_categories), style = MaterialTheme.typography.titleLarge)
-            categories.forEach { category ->
+            categories.filterNot { it.isArchived }.forEach { category ->
                 val label = if (language == "ru") category.nameRu ?: category.nameEn.orEmpty()
                 else category.nameEn ?: category.nameRu.orEmpty()
-                Card(modifier = Modifier.fillMaxWidth()) {
+                Card(modifier = Modifier.fillMaxWidth().testTag("category_row_${category.id}"),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                    Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CategoryIcon(category.iconKey)
                     Text(
                         text = label,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        modifier = Modifier.weight(1f),
                         style = if (category.isCustom) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium,
                     )
+                    }
+                    Row {
+                        TextButton(onClick = { editingCategory = category; editorOpen = true }, modifier = Modifier.testTag("category_edit_${category.id}")) { Text(stringResource(R.string.category_edit)) }
+                        TextButton(onClick = { removingCategory = category }, modifier = Modifier.testTag("category_delete_${category.id}")) { Text(stringResource(R.string.category_delete)) }
+                    }
                 }
             }
-            OutlinedTextField(
-                value = categoryName,
-                onValueChange = { categoryName = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.profile_new_category)) },
-                singleLine = true,
-            )
             Button(
-                onClick = {
-                    onAddCategory(categoryName, language)
-                    categoryName = ""
-                },
-                enabled = categoryName.isNotBlank(),
-                modifier = Modifier.fillMaxWidth(),
+                onClick = { editingCategory = null; editorOpen = true },
+                modifier = Modifier.fillMaxWidth().testTag("category_add"),
             ) {
                 Text(stringResource(R.string.profile_add_category))
             }
         }
+    }
+    if (editorOpen) CategoryEditor(editingCategory, language, { editorOpen = false }) { name, icon ->
+        editingCategory?.let { onEditCategory(it.id, name, icon) } ?: onAddCategory(name, language, icon)
+    }
+    removingCategory?.let { category ->
+        AlertDialog(onDismissRequest = { removingCategory = null }, title = { Text(stringResource(R.string.category_delete)) },
+            text = { Text(stringResource(R.string.category_delete_message)) },
+            confirmButton = { TextButton(modifier = Modifier.testTag("category_delete_confirm"), onClick = { scope.launch { onArchiveCategory(category.id); removingCategory = null } }) { Text(stringResource(R.string.category_delete)) } },
+            dismissButton = { TextButton(onClick = { removingCategory = null }) { Text(stringResource(R.string.operation_cancel)) } })
     }
 }

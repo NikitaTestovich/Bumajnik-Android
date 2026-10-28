@@ -195,4 +195,13 @@
     <string name="operation_error_comment">Комментарий должен содержать не более 150 символов.</string>
     <string name="reports_legacy_csv">Для версии 1.1 — без комментариев</string>
     <string name="reports_export_request_lost">Выберите период отчёта и повторите экспорт.</string>
+    <string name="category_edit">Изменить</string>
+    <string name="category_delete">Удалить категорию</string>
+    <string name="category_delete_message">Убрать категорию из новых расходов? В существующих записях и отчётах она сохранится.</string>
+    <string name="category_choose_icon">Выберите иконку</string>
+    <string name="category_invalid_name">Введите название, не занятое другой активной категорией.</string>
+    <string name="category_none_active">Перед добавлением нового расхода создайте категорию в профиле.</string>
+    <string-array name="category_icon_names">
+        <item>Продукты</item><item>Дом</item><item>Транспорт</item><item>Связь</item><item>Здоровье</item><item>Образование</item><item>Одежда</item><item>Кафе</item><item>Развлечения</item><item>Бытовые товары</item><item>Путешествия</item><item>Подарки</item><item>Питомцы</item><item>Спорт</item><item>Красота</item><item>Дети</item><item>Страхование</item><item>Налоги</item><item>Инструменты</item><item>Другое</item>
+    </string-array>
 </resources>

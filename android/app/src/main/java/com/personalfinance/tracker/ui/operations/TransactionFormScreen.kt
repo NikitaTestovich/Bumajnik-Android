@@ -141,8 +141,9 @@ fun TransactionFormScreen(
                             ?: stringResource(R.string.operation_select_category),
                         onValueChange = {},
                         readOnly = true,
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.menuAnchor().fillMaxWidth().testTag("expense_category"),
                         label = { Text(stringResource(R.string.operation_category)) },
+                        leadingIcon = { selected?.let { com.personalfinance.tracker.ui.categories.CategoryIcon(it.iconKey) } },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryMenuExpanded) },
                         singleLine = true,
                     )
@@ -151,9 +152,10 @@ fun TransactionFormScreen(
                         onDismissRequest = { categoryMenuExpanded = false },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        categories.forEach { category ->
+                        categories.filter { !it.isArchived || (transactionId != null && it.id == draft.categoryId) }.forEach { category ->
                             DropdownMenuItem(
                                 text = { Text(category.categoryLabel(profile?.languageTag ?: "en")) },
+                                leadingIcon = { com.personalfinance.tracker.ui.categories.CategoryIcon(category.iconKey) },
                                 onClick = {
                                     draft = draft.copy(categoryId = category.id)
                                     errorResult = null
@@ -164,6 +166,7 @@ fun TransactionFormScreen(
                     }
                 }
                 Text(stringResource(R.string.operation_category_profile_hint), style = MaterialTheme.typography.bodySmall)
+                if (categories.none { !it.isArchived }) Text(stringResource(R.string.category_none_active), color = MaterialTheme.colorScheme.error)
             }
             errorResult?.let { result ->
                 val message = when (result) {

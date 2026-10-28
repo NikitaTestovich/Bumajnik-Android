@@ -28,7 +28,8 @@ class WelcomeViewModel(
         val existingCategoryIds = repository.observeCategories().first().mapTo(mutableSetOf()) { it.id }
         DefaultCategories.forLanguage(language).forEach { seed ->
             if (seed.id !in existingCategoryIds) {
-                repository.saveCategory(Category(seed.id, seed.nameRu, seed.nameEn, isCustom = false))
+                repository.saveCategory(Category(seed.id, seed.nameRu, seed.nameEn, isCustom = false,
+                    iconKey = com.personalfinance.tracker.domain.model.CategoryIcons.forStandard(seed.id)))
             }
         }
         repository.saveProfile(

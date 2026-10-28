@@ -64,14 +64,17 @@ object FamilyReportCalculator {
         }.toMap()
         // Prefer the device's localized names, including for equivalent imported categories.
         val preferredLabels = categoryNamesById.values.associateBy({ normalized(it) }, { it.trim() })
-        fun combinedLabel(label: String): String {
+        fun combinedLabel(label: String, personal: Boolean = false): String {
             val seed = standardNames[normalized(label)]
-            val display = seed?.let { categoryNamesById[it.id] } ?: label.trim().replace(Regex("\\s+"), " ")
-            val key = seed?.let { "standard:${it.id}" } ?: "custom:${normalized(display)}"
+            val localName = seed?.let { categoryNamesById[it.id] }
+            // Imported labels are snapshots: only localize an untouched standard alias.
+            val untouched = seed != null && localName != null && normalized(localName) in setOf(normalized(seed.nameRu), normalized(seed.nameEn))
+            val display = if (!personal && untouched) localName!! else label.trim().replace(Regex("\\s+"), " ")
+            val key = "category:${normalized(display)}"
             return categoryLabels.getOrPut(key) { preferredLabels[normalized(display)] ?: display }
         }
 
-        fun add(owner: String, type: TransactionType, converted: Long, category: String?) {
+        fun add(owner: String, type: TransactionType, converted: Long, category: String?, personal: Boolean = false) {
             val previous = totals[owner] ?: FamilyOwnerTotals()
             totals[owner] = when (type) {
                 TransactionType.INCOME -> previous.copy(incomeMinorUnits = Math.addExact(previous.incomeMinorUnits, converted))
@@ -79,7 +82,7 @@ object FamilyReportCalculator {
                     val label = category?.takeIf(String::isNotBlank) ?: uncategorizedLabel
                     val ownerCategories = categoryTotals.getOrPut(owner) { mutableMapOf() }
                     ownerCategories[label] = Math.addExact(ownerCategories[label] ?: 0L, converted)
-                    val combined = combinedLabel(label)
+                    val combined = combinedLabel(label, personal)
                     combinedCategories[combined] = Math.addExact(combinedCategories[combined] ?: 0L, converted)
                     previous.copy(expensesMinorUnits = Math.addExact(previous.expensesMinorUnits, converted))
                 }
@@ -109,6 +112,7 @@ object FamilyReportCalculator {
                 transaction.type,
                 converted,
                 transaction.categoryId?.let(categoryNamesById::get) ?: uncategorizedLabel,
+                personal = true,
             )
         }
         return FamilyReportTotals(

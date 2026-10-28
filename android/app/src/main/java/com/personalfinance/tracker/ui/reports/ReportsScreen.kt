@@ -241,6 +241,7 @@ fun ReportsScreen() {
                                 items = current.categories.map { category ->
                                     CategoryBreakdownItem(
                                         label = category.name,
+                                        iconKey = categories.firstOrNull { (if (languageTag == "ru") it.nameRu ?: it.nameEn else it.nameEn ?: it.nameRu) == category.name }?.iconKey ?: "other",
                                         valueMinorUnits = category.minorUnits,
                                         share = if (summary.expense.minorUnits <= 0L) 0f
                                         else (category.minorUnits.toDouble() / summary.expense.minorUnits.toDouble()).toFloat(),

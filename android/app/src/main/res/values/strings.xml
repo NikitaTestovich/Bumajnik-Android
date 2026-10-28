@@ -195,4 +195,13 @@
     <string name="operation_error_comment">Use at most 150 characters for the comment.</string>
     <string name="reports_legacy_csv">For version 1.1 — comments are omitted</string>
     <string name="reports_export_request_lost">Please choose the report period and export again.</string>
+    <string name="category_edit">Edit</string>
+    <string name="category_delete">Delete category</string>
+    <string name="category_delete_message">Remove this category from new expenses? Existing records and reports will keep it.</string>
+    <string name="category_choose_icon">Choose an icon</string>
+    <string name="category_invalid_name">Enter a name that is not used by another active category.</string>
+    <string name="category_none_active">Add a category in your profile before saving a new expense.</string>
+    <string-array name="category_icon_names">
+        <item>Groceries</item><item>Home</item><item>Transport</item><item>Phone</item><item>Health</item><item>Education</item><item>Clothing</item><item>Dining</item><item>Entertainment</item><item>Household goods</item><item>Travel</item><item>Gifts</item><item>Pets</item><item>Sport</item><item>Beauty</item><item>Children</item><item>Insurance</item><item>Taxes</item><item>Tools</item><item>Other</item>
+    </string-array>
 </resources>

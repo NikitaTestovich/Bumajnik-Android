@@ -86,6 +86,11 @@ class TransactionFormViewModel(private val repository: FinanceRepository) {
             repository.observeTransactions(null).first().firstOrNull { it.id == id }
                 ?: return TransactionSaveResult.NotFound
         }
+        if (type == TransactionType.EXPENSE) {
+            val category = repository.observeCategories().first().firstOrNull { it.id == categoryId }
+                ?: return TransactionSaveResult.CategoryRequired
+            if (category.isArchived && existing?.categoryId != category.id) return TransactionSaveResult.CategoryRequired
+        }
         // Existing entries keep the currency they were recorded in, even if the
         // profile's main currency changed. New entries use the profile currency.
         val savedCurrencyCode = existing?.money?.currencyCode ?: currencyCode

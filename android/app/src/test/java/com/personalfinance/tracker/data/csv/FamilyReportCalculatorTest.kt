@@ -10,6 +10,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class FamilyReportCalculatorTest {
+    @Test fun renamedStandardPersonalLabelDoesNotRenameImportedSnapshot() {
+        val date = LocalDate.of(2026, 10, 1)
+        val imported = listOf(FamilyTransaction("a", "Partner", Money(1000, "USD"), date, "Groceries", TransactionType.EXPENSE, null, "USD"))
+        val personal = listOf(FinanceTransaction("b", "Owner", TransactionType.EXPENSE, date, Money(2000, "USD"), "groceries"))
+        val report = FamilyReportCalculator.calculate(imported, personal, "USD", emptyMap(), mapOf("groceries" to "Food"))
+        assertEquals(mapOf("Groceries" to 1000L, "Food" to 2000L), report.expensesByCategory)
+    }
     @Test
     fun customCategoryMatchingInternalStandardIdDoesNotMergeDifferentNames() {
         val date = LocalDate.of(2026, 10, 1)

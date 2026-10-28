@@ -40,11 +40,15 @@ data class PersonalRestoreSummary(val addedCount: Int, val duplicateCount: Int)
 
 /** Shared conversion policy; persistence of these categories belongs to the batch transaction. */
 internal fun restoredCategory(name: String, categories: Collection<Category>): Category {
-    val normalized = name.trim().lowercase(Locale.ROOT)
+    val normalized = com.personalfinance.tracker.domain.model.normalizedCategoryName(name)
     return categories.firstOrNull { category ->
-        listOfNotNull(category.nameRu, category.nameEn).any { it.trim().lowercase(Locale.ROOT) == normalized }
+        listOfNotNull(category.nameRu, category.nameEn).any { com.personalfinance.tracker.domain.model.normalizedCategoryName(it) == normalized }
     } ?: Category(
-        id = "backup-" + UUID.nameUUIDFromBytes("personal-category:$normalized".toByteArray(Charsets.UTF_8)),
+        id = run {
+            val base = "backup-" + UUID.nameUUIDFromBytes("personal-category:$normalized".toByteArray(Charsets.UTF_8))
+            generateSequence(0) { it + 1 }.map { if (it == 0) base else "$base-$it" }
+                .first { candidate -> categories.none { it.id == candidate } }
+        },
         nameRu = name.trim(),
         nameEn = name.trim(),
         isCustom = true,
@@ -129,7 +133,16 @@ class RoomFinanceRepository(private val database: AppDatabase) : FinanceReposito
         dao.observeCategories().map { items -> items.map(CategoryEntity::toDomain) }
 
     override suspend fun saveCategory(category: Category) {
-        dao.saveCategory(CategoryEntity(category.id, category.nameRu, category.nameEn, category.isCustom, category.isArchived, category.iconKey))
+        database.withTransaction {
+            if (!category.isArchived) {
+                val categories = dao.categories().map(CategoryEntity::toDomain)
+                listOfNotNull(category.nameRu, category.nameEn).forEach { name ->
+                    require(com.personalfinance.tracker.domain.model.categoryNameAvailable(name, categories, category.id))
+                }
+            }
+            dao.saveCategory(CategoryEntity(category.id, category.nameRu, category.nameEn, category.isCustom, category.isArchived,
+                com.personalfinance.tracker.domain.model.CategoryIcons.resolve(category.iconKey)))
+        }
     }
 
     override fun observeGoal(): Flow<SavingsGoal?> = dao.observeGoal().map { entity -> entity?.toDomain() }
