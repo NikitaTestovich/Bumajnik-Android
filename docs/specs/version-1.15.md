@@ -1,12 +1,12 @@
-# Version 1.15 — approved design
+# Version 1.15 — implementation under verification
 
-Status: approved by the user on 27 October 2026, with a 150-character comment limit and required drag-and-drop ordering alongside arrow controls. The shipped specification remains version 1.1 until implementation is verified.
+Status: approved by the user on 27 October 2026 and implemented in the version 1.15 build on 28 October 2026, with a 150-character comment limit and required drag-and-drop ordering alongside arrow controls. Release acceptance remains open while the opt-in real system-PIN recovery timeout is investigated. The [verification report](../testing-1.15.md) records executed checks and remaining physical-device checks.
 
 Builder check completed on 27 October 2026: no important unanswered implementation questions.
 
 ## Purpose and scope
 
-Improve everyday entry, category management and the personal dashboard, while retaining records and the existing optional app lock. Deliver versionName `1.15`, a versionCode greater than 2, the same application ID and signing certificate, and an updated root `AppAndroidBudjets.zip`. A separate APK in the project root is not requested.
+Improve everyday entry, category management and the personal dashboard, while retaining records and the existing optional app lock. Deliver versionName `1.15`, versionCode `3`, the same application ID and signing certificate, and an updated root `AppAndroidBudjets.zip`. A separate APK in the project root is not requested.
 
 ## Chosen approaches
 

@@ -78,9 +78,10 @@ class PersonalBackupManagerTest {
         repository.saveCategory(Category("food", "Еда", "Food", false))
         val local = FinanceTransaction(id1, "Alex", TransactionType.INCOME, LocalDate.of(2026, 1, 1), Money(900, "EUR"), null)
         repository.saveTransaction(local)
+        val persistedLocal = repository.observeTransactions(null).first().single { it.id == id1 }
         val bytes = (header + row(id1) + row(id2, "Кофе") + row(id2, "Кофе")).toByteArray()
         assertEquals(BackupRestoreResult(1, 2, emptyList()), manager.restoreBytes(bytes))
-        assertEquals(local, repository.observeTransactions(null).first().single { it.id == id1 })
+        assertEquals(persistedLocal, repository.observeTransactions(null).first().single { it.id == id1 })
         val custom = repository.observeCategories().first().single { it.isCustom }
         assertEquals(custom.id, repository.observeTransactions(null).first().single { it.id == id2 }.categoryId)
         assertEquals(BackupRestoreResult(0, 3, emptyList()), manager.restoreBytes(bytes))

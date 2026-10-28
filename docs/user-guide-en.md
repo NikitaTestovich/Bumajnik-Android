@@ -6,7 +6,7 @@ Finance Tracker stores your data locally on your Android phone. It needs no acco
 
 ## Updating without losing records
 
-Download the newer APK, open it on your phone and confirm **Update**. Keep the existing app installed and do not clear its storage. A compatible update retains your profile, transactions, categories, goal, exchange rates and saved family imports. The new APK must have the same application ID and signing certificate; the developer increases its version for each release. Version 1.1 keeps the existing database structure.
+Download the newer APK, open it on your phone and confirm **Update**. Keep the existing app installed and do not clear its storage. A compatible update retains your profile, transactions, categories, goal, exchange rates and saved family imports. The new APK must have the same application ID and signing certificate; the developer increases its version for each release. Version 1.15 upgrades the database without removing existing records.
 
 Export a personal CSV backup before an update as an extra precaution. It covers personal transactions, not all settings or family imports. If Android reports a signature conflict, ask for a compatible APK instead of uninstalling: an uninstall deletes local data. The current test builds use the same local debug signing key. Moving to a release signed with a different key requires a planned data transfer; it cannot be installed directly over this test build. GitHub does not automatically update the app on your phone.
 
@@ -16,16 +16,16 @@ Export a personal CSV backup before an update as an extra precaution. It covers 
 2. The initial language follows the device: Russian or English, with English as the fallback for other languages.
 3. Use the four bottom tabs: **Home**, **Operations**, **Reports**, and **More**. **More** opens **Profile**, which also contains the family report, goal, backup actions, and categories. Scroll to see lower controls.
 
-**Home** shows the current calendar month's income, expenses, and balance (income minus expenses), quick entry buttons, saved goal progress, and the latest transaction. **All operations** opens the personal transaction list. Open **Savings goal planner** for the forecast.
+**Home** shows the current calendar month's income, expenses, and balance (income minus expenses), quick entry buttons, saved goal progress, and the latest transaction. Tap **Customize home** to show or hide blocks and change their order. Drag a block by its handle, use the accessible up/down buttons, or reset to defaults. The settings button remains visible when every block is hidden. **Monthly expenses** starts hidden; enable it to see a category doughnut and cards. Tap a segment or card to focus on one category; tap it again to restore the total. **All operations** opens the personal transaction list. Open **Savings goal planner** for the forecast.
 
 ## Add, edit, and delete transactions
 
 1. On **Home**, tap **Add income** or **Add expense**. Alternatively, in **Operations**, select **Expenses** or **Income**, then **Add transaction**.
 2. Enter **Date** as `DD-MM-YYYY`, for example `21-10-2026`. Tap the calendar icon to pick a date, or type it manually. Enter a positive **Amount** with at most two decimal places; a decimal point or comma works.
 3. The entry currency comes from the profile and cannot be changed in this form. Change **Main currency** in the profile to use another currency for new entries. Existing entries keep their original currencies and amounts, including when you edit an entry after changing the profile currency.
-4. For an expense, select an **Expense category** from the full-width list. If a category is missing, add it in **More → Profile → Expense categories**. Income has no category. Tap **Save**; **Cancel** leaves the form without saving.
+4. For an expense, select an **Expense category** from the full-width list. If a category is missing, add it in **More → Profile → Expense categories**. Income has no category; you may add an optional **Comment** of up to 150 Unicode characters (for example, salary or dividends). Tap **Save**; **Cancel** leaves the form without saving.
 
-In **Operations**, the list contains all saved personal entries of the selected type, newest dates first. The full-width add button stays below the list instead of covering it. **Total this month** covers only the current month. Each row shows its original amount and currency code.
+In **Operations**, the list contains all saved personal entries of the selected type, newest transaction dates first and newest creation first within a date. Editing an old entry does not move it above a newer entry on the same date. The full-width add button stays below the list instead of covering it. **Total this month** covers only the current month. Each row shows its original amount and currency code; income comments also appear on the row and the Home latest-entry card.
 
 Tap a row or **Edit** to change it, then **Save**. Editing retains its record identifier. Tap the row's **Delete** and confirm **Delete transaction?** to remove it. **Cancel** keeps it. Deletion is permanent in the app; an earlier CSV backup may still contain the record.
 
@@ -33,7 +33,7 @@ Tap a row or **Edit** to change it, then **Save**. Editing retains its record id
 
 In **More → Profile**, edit **Your name**, select **Русский** or **English** under **App language**, choose **Main currency**, and tap **Save changes**. The interface may reload after changing language.
 
-The initial categories are Groceries, Housing and utilities, Transport, Communications, Healthcare, Education, Clothing, Cafes and restaurants, Entertainment, Household goods, and Other. Under **Expense categories**, enter **New category name** and tap **Add category** to create your own. Standard names follow the interface language; custom names stay as entered.
+The initial categories are Groceries, Housing and utilities, Transport, Communications, Healthcare, Education, Clothing, Cafes and restaurants, Entertainment, Household goods, and Other. Under **Expense categories**, add your own, or edit the name and one of 20 built-in icons on any standard or custom category. Names must be unique among active categories. A renamed category displays your chosen name in both languages, including on older personal expenses and reports. **Delete** archives a category after confirmation: existing expenses retain it, while new expenses cannot select it. If no active category remains, create one before saving another expense.
 
 Changing the main currency changes the currency used for totals and new entries. Existing transactions retain their original amounts and currencies. Saved family imports and a saved goal may need additional conversion; see below.
 
@@ -48,7 +48,7 @@ Personal totals store rates for the exact date range and main currency. Screens 
 1. Open **Reports**. Normally the initial period runs from the start of this month through today; it starts later if your first personal entry is later. Check the displayed dates.
 2. Enter **From** and **Through** in `DD-MM-YYYY`, then tap **Apply period**. Both dates are included. The start cannot precede your first personal transaction or follow the end.
 3. Supply missing rates. The report shows income, expenses, and net balance, plus category amounts with share bars. A comparison card gives the absolute and percentage change from an equal-length period shifted back one calendar month. The entered report rates are reused for both periods. An empty expense breakdown says **No expenses in this period.**
-4. Tap **Export CSV**, choose a name and location in Android's file picker, and save. Wait for **CSV report saved.** Export uses the applied period, and requires a valid period and any requested rates.
+4. Tap **Export CSV**, choose a name and location in Android's file picker, and save. Wait for **CSV report saved.** The current eight-column format includes income comments. Select the clearly labelled **For version 1.1** option when sending a report to an older app; that seven-column format omits comments. Export uses the applied period and requires a valid period and any requested rates.
 
 The CSV contains personal entries in that period, original amounts and currencies, and category names in the current app language. It is suitable for family import on another phone. For a copy of all personal transactions, use the separate personal backup action.
 
@@ -89,7 +89,7 @@ Open **More → Profile → App protection**. Protection is optional and starts 
 1. Enter and repeat a code of **4–10 characters**. Letters, digits and symbols are allowed; case and spaces matter.
 2. Optionally enable **Biometric unlock** if your phone has an available, enrolled fingerprint or face method. Android performs biometric authentication; the app does not receive biometric data.
 3. Tap **Enable protection**. The app asks for authentication on a fresh launch, after 30 seconds in the background, or when the phone is locked. A short visit to the CSV picker does not require another code.
-4. Enter the app code or tap **Use biometrics**. After five wrong codes, wait 30 seconds. Restarting the app or changing the clock does not remove the delay. If you reboot the phone during a pending delay, the app may require a fresh 30 seconds.
+4. When biometrics are enabled and available, Android asks for a fingerprint or face automatically. If it fails, is canceled, or is unavailable, enter the app code; an explicit biometric retry is available when the sensor is ready. If biometrics are disabled, enter the code directly. After five wrong codes, wait 30 seconds. Restarting the app or changing the clock does not remove the delay. If you reboot the phone during a pending delay, the app may require a fresh 30 seconds.
 
 To change the code or biometric setting, enter the current code and save the protection settings. Leave both new-code fields empty to keep the code. To disable protection, enter the current code and tap **Disable protection**.
 
@@ -110,10 +110,10 @@ An invalid backup is rejected as a whole with no records saved. For read/write f
 
 ## CSV format and troubleshooting
 
-Report exports and personal backups use UTF-8, comma-separated fields, and this exact header and order:
+Current report exports and personal backups use UTF-8, comma-separated fields, and this exact header and order:
 
 ```csv
-owner,record_id,date,category,income,expense,currency
+owner,record_id,date,category,income,expense,currency,comment
 ```
 
 | Field | Meaning |
@@ -125,6 +125,9 @@ owner,record_id,date,category,income,expense,currency
 | `income` | Positive income amount with a decimal point, e.g. `1250.00`; blank for an expense. |
 | `expense` | Positive expense amount with a decimal point, e.g. `45.70`; blank for income. Exactly one amount field is filled. |
 | `currency` | Original `USD`, `EUR`, `RUB`, or `BYN`, uppercase. |
+| `comment` | Optional income comment, up to 150 Unicode code points. Empty for expenses. Quoting protects commas and line breaks. |
+
+Family import and personal restore also accept the old seven-column header without `comment`; those rows have an empty comment. The **For version 1.1** report export writes exactly seven columns and omits comments. Personal backups always use eight columns so comments are preserved.
 
 Amounts must be representable to two decimal places. Fields with commas, quotes, or line breaks are quoted, and embedded quotes doubled. Use app exports where possible; spreadsheet tools can change dates, separators, encoding, or identifiers. Check these fields if an import fails. CSV files are readable financial data; share them only with intended recipients.
 

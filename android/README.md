@@ -1,5 +1,11 @@
 # Finance Tracker for Android
 
+## Version 1.15 verification (2026-10-28)
+
+Version 1.15 uses `versionCode=3` and a non-destructive database migration to schema 3. It adds biometric-first entry, optional income comments and compatible CSV formats, editable/archivable categories with bundled icons, saved Home customization and an optional monthly expense doughnut. The package ID remains `com.personalfinance.tracker`; install the matching debug APK with `adb install -r` to retain local records. The generated APK is `app/build/outputs/apk/debug/app-debug.apk`; `:app:archiveDebugApk` refreshes the local root `AppAndroidBudjets.zip` containing the same APK. These outputs and signing keys are excluded from Git.
+
+Run the full JVM and Android suites on a disposable emulator. The Android acceptance tests include cases that clear the local database and must not target a phone containing personal data. See [version 1.15 test results](../docs/testing-1.15.md) and the [English](../docs/user-guide-en.md) or [Russian](../docs/user-guide-ru.md) guide for the current behavior. The version 1.1 section below remains historical evidence.
+
 ## Version 1.1 verification (2026-10-26)
 
 The 1.1 debug APK (`versionCode=2`) was built with the existing toolchain and the same signing certificate as the saved 1.0 APK. Both APK signatures were verified. Installing 1.1 over 1.0 with `adb install -r` preserved the seeded profile, personal transactions, standard/custom categories, goal, family records and exchange rates. The database schema remains version 2. The root archive was checked to contain the exact same APK as the build output.

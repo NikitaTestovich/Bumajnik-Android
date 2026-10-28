@@ -14,13 +14,16 @@ These examples were captured on an Android emulator using fictional demo profile
 | **Family** | **Savings goal** |
 | <img src="docs/screenshots/family-en.png" alt="Signed family balance, member comparison and combined expense categories" width="240"> | <img src="docs/screenshots/goal-en.png" alt="Savings goal target and already-saved amount" width="240"> |
 
+Version 1.15 optional monthly expense widget, captured from the emulator with fictional data: [English chart](docs/screenshots/expenses-en.png) · [Russian chart with large text](docs/screenshots/expenses-ru.png).
+
 ## What it does
 
-- Add, edit, and delete income and expense entries. Choose dates with a calendar or type them as `DD-MM-YYYY`.
-- Start with standard expense categories and create your own.
+- Add, edit, and delete income and expense entries. Choose dates with a calendar or type them as `DD-MM-YYYY`. Add optional income comments of up to 150 Unicode characters.
+- Start with standard expense categories, create your own, rename or archive them, and choose from 20 bundled icons. Archived categories remain on older expenses.
+- Customize Home with hide/show controls and drag or arrow ordering. Enable the optional monthly expense doughnut to explore category amounts.
 - Review monthly totals, category breakdowns, and comparisons with a previous period.
-- Export personal reports and backups as CSV. Import a family member's report to see a signed family balance, income/expense comparisons by member and combined expense categories. Repeated records are skipped.
-- Optionally protect access with a 4–10-character app code and available biometrics. Recover a forgotten code through the phone screen lock without deleting records.
+- Export current eight-column CSV reports/backups with income comments or explicitly choose a seven-column report for version 1.1. Import either format. A family member's report shows a signed balance, income/expense comparisons by member and combined expense categories; repeated records are skipped.
+- Optionally protect access with a 4–10-character app code and available biometrics. When enabled, the biometric prompt opens automatically; the code appears after failure or cancellation. Recover a forgotten code through the phone screen lock without deleting records.
 - Enter exchange rates manually when a report contains multiple currencies. Supported currencies: USD, EUR, RUB, and BYN.
 - Plan one savings goal using your saved amount and the average surplus from up to three completed months.
 - Switch between English and Russian in the profile.
@@ -45,6 +48,6 @@ To update, install a newer APK over the existing app without uninstalling it. Up
 - [Руководство пользователя на русском](docs/user-guide-ru.md)
 - [Development and bug reports](docs/CONTRIBUTING.md)
 - [Current product specification](docs/specification.md)
-- [Version 1.1 verification and device-test limits](docs/testing-1.1.md)
+- [Version 1.15 verification and device-test limits](docs/testing-1.15.md)
 
 The project remains open for iterative testing and fixes. When reporting a bug, use sample data and remove names, amounts, and files that reveal real finances.
