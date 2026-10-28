@@ -171,6 +171,19 @@ class MainActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
+    override fun onResume() {
+        super.onResume()
+        // ON_START is dispatched after onStart returns. The first locked-state emission can
+        // also arrive earlier, so retry once the Lifecycle is actually STARTED.
+        maybeStartPendingPrompt()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        // Unlocking keyguard can restore focus without another onResume callback.
+        if (hasFocus) maybeStartPendingPrompt()
+    }
+
     override fun onStop() {
         if (!isChangingConfigurations) {
             appLock.background()
