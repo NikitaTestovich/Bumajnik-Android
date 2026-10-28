@@ -19,10 +19,12 @@ import androidx.biometric.BiometricPrompt
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.personalfinance.tracker.navigation.AppNavigation
 import com.personalfinance.tracker.security.AppLockController
 import com.personalfinance.tracker.security.LockResult
+import com.personalfinance.tracker.security.BiometricEntryPolicy
 import com.personalfinance.tracker.ui.security.AppLockScreen
 import com.personalfinance.tracker.ui.theme.FinanceTheme
 import kotlinx.coroutines.launch
@@ -31,15 +33,13 @@ class MainActivity : AppCompatActivity() {
     val appLock: AppLockController get() = (application as FinanceApplication).appLock
     private val handler = Handler(Looper.getMainLooper())
     private val lockAfterTimeout = Runnable { if (!appLock.state.value.locked) appLock.lockNow() }
-    private var biometricGeneration: Long? = null
     private var recoveryGeneration: Long? = null
     private lateinit var biometricPrompt: BiometricPrompt
     private val screenOffReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == Intent.ACTION_SCREEN_OFF) {
-                biometricGeneration = null
                 appLock.lockNow()
-                biometricPrompt.cancelAuthentication()
+                cancelOutstandingPrompt()
             }
         }
     }
@@ -57,14 +57,13 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState?.getString("authSession") == appLock.instanceId) {
-            biometricGeneration = savedInstanceState.getLong("biometricGeneration", -1).takeIf { it == appLock.generation }
             recoveryGeneration = savedInstanceState.getLong("recoveryGeneration", -1).takeIf { it == appLock.generation }
         }
         // Set the presentation phase before Compose can draw the first locked frame.
         val initialLock = appLock.state.value
         if (initialLock.locked) appLock.biometricEntry.beginSession(
             appLock.generation, initialLock.biometrics, canUseBiometrics())
-        biometricPrompt = createBiometricPrompt(appLock.biometricEntry.activeAttempt, appLock.generation)
+        biometricPrompt = createBiometricPrompt(appLock.biometricEntry.platformRequest)
         ContextCompat.registerReceiver(this, screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF), ContextCompat.RECEIVER_NOT_EXPORTED)
         lifecycleScope.launch {
             appLock.state.collect { state ->
@@ -72,7 +71,7 @@ class MainActivity : AppCompatActivity() {
                 else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 if (state.locked) {
                     appLock.biometricEntry.beginSession(appLock.generation, state.biometrics, canUseBiometrics())
-                    if (appLock.biometricEntry.phase.value == com.personalfinance.tracker.security.BiometricEntryPolicy.Phase.PROMPT_PENDING) authenticateBiometric()
+                    maybeStartPendingPrompt()
                 }
             }
         }
@@ -88,36 +87,56 @@ class MainActivity : AppCompatActivity() {
     fun canUseBiometrics(): Boolean = BiometricManager.from(this)
         .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS
 
-    // Each callback closes over its own token; never consult a mutable current-request token.
-    private fun createBiometricPrompt(attempt: Long?, epoch: Long) =
+    // A replacement prompt is registered only after the previous framework request is terminal.
+    // Configuration recreation reattaches to that still-outstanding request instead.
+    private fun createBiometricPrompt(request: BiometricEntryPolicy.PlatformRequest?) =
         BiometricPrompt(this, ContextCompat.getMainExecutor(this),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    if (attempt == null) return
-                    lifecycleScope.launch { appLock.biometricSucceeded(epoch, attempt) }
+                    if (request == null) return
+                    lifecycleScope.launch {
+                        appLock.biometricSucceeded(request.generation, request.attempt)
+                        appLock.biometricEntry.terminal(request.attempt)
+                        maybeStartPendingPrompt()
+                    }
                 }
-                override fun onAuthenticationFailed() { fallback() }
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) { fallback() }
-                private fun fallback() {
-                    if (attempt == null || appLock.biometricEntry.activeAttempt != attempt) return
+                override fun onAuthenticationFailed() {
+                    if (request == null || appLock.biometricEntry.activeAttempt != request.attempt) return
                     // Invalidate before cancelAuthentication can dispatch another callback.
-                    appLock.biometricEntry.fallback(attempt)
+                    appLock.biometricEntry.fallback(request.attempt)
                     biometricPrompt.cancelAuthentication()
+                }
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    if (request == null) return
+                    appLock.biometricEntry.fallback(request.attempt)
+                    appLock.biometricEntry.terminal(request.attempt)
+                    maybeStartPendingPrompt()
                 }
             })
 
+    private fun cancelOutstandingPrompt() {
+        if (appLock.biometricEntry.platformRequest != null) biometricPrompt.cancelAuthentication()
+    }
+
+    private fun maybeStartPendingPrompt() {
+        if (!lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) ||
+            getSystemService(KeyguardManager::class.java).isDeviceLocked) return
+        if (appLock.state.value.locked && appLock.biometricEntry.phase.value == BiometricEntryPolicy.Phase.PROMPT_PENDING)
+            authenticateBiometric()
+    }
+
     private fun authenticateBiometric() {
         if (!appLock.state.value.locked) return
-        if (!appLock.state.value.biometrics) {
-            appLock.biometricEntry.beginSession(appLock.generation, false, false)
-            return
-        }
+        val available = appLock.state.value.biometrics && canUseBiometrics()
+        appLock.biometricEntry.beginSession(appLock.generation, appLock.state.value.biometrics, available)
+        if (!available) return
         val attempt = appLock.biometricEntry.beginAttempt() ?: return
         if (!canUseBiometrics()) {
             appLock.biometricEntry.fallback(attempt)
+            appLock.biometricEntry.terminal(attempt)
             return
         }
-        biometricPrompt = createBiometricPrompt(attempt, appLock.generation)
+        biometricPrompt = createBiometricPrompt(appLock.biometricEntry.platformRequest)
         biometricPrompt.authenticate(BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.security_locked_title))
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK)
@@ -133,7 +152,7 @@ class MainActivity : AppCompatActivity() {
         }
         // Cover financial content before handing control to the system credential activity.
         appLock.lockNow()
-        biometricPrompt.cancelAuthentication()
+        cancelOutstandingPrompt()
         recoveryGeneration = appLock.generation
         credentialLauncher.launch(intent)
     }
@@ -143,11 +162,11 @@ class MainActivity : AppCompatActivity() {
         handler.removeCallbacks(lockAfterTimeout)
         appLock.foreground()
         if (appLock.state.value.enabled && getSystemService(KeyguardManager::class.java).isDeviceLocked) appLock.lockNow()
+        maybeStartPendingPrompt()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString("authSession", appLock.instanceId)
-        outState.putLong("biometricGeneration", biometricGeneration ?: -1)
         outState.putLong("recoveryGeneration", recoveryGeneration ?: -1)
         super.onSaveInstanceState(outState)
     }
@@ -155,7 +174,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         if (!isChangingConfigurations) {
             appLock.background()
-            biometricPrompt.cancelAuthentication()
+            cancelOutstandingPrompt()
             if (appLock.state.value.enabled) handler.postDelayed(lockAfterTimeout, 30_000)
         }
         super.onStop()
