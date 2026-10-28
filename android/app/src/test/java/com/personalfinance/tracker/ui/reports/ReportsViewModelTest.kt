@@ -17,6 +17,20 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ReportsViewModelTest {
+    @Test fun archivedAndActiveSameNameCategoriesRemainDistinct() = runBlocking {
+        val repository = FakeFinanceRepository()
+        repository.saveCategory(com.personalfinance.tracker.domain.model.Category("old-food", "Food", "Food", true, true, "dining"))
+        repository.saveCategory(com.personalfinance.tracker.domain.model.Category("new-food", "Food", "Food", true, false, "groceries"))
+        repository.saveTransaction(transaction("old", TransactionType.EXPENSE, "2026-10-01", 1000).copy(categoryId = "old-food"))
+        repository.saveTransaction(transaction("new", TransactionType.EXPENSE, "2026-10-01", 2000).copy(categoryId = "new-food"))
+        val model = ReportsViewModel(repository, ExchangeRateService(EmptyRateRepository), SummaryService(repository))
+        val state = model.load(PeriodRange(LocalDate.of(2026,10,1), LocalDate.of(2026,11,1)), "USD", "en")
+        assertEquals(2, state.categories.size)
+        assertEquals(listOf(2000L, 1000L), state.categories.map { it.minorUnits })
+        assertEquals(listOf("new-food", "old-food"), state.categories.map { it.categoryId })
+        assertEquals(listOf("groceries", "dining"), state.categories.map { it.iconKey })
+        assertEquals(listOf("Food", "Food"), state.categories.map { it.name })
+    }
     @Test
     fun loadIncludesImmediatelyPrecedingEqualLengthPeriodForComparison() = runBlocking {
         val repository = FakeFinanceRepository()
