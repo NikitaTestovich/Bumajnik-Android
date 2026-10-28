@@ -2,6 +2,7 @@ package com.personalfinance.tracker
 
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -25,7 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-@Ignore("Compose hierarchy is unavailable on the current emulator; revisit in release-wide Task 7 verification")
+@Ignore("Compose hierarchy unavailable on current emulator; real UI acceptance is tracked for release verification")
 class BiometricEntryScreenTest {
     @get:Rule val ui = createComposeRule()
     private val app get() = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as FinanceApplication
@@ -68,5 +69,15 @@ class BiometricEntryScreenTest {
         ui.onNodeWithTag("unlock_button").performClick()
         ui.waitUntil(10_000) { !lock.state.value.locked }
         assertFalse(lock.state.value.locked)
+    }
+
+    @Test fun newGenerationWithUnconfirmedCancellationShowsCode() {
+        val lock = launchLock(true)
+        val old = lock.biometricEntry.beginAttempt()!!
+        lock.lockNow()
+        lock.biometricEntry.beginSession(lock.generation, true, true)
+        ui.onNodeWithTag("unlock_code").assertIsDisplayed()
+        ui.onNodeWithTag("biometric_retry_button").assertIsNotEnabled()
+        assertEquals(LockResult.UNAVAILABLE, runBlocking { lock.biometricSucceeded(lock.generation, old) })
     }
 }

@@ -47,6 +47,21 @@ class AppLockControllerTest {
         assertEquals(LockResult.SUCCESS, lock.unlock("1234"))
         assertFalse(lock.state.value.locked)
     }
+
+    @Test fun newGenerationDuringPendingCancellationStillAllowsCode() = runBlocking {
+        val lock = AppLockController(MemoryStorage(), { 1000 }, { 1000 })
+        lock.enable("1234", true, true)
+        lock.lockNow()
+        lock.biometricEntry.beginSession(lock.generation, true, true)
+        val old = lock.biometricEntry.beginAttempt()!!
+        lock.lockNow()
+        lock.biometricEntry.beginSession(lock.generation, true, true)
+        assertEquals(BiometricEntryPolicy.Phase.CODE, lock.biometricEntry.phase.value)
+        assertNull(lock.biometricEntry.beginAttempt())
+        assertEquals(LockResult.UNAVAILABLE, lock.biometricSucceeded(lock.generation, old))
+        assertEquals(LockResult.SUCCESS, lock.unlock("1234"))
+        assertFalse(lock.state.value.locked)
+    }
     private class MemoryStorage : LockStorage {
         var record: StoredLock? = null
         var afterWrite: () -> Unit = {}

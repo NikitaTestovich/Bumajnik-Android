@@ -43,6 +43,7 @@ class BiometricEntryPolicyTest {
         p.beginSession(1, true, true)
         val old = p.beginAttempt()!!
         p.beginSession(2, true, true)
+        assertEquals(BiometricEntryPolicy.Phase.CODE, p.phase.value)
         assertNull(p.beginAttempt())
         assertFalse(p.acceptSuccess(old))
         p.terminal(old)
@@ -67,12 +68,13 @@ class BiometricEntryPolicyTest {
         val old = p.beginAttempt()!!
         p.fallback(old)
         p.beginSession(2, true, true)
-        assertEquals(BiometricEntryPolicy.Phase.PROMPT_PENDING, p.phase.value)
+        assertEquals(BiometricEntryPolicy.Phase.CODE, p.phase.value)
         assertNull(p.beginAttempt())
         assertFalse(p.acceptSuccess(old))
         assertEquals(old, p.platformRequest?.attempt)
-        // The code path remains available; no replacement prompt can claim a late old result.
-        p.beginSession(2, true, false)
+        assertFalse(p.platformReady.value)
+        // The sensor is still available, but code remains visible without a terminal callback.
+        p.beginSession(2, true, true)
         assertEquals(BiometricEntryPolicy.Phase.CODE, p.phase.value)
     }
 }

@@ -33,7 +33,9 @@ class BiometricEntryPolicy {
         eligible = enabled && available
         activeAttempt = null
         if (platformRequest != null) cancelling = true
-        mutablePhase.value = if (eligible) Phase.PROMPT_PENDING else Phase.CODE
+        // An invalidated Android request may never send a terminal callback. Keep code entry
+        // available; retry can be offered only after that request is confirmed finished.
+        mutablePhase.value = if (eligible && platformRequest == null) Phase.PROMPT_PENDING else Phase.CODE
     }
 
     fun beginAttempt(): Long? {
