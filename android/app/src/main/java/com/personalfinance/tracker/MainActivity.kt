@@ -60,25 +60,20 @@ class MainActivity : AppCompatActivity() {
             biometricGeneration = savedInstanceState.getLong("biometricGeneration", -1).takeIf { it == appLock.generation }
             recoveryGeneration = savedInstanceState.getLong("recoveryGeneration", -1).takeIf { it == appLock.generation }
         }
-        biometricPrompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    val epoch = biometricGeneration ?: return
-                    biometricGeneration = null
-                    lifecycleScope.launch { appLock.biometricSucceeded(epoch) }
-                }
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    biometricGeneration = null
-                    if (errorCode != BiometricPrompt.ERROR_USER_CANCELED && errorCode != BiometricPrompt.ERROR_CANCELED &&
-                        errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON)
-                        Toast.makeText(this@MainActivity, errString, Toast.LENGTH_LONG).show()
-                }
-            })
+        // Set the presentation phase before Compose can draw the first locked frame.
+        val initialLock = appLock.state.value
+        if (initialLock.locked) appLock.biometricEntry.beginSession(
+            appLock.generation, initialLock.biometrics, canUseBiometrics())
+        biometricPrompt = createBiometricPrompt(appLock.biometricEntry.activeAttempt, appLock.generation)
         ContextCompat.registerReceiver(this, screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF), ContextCompat.RECEIVER_NOT_EXPORTED)
         lifecycleScope.launch {
             appLock.state.collect { state ->
                 if (state.enabled) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                if (state.locked) {
+                    appLock.biometricEntry.beginSession(appLock.generation, state.biometrics, canUseBiometrics())
+                    if (appLock.biometricEntry.phase.value == com.personalfinance.tracker.security.BiometricEntryPolicy.Phase.PROMPT_PENDING) authenticateBiometric()
+                }
             }
         }
         setContent {
@@ -93,18 +88,41 @@ class MainActivity : AppCompatActivity() {
     fun canUseBiometrics(): Boolean = BiometricManager.from(this)
         .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS
 
+    // Each callback closes over its own token; never consult a mutable current-request token.
+    private fun createBiometricPrompt(attempt: Long?, epoch: Long) =
+        BiometricPrompt(this, ContextCompat.getMainExecutor(this),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    if (attempt == null) return
+                    lifecycleScope.launch { appLock.biometricSucceeded(epoch, attempt) }
+                }
+                override fun onAuthenticationFailed() { fallback() }
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) { fallback() }
+                private fun fallback() {
+                    if (attempt == null || appLock.biometricEntry.activeAttempt != attempt) return
+                    // Invalidate before cancelAuthentication can dispatch another callback.
+                    appLock.biometricEntry.fallback(attempt)
+                    biometricPrompt.cancelAuthentication()
+                }
+            })
+
     private fun authenticateBiometric() {
-        if (!appLock.state.value.biometrics || !canUseBiometrics()) {
-            Toast.makeText(this, R.string.security_biometrics_unavailable, Toast.LENGTH_LONG).show()
+        if (!appLock.state.value.locked) return
+        if (!appLock.state.value.biometrics) {
+            appLock.biometricEntry.beginSession(appLock.generation, false, false)
             return
         }
-        biometricGeneration = appLock.generation
+        val attempt = appLock.biometricEntry.beginAttempt() ?: return
+        if (!canUseBiometrics()) {
+            appLock.biometricEntry.fallback(attempt)
+            return
+        }
+        biometricPrompt = createBiometricPrompt(attempt, appLock.generation)
         biometricPrompt.authenticate(BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.security_locked_title))
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK)
             .setNegativeButtonText(getString(R.string.security_use_code)).build())
     }
-
     @Suppress("DEPRECATION")
     fun recoverAppCode() {
         val intent = getSystemService(KeyguardManager::class.java).createConfirmDeviceCredentialIntent(
@@ -115,6 +133,7 @@ class MainActivity : AppCompatActivity() {
         }
         // Cover financial content before handing control to the system credential activity.
         appLock.lockNow()
+        biometricPrompt.cancelAuthentication()
         recoveryGeneration = appLock.generation
         credentialLauncher.launch(intent)
     }
@@ -136,6 +155,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         if (!isChangingConfigurations) {
             appLock.background()
+            biometricPrompt.cancelAuthentication()
             if (appLock.state.value.enabled) handler.postDelayed(lockAfterTimeout, 30_000)
         }
         super.onStop()

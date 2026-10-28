@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppLockScreen(controller: AppLockController, onBiometric: () -> Unit, onRecover: () -> Unit, onExit: () -> Unit) {
     val state by controller.state.collectAsState()
+    val phase by controller.biometricEntry.phase.collectAsState()
     var code by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<Int?>(null) }
@@ -36,6 +37,7 @@ fun AppLockScreen(controller: AppLockController, onBiometric: () -> Unit, onReco
         ) {
             Text(stringResource(R.string.security_locked_title), style = MaterialTheme.typography.headlineMedium)
             Text(stringResource(R.string.security_locked_description))
+            if (phase == com.personalfinance.tracker.security.BiometricEntryPolicy.Phase.CODE) {
             CodeField(code, { code = it; error = null }, R.string.security_code, "unlock_code", !busy)
             if (state.storageError) Text(stringResource(R.string.security_storage_error), color = MaterialTheme.colorScheme.error)
             if (state.retrySeconds > 0) Text(stringResource(R.string.security_wait, state.retrySeconds), color = MaterialTheme.colorScheme.error)
@@ -52,7 +54,8 @@ fun AppLockScreen(controller: AppLockController, onBiometric: () -> Unit, onReco
                 enabled = !busy && !state.storageError && state.retrySeconds == 0 && CodeVerifier.isValid(code),
                 modifier = Modifier.fillMaxWidth().testTag("unlock_button"),
             ) { Text(stringResource(R.string.security_unlock)) }
-            if (state.biometrics) OutlinedButton(onClick = onBiometric, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+            }
+            if (state.biometrics && phase == com.personalfinance.tracker.security.BiometricEntryPolicy.Phase.CODE) OutlinedButton(onClick = onBiometric, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("biometric_retry_button")) {
                 Text(stringResource(R.string.security_use_biometrics))
             }
             TextButton(onClick = onRecover, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
