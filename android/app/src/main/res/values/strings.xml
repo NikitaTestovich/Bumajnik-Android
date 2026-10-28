@@ -215,4 +215,8 @@
     <string name="home_reset_confirm">Restore the default order and visibility?</string>
     <string name="home_done">Done</string>
     <string name="home_all_hidden">All blocks are hidden. Customize home to show them.</string>
+    <string name="monthly_expenses_title">Monthly expense breakdown</string>
+    <string name="monthly_expenses_total">Total</string>
+    <string name="monthly_expenses_rates">Enter exchange rates to calculate expenses</string>
+    <string name="monthly_expenses_empty">No expenses this month</string>
 </resources>

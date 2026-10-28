@@ -20,6 +20,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +64,7 @@ fun HomeScreen(
     val profile by repository.observeProfile().collectAsState(initial = null)
     val transactions by repository.observeTransactions(null).collectAsState(initial = emptyList())
     val goal by repository.observeGoal().collectAsState(initial = null)
+    val categories by repository.observeCategories().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
     val layoutStore = remember { HomeLayoutStore(context) }
     val layout by layoutStore.layout.collectAsState()
@@ -71,16 +76,24 @@ fun HomeScreen(
             summaryService = SummaryService(repository),
         )
     }
-    val range = remember { viewModel.currentMonthRange() }
+    var range by remember { mutableStateOf(viewModel.currentMonthRange()) }
+    var resumeVersion by remember { mutableStateOf(0) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) { range = viewModel.currentMonthRange(); resumeVersion++ } }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     val baseCurrency = profile?.baseCurrency ?: "USD"
     val savedRates by rateRepository.ratesFor(range, baseCurrency).collectAsState(initial = emptyMap())
     var state by remember(baseCurrency) { mutableStateOf<HomeUiState?>(null) }
     var showRateDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(profile, transactions, goal, savedRates) {
+    val financialVisible = layout.any { it.visible && it.id in setOf(HomeBlock.SUMMARY, HomeBlock.EXPENSES) }
+    LaunchedEffect(profile, transactions, categories, goal, savedRates, range, resumeVersion, financialVisible) {
         val currentProfile = profile ?: return@LaunchedEffect
-        state = viewModel.load(currentProfile.baseCurrency)
-        if (state?.missingCurrencies?.isNotEmpty() == true) showRateDialog = true
+        state = viewModel.load(currentProfile.baseCurrency, currentProfile.languageTag)
+        showRateDialog = financialVisible && state?.missingCurrencies?.isNotEmpty() == true
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -216,7 +229,7 @@ fun HomeScreen(
             }
 
             }
-            HomeBlock.EXPENSES -> Unit // Rendered by the monthly-expenses integration task.
+            HomeBlock.EXPENSES -> MonthlyExpensesWidget(current?.expenses.orEmpty(), baseCurrency, profile?.languageTag ?: "en", current == null || current.missingCurrencies.isNotEmpty(), { showRateDialog = true })
             }
             }
             OutlinedButton(onClick = onAllOperations, modifier = Modifier.fillMaxWidth()) {
@@ -235,7 +248,7 @@ fun HomeScreen(
             onSave = { entered ->
                 scope.launch {
                     viewModel.saveRates(baseCurrency, entered)
-                    state = viewModel.load(baseCurrency)
+                    state = viewModel.load(baseCurrency, profile?.languageTag ?: "en")
                     showRateDialog = state?.missingCurrencies?.isNotEmpty() == true
                 }
             },

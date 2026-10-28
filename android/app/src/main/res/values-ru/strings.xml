@@ -215,4 +215,8 @@
     <string name="home_reset_confirm">Восстановить порядок и видимость по умолчанию?</string>
     <string name="home_done">Готово</string>
     <string name="home_all_hidden">Все блоки скрыты. Откройте «Моя главная», чтобы включить их.</string>
+    <string name="monthly_expenses_title">Расходы по категориям</string>
+    <string name="monthly_expenses_total">Всего</string>
+    <string name="monthly_expenses_rates">Укажите курс для расчёта расходов</string>
+    <string name="monthly_expenses_empty">В этом месяце расходов пока нет</string>
 </resources>
