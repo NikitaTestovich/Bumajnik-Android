@@ -422,6 +422,7 @@ class FinanceTrackerAcceptanceTest {
         val income = FinanceTransaction(
             id = UUID.randomUUID().toString(), owner = profile.name, type = TransactionType.INCOME,
             date = today, money = Money(125_000, "USD"), categoryId = null,
+            comment = "Salary, \"bonus\"\n😀",
         )
         val expense = FinanceTransaction(
             id = UUID.randomUUID().toString(), owner = profile.name, type = TransactionType.EXPENSE,
@@ -453,6 +454,20 @@ class FinanceTrackerAcceptanceTest {
         assertEquals(profile.name, exportedIncome.owner)
         assertEquals(today, exportedIncome.date)
         assertEquals(Money(125_000, "USD"), exportedIncome.amount)
+        assertEquals(income.comment, exportedIncome.comment)
+        val familyImporter = com.personalfinance.tracker.data.csv.FamilyImportManager(app.container.familyRepository) { exported }
+        val preview = familyImporter.previewBytes(exported)
+        assertEquals(2, runBlocking { familyImporter.import(preview, "USD", emptyMap()) }.addedCount)
+        assertEquals(2, runBlocking { familyImporter.import(preview, "USD", emptyMap()) }.duplicateCount)
+        val imported = runBlocking { app.container.familyRepository.observeFamilyTransactions(PeriodRange(today, today.plusDays(1))).first() }
+        assertEquals(income.comment, imported.single { it.id == income.id }.comment)
+        val backupManager = com.personalfinance.tracker.data.csv.PersonalBackupManager(repository, { exported }, { _, _ -> })
+        runBlocking {
+            repository.deleteTransaction(income.id)
+            assertEquals(1, backupManager.restoreBytes(exported).addedCount)
+            assertEquals(2, backupManager.restoreBytes(exported).duplicateCount)
+        }
+        assertEquals(income.comment, runBlocking { repository.observeTransactions(null).first().single { it.id == income.id }.comment })
         assertEquals(today, exportedExpense.date)
         assertEquals(Money(1_730, "USD"), exportedExpense.amount)
         assertEquals(

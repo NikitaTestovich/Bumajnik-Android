@@ -13,6 +13,16 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class PersonalBackupManagerTest {
+    @Test fun commentRestoresAndDuplicateDoesNotOverwriteIt() = runBlocking {
+        val repo = FakeFinanceRepository()
+        val backup = PersonalBackupManager(repo, { error("unused") }, { _, _ -> })
+        val original = FinanceTransaction("00000000-0000-0000-0000-000000000099", "Demo", TransactionType.INCOME, LocalDate.of(2026,10,1), Money(100,"USD"), null, comment = "Salary\n😀")
+        val bytes = FinanceCsvCodec.encode(listOf(original), "Demo")
+        assertEquals(1, backup.restoreBytes(bytes).addedCount)
+        assertEquals(original.comment, repo.observeTransactions(null).first().single().comment)
+        assertEquals(1, backup.restoreBytes(FinanceCsvCodec.encode(listOf(original.copy(comment="Changed")), "Demo")).duplicateCount)
+        assertEquals(original.comment, repo.observeTransactions(null).first().single().comment)
+    }
     private val repository = FakeFinanceRepository()
     private val manager = PersonalBackupManager(repository, { error("No URI reads in byte tests") }, { _, _ -> })
     private val id1 = "00000000-0000-0000-0000-000000000001"

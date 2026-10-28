@@ -191,4 +191,7 @@
     <string name="security_recovered">App code reset. Your records are kept. You can enable protection again in your profile.</string>
     <string name="security_unavailable">Unable to complete authentication or save protection. Please try again.</string>
     <string name="security_storage_error">Protection settings could not be read. Use “Forgot app code?” to recover access with your phone screen lock.</string>
+    <string name="operation_comment">Comment (optional)</string>
+    <string name="operation_error_comment">Use at most 150 characters for the comment.</string>
+    <string name="reports_legacy_csv">For version 1.1 — comments are omitted</string>
 </resources>

@@ -210,6 +210,7 @@ private fun TransactionRow(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(FinanceDateFormat.format(transaction.date))
+                if (transaction.type == TransactionType.INCOME && transaction.comment.isNotBlank()) Text(transaction.comment)
                 if (!categoryLabel.isNullOrBlank()) Text(categoryLabel, style = MaterialTheme.typography.bodyMedium)
             }
             Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {

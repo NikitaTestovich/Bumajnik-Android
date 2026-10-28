@@ -44,6 +44,15 @@ class PersonalBackupManagerTest {
 
     @After fun tearDown() { database.close(); file.delete() }
 
+    @Test fun repositoriesRejectInvalidCommentsBeforeWriting() = runBlocking {
+        val income = FinanceTransaction(id1, "Demo", TransactionType.INCOME, LocalDate.of(2026,10,1), Money(100,"USD"), null, comment = "😀".repeat(151))
+        assertTrue(runCatching { repository.saveTransaction(income) }.isFailure)
+        assertTrue(runCatching { repository.restorePersonalTransactions(listOf(com.personalfinance.tracker.data.repository.PersonalRestoreRecord(income, null))) }.isFailure)
+        val family = RoomFamilyRepository(database)
+        assertTrue(runCatching { family.saveImportBatch(listOf(FamilyTransaction(id = id1, owner = "Demo", type = TransactionType.INCOME, date = income.date, sourceMoney = income.money, categoryName = null, importRate = null, comment = income.comment))) }.isFailure)
+        assertTrue(repository.observeTransactions(null).first().isEmpty())
+    }
+
     @Test fun malformedFileLeavesRoomUnchanged() = runBlocking {
         val result = manager.restoreBytes((header + row(id1) + "Alex,$id2,invalid,,1.00,,USD\r\n").toByteArray())
         assertTrue(result.errors.isNotEmpty())

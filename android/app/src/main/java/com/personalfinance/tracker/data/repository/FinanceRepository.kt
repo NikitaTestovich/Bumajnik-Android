@@ -67,6 +67,7 @@ class RoomFinanceRepository(private val database: AppDatabase) : FinanceReposito
     ).map(FinanceTransactionEntity::toDomain)
 
     override suspend fun saveTransaction(transaction: FinanceTransaction) {
+        validateComment(transaction)
         requireUuid(transaction.id)
         require(transaction.owner.isNotBlank()) { "Transaction owner must not be blank" }
         require(transaction.money.minorUnits > 0) { "Transaction amount must be positive" }
@@ -79,6 +80,7 @@ class RoomFinanceRepository(private val database: AppDatabase) : FinanceReposito
     override suspend fun restorePersonalTransactions(records: List<PersonalRestoreRecord>): PersonalRestoreSummary {
         // Validate even duplicate rows before opening a write transaction.
         records.forEach { (transaction, categoryName) ->
+            validateComment(transaction)
             requireUuid(transaction.id)
             require(transaction.owner.isNotBlank())
             require(transaction.money.minorUnits > 0)
@@ -142,6 +144,11 @@ class RoomFinanceRepository(private val database: AppDatabase) : FinanceReposito
             ),
         )
     }
+}
+
+private fun validateComment(transaction: FinanceTransaction) {
+    require(com.personalfinance.tracker.domain.model.IncomeComment.isValid(transaction.comment))
+    require(transaction.type == TransactionType.INCOME || transaction.comment.isEmpty())
 }
 
 private fun FinanceTransaction.toEntity() = FinanceTransactionEntity(

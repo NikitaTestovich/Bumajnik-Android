@@ -2,6 +2,7 @@ package com.personalfinance.tracker.data.csv
 
 import com.personalfinance.tracker.domain.model.FinanceTransaction
 import com.personalfinance.tracker.domain.model.TransactionType
+import com.personalfinance.tracker.domain.model.IncomeComment
 import com.personalfinance.tracker.domain.money.Money
 import com.personalfinance.tracker.domain.time.FinanceDateFormat
 import java.math.BigDecimal
@@ -17,21 +18,28 @@ data class CsvTransactionRow(
     val type: TransactionType,
     val amount: Money,
     val categoryName: String?,
+    val comment: String = "",
 )
+
+enum class CsvFormat { CURRENT, LEGACY_1_1 }
 
 data class CsvImportResult(val records: List<CsvTransactionRow>, val errors: List<String>)
 
 object FinanceCsvCodec {
-    val header: List<String> = listOf("owner", "record_id", "date", "category", "income", "expense", "currency")
+    val legacyHeader: List<String> = listOf("owner", "record_id", "date", "category", "income", "expense", "currency")
+    val header: List<String> = legacyHeader + "comment"
     private val headerRow = header.joinToString(",")
 
     fun encode(
         records: List<FinanceTransaction>,
         owner: String,
         categoryNamesById: Map<String, String> = emptyMap(),
+        format: CsvFormat = CsvFormat.CURRENT,
     ): ByteArray {
-        val builder = StringBuilder().append(headerRow).append("\r\n")
+        val builder = StringBuilder().append((if (format == CsvFormat.CURRENT) header else legacyHeader).joinToString(",")).append("\r\n")
         records.forEach { transaction ->
+            require(IncomeComment.isValid(transaction.comment))
+            require(transaction.type == TransactionType.INCOME || transaction.comment.isEmpty())
             val amount = BigDecimal.valueOf(transaction.money.minorUnits, 2).toPlainString()
             val fields = listOf(
                 owner,
@@ -46,7 +54,8 @@ object FinanceCsvCodec {
                 if (transaction.type == TransactionType.EXPENSE) amount else "",
                 transaction.money.currencyCode,
             )
-            builder.append(fields.joinToString(",", transform = ::quote)).append("\r\n")
+            val output = if (format == CsvFormat.CURRENT) fields + transaction.comment else fields
+            builder.append(output.joinToString(",", transform = ::quote)).append("\r\n")
         }
         return builder.toString().toByteArray(StandardCharsets.UTF_8)
     }
@@ -59,7 +68,7 @@ object FinanceCsvCodec {
             return CsvImportResult(emptyList(), listOf(error.message ?: "Malformed CSV quoting"))
         }
         if (rows.isEmpty()) return CsvImportResult(emptyList(), listOf("CSV file is empty"))
-        if (rows.first() != header) {
+        if (rows.first() != header && rows.first() != legacyHeader) {
             return CsvImportResult(emptyList(), listOf("CSV header must be: $headerRow"))
         }
 
@@ -67,14 +76,14 @@ object FinanceCsvCodec {
         val errors = mutableListOf<String>()
         rows.drop(1).forEachIndexed { index, fields ->
             val rowNumber = index + 2
-            val parsed = parseRecord(fields, rowNumber)
+            val parsed = parseRecord(fields, rowNumber, rows.first().size)
             if (parsed.isSuccess) records += parsed.getOrThrow() else errors += parsed.exceptionOrNull()?.message.orEmpty()
         }
         return CsvImportResult(records, errors)
     }
 
-    private fun parseRecord(fields: List<String>, rowNumber: Int): Result<CsvTransactionRow> = runCatching {
-        require(fields.size == header.size) { "Row $rowNumber must contain ${header.size} columns" }
+    private fun parseRecord(fields: List<String>, rowNumber: Int, columns: Int): Result<CsvTransactionRow> = runCatching {
+        require(fields.size == columns) { "Row $rowNumber must contain $columns columns" }
         val owner = fields[0].trim()
         require(owner.isNotEmpty()) { "Row $rowNumber has an empty owner" }
         val id = fields[1].trim()
@@ -103,7 +112,10 @@ object FinanceCsvCodec {
         val money = runCatching { Money(minorUnits, currency) }.getOrElse {
             throw IllegalArgumentException("Row $rowNumber has an unsupported currency")
         }
-        CsvTransactionRow(id, owner, date, type, money, category)
+        val comment = if (columns == header.size) fields[7] else ""
+        require(IncomeComment.isValid(comment)) { "Row $rowNumber comment exceeds 150 characters" }
+        require(type == TransactionType.INCOME || comment.isEmpty()) { "Row $rowNumber expense comment must be blank" }
+        CsvTransactionRow(id, owner, date, type, money, category, comment)
     }
 
     private fun quote(value: String): String =

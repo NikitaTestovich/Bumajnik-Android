@@ -12,7 +12,7 @@ class ReportExportManager(
     private val contentResolver: ContentResolver,
     private val repository: FinanceRepository,
 ) {
-    suspend fun exportReport(range: PeriodRange, destination: Uri): ExportResult {
+    suspend fun exportReport(range: PeriodRange, destination: Uri, format: CsvFormat = CsvFormat.CURRENT): ExportResult {
         val profile = repository.observeProfile().first()
             ?: return ExportResult(false, "Profile is not set")
         val records = repository.transactionsBetween(range, null)
@@ -24,7 +24,7 @@ class ReportExportManager(
             }
             category.id to name
         }
-        val csv = FinanceCsvCodec.encode(records, profile.name, categories)
+        val csv = FinanceCsvCodec.encode(records, profile.name, categories, format)
 
         return runCatching {
             val output = contentResolver.openOutputStream(destination)

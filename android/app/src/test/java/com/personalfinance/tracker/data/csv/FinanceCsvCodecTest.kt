@@ -30,7 +30,7 @@ class FinanceCsvCodecTest {
         )
 
         val csv = String(bytes, StandardCharsets.UTF_8)
-        assertTrue(csv.startsWith("owner,record_id,date,category,income,expense,currency\r\n"))
+        assertTrue(csv.startsWith("owner,record_id,date,category,income,expense,currency,comment\r\n"))
         assertTrue(csv.contains("Alex,$id,03-10-2026,,123.45,,USD"))
         assertFalse(csv.startsWith("\uFEFF"))
     }

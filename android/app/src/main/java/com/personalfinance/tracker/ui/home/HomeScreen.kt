@@ -194,6 +194,7 @@ fun HomeScreen(
                         }
                         Text("$title • ${FinanceDateFormat.format(latest.date)}")
                         Text(formatAmount(latest.money.minorUnits, latest.money.currencyCode))
+                        if (latest.type == TransactionType.INCOME && latest.comment.isNotBlank()) Text(latest.comment)
                     }
                 }
             }

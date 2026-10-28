@@ -64,7 +64,7 @@ class PersonalBackupManager(
         // Canonical UUID strings prevent case variants from bypassing duplicate detection.
         val records = decoded.records.map { row ->
             PersonalRestoreRecord(
-                FinanceTransaction(UUID.fromString(row.recordId).toString(), row.owner, row.type, row.date, row.amount, null),
+                FinanceTransaction(UUID.fromString(row.recordId).toString(), row.owner, row.type, row.date, row.amount, null, comment = row.comment),
                 row.categoryName,
             )
         }

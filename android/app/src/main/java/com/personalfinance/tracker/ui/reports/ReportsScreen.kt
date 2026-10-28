@@ -33,6 +33,8 @@ import com.personalfinance.tracker.R
 import com.personalfinance.tracker.data.csv.ExportResult
 import com.personalfinance.tracker.data.csv.CreateCsvDocument
 import com.personalfinance.tracker.data.csv.ReportExportManager
+import com.personalfinance.tracker.data.csv.CsvFormat
+import androidx.compose.material3.Checkbox
 import com.personalfinance.tracker.domain.model.PeriodRange
 import com.personalfinance.tracker.domain.money.ExchangeRateService
 import com.personalfinance.tracker.domain.summary.SummaryService
@@ -67,6 +69,8 @@ fun ReportsScreen() {
     var showRateDialog by remember { mutableStateOf(false) }
     var exportResult by remember { mutableStateOf<ExportResult?>(null) }
     var dateError by remember { mutableStateOf<Int?>(null) }
+    var legacyExport by remember { mutableStateOf(false) }
+    var pendingFormat by remember { mutableStateOf(CsvFormat.CURRENT) }
     val scope = rememberCoroutineScope()
     val rateRepository = container.rateRepository
     val baseCurrency = profile?.baseCurrency ?: "USD"
@@ -81,7 +85,7 @@ fun ReportsScreen() {
     val savedRates by rateRepository.ratesFor(selectedRange, baseCurrency).collectAsState(initial = emptyMap())
     val createDocument = rememberLauncherForActivityResult(CreateCsvDocument()) { uri ->
         if (uri != null) {
-            scope.launch { exportResult = exportManager.exportReport(selectedRange, uri) }
+            scope.launch { exportResult = exportManager.exportReport(selectedRange, uri, pendingFormat) }
         }
     }
 
@@ -234,11 +238,18 @@ fun ReportsScreen() {
             }
 
             Button(
-                onClick = { createDocument.launch("finance_report_${selectedRange.start}_${selectedRange.endExclusive.minusDays(1)}.csv") },
+                onClick = {
+                    pendingFormat = if (legacyExport) CsvFormat.LEGACY_1_1 else CsvFormat.CURRENT
+                    createDocument.launch("finance_report_${selectedRange.start}_${selectedRange.endExclusive.minusDays(1)}.csv")
+                },
                 enabled = current != null && current.error == null && current.missingCurrencies.isEmpty() && dateError == null,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.reports_export_csv))
+            }
+            Row {
+                Checkbox(checked = legacyExport, onCheckedChange = { legacyExport = it })
+                Text(stringResource(R.string.reports_legacy_csv))
             }
             exportResult?.let { result ->
                 Text(

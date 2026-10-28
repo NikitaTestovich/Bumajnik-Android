@@ -13,6 +13,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TransactionFormViewModelTest {
+    @Test fun incomeCommentSurvivesEditAndRejectsOverLimit() = runBlocking {
+        val repository = FakeFinanceRepository()
+        val model = TransactionFormViewModel(repository)
+        val comment = "😀".repeat(150)
+        assertEquals(TransactionSaveResult.Saved, model.save(null, TransactionType.INCOME, "Demo", "20-10-2026", "1", "USD", null, comment))
+        val saved = repository.observeTransactions(null).first().single()
+        assertEquals(comment, model.load(saved.id, TransactionType.INCOME, "USD")!!.comment)
+        assertEquals(TransactionSaveResult.InvalidComment, model.save(saved.id, TransactionType.INCOME, "Demo", "20-10-2026", "2", "USD", null, comment + "x"))
+        assertEquals(comment, repository.observeTransactions(null).first().single().comment)
+        assertEquals(TransactionSaveResult.Saved, model.save(null, TransactionType.EXPENSE, "Demo", "20-10-2026", "1", "USD", "food", "ignored"))
+        assertEquals("", repository.observeTransactions(TransactionType.EXPENSE).first().single().comment)
+    }
     @Test
     fun expenseCannotBeSavedWithoutCategory() = runBlocking {
         val repository = FakeFinanceRepository()

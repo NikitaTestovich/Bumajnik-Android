@@ -191,4 +191,7 @@
     <string name="security_recovered">Код приложения сброшен. Записи сохранены. Защиту можно снова включить в профиле.</string>
     <string name="security_unavailable">Не удалось подтвердить вход или сохранить защиту. Попробуйте снова.</string>
     <string name="security_storage_error">Не удалось прочитать настройки защиты. Нажмите «Забыли код приложения?», чтобы восстановить доступ через защиту телефона.</string>
+    <string name="operation_comment">Комментарий (необязательно)</string>
+    <string name="operation_error_comment">Комментарий должен содержать не более 150 символов.</string>
+    <string name="reports_legacy_csv">Для версии 1.1 — без комментариев</string>
 </resources>
