@@ -194,4 +194,5 @@
     <string name="operation_comment">Комментарий (необязательно)</string>
     <string name="operation_error_comment">Комментарий должен содержать не более 150 символов.</string>
     <string name="reports_legacy_csv">Для версии 1.1 — без комментариев</string>
+    <string name="reports_export_request_lost">Выберите период отчёта и повторите экспорт.</string>
 </resources>

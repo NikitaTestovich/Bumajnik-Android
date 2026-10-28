@@ -194,4 +194,5 @@
     <string name="operation_comment">Comment (optional)</string>
     <string name="operation_error_comment">Use at most 150 characters for the comment.</string>
     <string name="reports_legacy_csv">For version 1.1 — comments are omitted</string>
+    <string name="reports_export_request_lost">Please choose the report period and export again.</string>
 </resources>
