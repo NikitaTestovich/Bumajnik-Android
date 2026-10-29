@@ -22,6 +22,10 @@ import com.personalfinance.tracker.R
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.foundation.text.BasicText
 import com.personalfinance.tracker.ui.categories.CategoryIcon
 import com.personalfinance.tracker.ui.charts.ExpenseSlice
 import java.math.BigDecimal
@@ -53,7 +57,7 @@ fun MonthlyExpensesWidget(slices: List<ExpenseSlice>, currency: String, language
                                 val dx = point.x - size.width / 2f
                                 val dy = point.y - size.height / 2f
                                 val radius = minOf(size.width, size.height) / 2f
-                                if (hypot(dx, dy) in radius * .54f..radius) {
+                                if (total > 0 && hypot(dx, dy) in radius * .54f..radius) {
                                     val fraction = ((atan2(dy, dx) * 180 / PI + 450) % 360) / 360
                                     var end = 0.0
                                     val slice = slices.firstOrNull { end += it.share; fraction < end } ?: slices.last()
@@ -77,8 +81,8 @@ fun MonthlyExpensesWidget(slices: List<ExpenseSlice>, currency: String, language
                             }
                         }
                         Column(Modifier.width(125.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(chosen?.name ?: totalLabel, style = MaterialTheme.typography.labelLarge)
-                            Text(amount(chosen?.minorUnits ?: total), style = MaterialTheme.typography.titleMedium, modifier = Modifier.testTag("expense_center"))
+                            Text(chosen?.name ?: totalLabel, style = MaterialTheme.typography.labelLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag("expense_center_name"))
+                            BasicText(amount(chosen?.minorUnits ?: total), style = MaterialTheme.typography.titleMedium.copy(color = LocalContentColor.current), modifier = Modifier.testTag("expense_center"), autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MaterialTheme.typography.titleMedium.fontSize), maxLines = 1)
                         }
                     }
                     slices.forEach { slice ->

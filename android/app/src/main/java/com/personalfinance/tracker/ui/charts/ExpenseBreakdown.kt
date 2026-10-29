@@ -23,11 +23,10 @@ fun expenseBreakdown(transactions: List<FinanceTransaction>, categories: List<Ca
         amounts[it.categoryId] = Math.addExact(amounts[it.categoryId] ?: 0, amount)
         total = Math.addExact(total, amount)
     }
-    if (total == 0L) return emptyList()
     val lookup = categories.associateBy { it.id }
-    return amounts.filterValues { it > 0 }.map { (id, amount) ->
+    return amounts.map { (id, amount) ->
         val category = lookup[id]
         val name = if (languageTag == "ru") category?.nameRu ?: category?.nameEn else category?.nameEn ?: category?.nameRu
-        ExpenseSlice(id, name ?: if (languageTag == "ru") "Без категории" else "Uncategorized", category?.iconKey ?: "other", amount, amount.toDouble() / total)
+        ExpenseSlice(id, name ?: if (languageTag == "ru") "Без категории" else "Uncategorized", category?.iconKey ?: "other", amount, if (total == 0L) 0.0 else amount.toDouble() / total)
     }.sortedWith(compareByDescending<ExpenseSlice> { it.minorUnits }.thenBy { it.categoryId ?: "" })
 }

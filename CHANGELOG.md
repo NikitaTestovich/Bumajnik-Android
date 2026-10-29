@@ -8,6 +8,7 @@
 - Customize Home: show or hide blocks, reorder with drag handles or accessible arrows, and restore defaults. The monthly expense doughnut and category cards are optional and hidden initially.
 - Personal operations sort by transaction date and then local creation order; editing does not change the original order. Storage upgrades non-destructively to schema 3.
 - Updated English and Russian guides, specifications, test evidence and local APK archive. The package ID and debug signing certificate remain compatible with previous local builds.
+- Verification fixes: preserve standard category translations on icon-only edits; fit selected chart names and amounts at enlarged font sizes; retain category cards for expenses rounded to zero after currency conversion.
 
 ## 1.1 — 2026-10-26
 

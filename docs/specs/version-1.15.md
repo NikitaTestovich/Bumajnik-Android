@@ -1,6 +1,6 @@
 # Version 1.15 — implementation under verification
 
-Status: approved by the user on 27 October 2026 and implemented in the version 1.15 build on 28 October 2026, with a 150-character comment limit and required drag-and-drop ordering alongside arrow controls. Release acceptance remains open while the opt-in real system-PIN recovery timeout is investigated. The [verification report](../testing-1.15.md) records executed checks and remaining physical-device checks.
+Status: approved by the user on 27 October 2026 and implemented in the version 1.15 build on 28 October 2026, with a 150-character comment limit and required drag-and-drop ordering alongside arrow controls. Emulator system-PIN recovery is verified; physical biometric match and recovery remain device checks. The [verification report](../testing-1.15.md) records executed checks and remaining physical-device checks.
 
 Builder check completed on 27 October 2026: no important unanswered implementation questions.
 
@@ -39,7 +39,7 @@ All standard and custom categories support rename, icon selection and removal wi
 
 Removal archives the category: exclude it from new-entry selectors but keep its ID, name and icon for existing transactions and reports. Existing expenses can retain their archived category during editing or move to an active category. Do not reseed archived standard categories or restore their old names on restart/language change. When no active category remains, guide users to add one before saving an expense.
 
-Unedited standard names remain localized. Proposed behavior for a renamed category: show the user-entered name in both languages, as with custom names. Reject empty names and duplicate active names after trimming and case normalization. Old archived names do not block creating a new category; identity remains separate.
+Unedited standard names remain localized, including unchanged saves and icon-only changes. Proposed behavior for a renamed category: show the user-entered name in both languages, as with custom names. Reject empty names and duplicate active names after trimming and case normalization. Old archived names do not block creating a new category; identity remains separate.
 
 Provide 20 bundled icons: groceries, home, transport, phone, health, education, clothing, dining, entertainment, household goods, travel, gifts, pets, sport, beauty, children, insurance, taxes, tools and other. Store stable icon keys with a safe fallback. Show them in category management, expense selection and category breakdowns. No remote image downloads.
 
@@ -57,7 +57,7 @@ Use personal expenses for the current calendar month, converted with the same pe
 
 Render the selected broad doughnut with the total and currency in the centre. Category cards show icon, name, amount, percentage and a share bar, sorted by expense amount descending with a stable tie-break. Use matching segment/card colours but always include text labels.
 
-Tapping a category highlights its segment, dims others and changes the centre to its amount and name. Repeating the tap restores the total. If a selected category disappears after editing, clear selection. Proposed small-segment rule: omit a percentage label on the ring when it would overlap; keep its exact rounded percentage on the card. Never inflate a segment for visibility. Keep every category in the scrollable list, including archived ones that have expenses in the month.
+Tapping a category highlights its segment, dims others and changes the centre to its amount and name. Repeating the tap restores the total. If a selected category disappears after editing, clear selection. Proposed small-segment rule: omit a percentage label on the ring when it would overlap; keep its exact rounded percentage on the card. Never inflate a segment for visibility. Keep every category in the scrollable list, including archived ones that have expenses in the month and positive expenses that round to zero after conversion. Zero totals retain category cards with zero shares and no painted segments. Bound the selected centre name to two lines and fit the amount on one line; the full name remains on its card and accessibility description.
 
 Show a clear no-expenses state instead of an empty chart. Single-category, many-category, small amounts, long names, large text and screen-reader descriptions must remain usable. Refresh the month when the app resumes across a calendar boundary.
 

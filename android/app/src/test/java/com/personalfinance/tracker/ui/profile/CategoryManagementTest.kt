@@ -12,6 +12,26 @@ import com.personalfinance.tracker.domain.model.UserProfile
 import com.personalfinance.tracker.ui.onboarding.WelcomeViewModel
 
 class CategoryManagementTest {
+    @Test fun iconOnlyAndUnchangedSavePreserveTranslationsAcrossLanguageSwitch() = runBlocking {
+        val repository = FakeFinanceRepository()
+        repository.saveProfile(UserProfile("Demo", "ru", "USD", true))
+        repository.saveCategory(Category("groceries", "Продукты", "Groceries", false))
+        val vm = ProfileViewModel(repository)
+        assertTrue(vm.renameCategory("groceries", "Продукты", "dining"))
+        assertTrue(vm.updateProfile("Demo", "en", "USD"))
+        var row = repository.observeCategories().first().single()
+        assertEquals("Groceries", row.nameEn)
+        assertEquals("Продукты", row.nameRu)
+        assertEquals("dining", row.iconKey)
+        assertTrue(vm.renameCategory("groceries", "Groceries", "dining"))
+        assertTrue(vm.updateProfile("Demo", "ru", "USD"))
+        row = repository.observeCategories().first().single()
+        assertEquals("Продукты", row.nameRu)
+        assertTrue(vm.renameCategory("groceries", "Food", "home"))
+        row = repository.observeCategories().first().single()
+        assertEquals("Food", row.nameRu)
+        assertEquals("Food", row.nameEn)
+    }
     @Test fun renameAndArchiveRetainIdentityAndRejectInvalidNames() = runBlocking {
         val repository = FakeFinanceRepository()
         repository.saveCategory(Category("groceries", "Продукты", "Groceries", false))

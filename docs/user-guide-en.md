@@ -18,6 +18,8 @@ Export a personal CSV backup before an update as an extra precaution. It covers 
 
 **Home** shows the current calendar month's income, expenses, and balance (income minus expenses), quick entry buttons, saved goal progress, and the latest transaction. Tap **Customize home** to show or hide blocks and change their order. Drag a block by its handle, use the accessible up/down buttons, or reset to defaults. The settings button remains visible when every block is hidden. **Monthly expenses** starts hidden; enable it to see a category doughnut and cards. Tap a segment or card to focus on one category; tap it again to restore the total. **All operations** opens the personal transaction list. Open **Savings goal planner** for the forecast.
 
+Changing only a standard category icon preserves its translated names when you switch languages. The expense doughnut shortens long selected names in its centre to keep the amount visible; the category card retains the full name. Expenses that convert to 0.00 still have cards with 0% share; when all amounts convert to zero, no segments are drawn.
+
 ## Add, edit, and delete transactions
 
 1. On **Home**, tap **Add income** or **Add expense**. Alternatively, in **Operations**, select **Expenses** or **Income**, then **Add transaction**.

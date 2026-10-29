@@ -15,6 +15,16 @@ import com.personalfinance.tracker.domain.summary.SummaryService
 import com.personalfinance.tracker.ui.home.HomeViewModel
 
 class ExpenseBreakdownTest {
+    @Test fun zeroConvertedExpensesRetainCardsWithoutInventingShares() {
+        val rates = mapOf("EUR" to BigDecimal("0.1"))
+        val mixed = expenseBreakdown(listOf(expense("tiny", 1, "EUR"), expense("large", 100)), emptyList(), "en", "USD", rates)
+        assertEquals(listOf("large", "tiny"), mixed.map { it.categoryId })
+        assertEquals(listOf(100L, 0L), mixed.map { it.minorUnits })
+        assertEquals(listOf(1.0, 0.0), mixed.map { it.share })
+        val zero = expenseBreakdown(listOf(expense("a", 1, "EUR"), expense("b", 2, "EUR")), emptyList(), "en", "USD", rates)
+        assertEquals(2, zero.size)
+        assertTrue(zero.all { it.minorUnits == 0L && it.share == 0.0 })
+    }
     @Test fun homeTotalsAndMonthRolloverUseSameContext() = runBlocking {
         val repository = FakeFinanceRepository()
         repository.saveTransaction(expense("a", 1, "EUR"))

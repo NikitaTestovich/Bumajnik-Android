@@ -19,8 +19,8 @@ Version 1.15 optional monthly expense widget, captured from the emulator with fi
 ## What it does
 
 - Add, edit, and delete income and expense entries. Choose dates with a calendar or type them as `DD-MM-YYYY`. Add optional income comments of up to 150 Unicode characters.
-- Start with standard expense categories, create your own, rename or archive them, and choose from 20 bundled icons. Archived categories remain on older expenses.
-- Customize Home with hide/show controls and drag or arrow ordering. Enable the optional monthly expense doughnut to explore category amounts.
+- Start with standard expense categories, create your own, rename or archive them, and choose from 20 bundled icons. Archived categories remain on older expenses; icon-only edits preserve standard translations.
+- Customize Home with hide/show controls and drag or arrow ordering. Enable the optional monthly expense doughnut to explore category amounts, including cards rounded to zero after conversion. Selected long names are bounded so the amount remains visible.
 - Review monthly totals, category breakdowns, and comparisons with a previous period.
 - Export current eight-column CSV reports/backups with income comments or explicitly choose a seven-column report for version 1.1. Import either format. A family member's report shows a signed balance, income/expense comparisons by member and combined expense categories; repeated records are skipped.
 - Optionally protect access with a 4–10-character app code and available biometrics. When enabled, the biometric prompt opens automatically; the code appears after failure or cancellation. Recover a forgotten code through the phone screen lock without deleting records.

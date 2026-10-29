@@ -37,7 +37,14 @@ class ProfileViewModel(private val repository: FinanceRepository) {
         val categories = repository.observeCategories().first()
         val category = categories.firstOrNull { it.id == id && !it.isArchived } ?: return false
         if (!categoryNameAvailable(name, categories, id)) return false
-        repository.saveCategory(category.copy(nameRu = name.trim(), nameEn = name.trim(), iconKey = CategoryIcons.resolve(iconKey)))
+        val language = repository.observeProfile().first()?.languageTag ?: "ru"
+        val originalName = if (language == "ru") category.nameRu ?: category.nameEn else category.nameEn ?: category.nameRu
+        val renamed = name.trim() != originalName
+        repository.saveCategory(category.copy(
+            nameRu = if (renamed) name.trim() else category.nameRu,
+            nameEn = if (renamed) name.trim() else category.nameEn,
+            iconKey = CategoryIcons.resolve(iconKey),
+        ))
         return true
     }
 
