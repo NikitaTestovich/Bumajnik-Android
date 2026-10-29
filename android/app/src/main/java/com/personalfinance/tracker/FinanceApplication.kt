@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import com.personalfinance.tracker.data.local.AppDatabase
 import com.personalfinance.tracker.data.local.MIGRATION_1_2
+import com.personalfinance.tracker.data.local.MIGRATION_2_3
 import com.personalfinance.tracker.data.repository.FamilyRepository
 import com.personalfinance.tracker.data.repository.FinanceRepository
 import com.personalfinance.tracker.data.repository.RateRepository
@@ -33,7 +34,7 @@ class FinanceApplication : Application() {
             applicationContext,
             AppDatabase::class.java,
             DATABASE_NAME,
-        ).addMigrations(MIGRATION_1_2).build()
+        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
         container = FinanceContainer(
             database = database,
             financeRepository = RoomFinanceRepository(database),

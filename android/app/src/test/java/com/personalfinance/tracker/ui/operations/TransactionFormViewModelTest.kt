@@ -13,9 +13,25 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TransactionFormViewModelTest {
+    private fun categoryRepository() = FakeFinanceRepository().also { repository -> runBlocking {
+        repository.saveCategory(com.personalfinance.tracker.domain.model.Category("groceries", "Продукты", "Groceries", false))
+        repository.saveCategory(com.personalfinance.tracker.domain.model.Category("food", "Еда", "Food", true))
+    } }
+    @Test fun incomeCommentSurvivesEditAndRejectsOverLimit() = runBlocking {
+        val repository = categoryRepository()
+        val model = TransactionFormViewModel(repository)
+        val comment = "😀".repeat(150)
+        assertEquals(TransactionSaveResult.Saved, model.save(null, TransactionType.INCOME, "Demo", "20-10-2026", "1", "USD", null, comment))
+        val saved = repository.observeTransactions(null).first().single()
+        assertEquals(comment, model.load(saved.id, TransactionType.INCOME, "USD")!!.comment)
+        assertEquals(TransactionSaveResult.InvalidComment, model.save(saved.id, TransactionType.INCOME, "Demo", "20-10-2026", "2", "USD", null, comment + "x"))
+        assertEquals(comment, repository.observeTransactions(null).first().single().comment)
+        assertEquals(TransactionSaveResult.Saved, model.save(null, TransactionType.EXPENSE, "Demo", "20-10-2026", "1", "USD", "food", "ignored"))
+        assertEquals("", repository.observeTransactions(TransactionType.EXPENSE).first().single().comment)
+    }
     @Test
     fun expenseCannotBeSavedWithoutCategory() = runBlocking {
-        val repository = FakeFinanceRepository()
+        val repository = categoryRepository()
         val result = TransactionFormViewModel(repository).save(
             transactionId = null,
             type = TransactionType.EXPENSE,
@@ -32,7 +48,7 @@ class TransactionFormViewModelTest {
 
     @Test
     fun incomeCanBeSavedWithoutCategory() = runBlocking {
-        val repository = FakeFinanceRepository()
+        val repository = categoryRepository()
         val result = TransactionFormViewModel(repository).save(
             transactionId = null,
             type = TransactionType.INCOME,
@@ -49,7 +65,7 @@ class TransactionFormViewModelTest {
 
     @Test
     fun saveParsesDateAndDecimalAmount() = runBlocking {
-        val repository = FakeFinanceRepository()
+        val repository = categoryRepository()
         val result = TransactionFormViewModel(repository).save(
             transactionId = null,
             type = TransactionType.EXPENSE,
@@ -68,7 +84,7 @@ class TransactionFormViewModelTest {
 
     @Test
     fun editDraftDisplaysDayMonthYearDate() = runBlocking {
-        val repository = FakeFinanceRepository()
+        val repository = categoryRepository()
         val transaction = FinanceTransaction(
             id = "0e20e7cf-091d-48d0-a6f0-1664397dc4d0",
             owner = "Alex",
@@ -86,7 +102,7 @@ class TransactionFormViewModelTest {
 
     @Test
     fun editingKeepsTheExistingTransactionId() = runBlocking {
-        val repository = FakeFinanceRepository()
+        val repository = categoryRepository()
         val original = FinanceTransaction(
             id = "0e20e7cf-091d-48d0-a6f0-1664397dc4d0",
             owner = "Alex",
@@ -116,7 +132,7 @@ class TransactionFormViewModelTest {
 
     @Test
     fun deleteOnlyOccursAfterConfirmation() = runBlocking {
-        val repository = FakeFinanceRepository()
+        val repository = categoryRepository()
         val transaction = FinanceTransaction(
             id = "0e20e7cf-091d-48d0-a6f0-1664397dc4d0",
             owner = "Alex",

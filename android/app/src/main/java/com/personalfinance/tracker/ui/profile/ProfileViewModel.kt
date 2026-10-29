@@ -2,6 +2,8 @@ package com.personalfinance.tracker.ui.profile
 
 import com.personalfinance.tracker.domain.model.Category
 import com.personalfinance.tracker.domain.model.UserProfile
+import com.personalfinance.tracker.domain.model.CategoryIcons
+import com.personalfinance.tracker.domain.model.categoryNameAvailable
 import com.personalfinance.tracker.data.repository.FinanceRepository
 import com.personalfinance.tracker.domain.money.SupportedCurrencies
 import kotlinx.coroutines.flow.first
@@ -19,16 +21,36 @@ class ProfileViewModel(private val repository: FinanceRepository) {
         return true
     }
 
-    suspend fun addCustomCategory(name: String, languageTag: String): Boolean {
+    suspend fun addCustomCategory(name: String, languageTag: String, iconKey: String = "other"): Boolean {
         val normalizedName = name.trim()
-        if (normalizedName.isEmpty()) return false
+        if (!categoryNameAvailable(normalizedName, repository.observeCategories().first())) return false
         val id = "custom-${java.util.UUID.randomUUID()}"
         val normalizedLanguage = languageTag.substringBefore('-').lowercase()
         if (normalizedLanguage !in setOf("ru", "en")) return false
         repository.saveCategory(
-            if (normalizedLanguage == "ru") Category(id, normalizedName, null, true)
-            else Category(id, null, normalizedName, true),
+            Category(id, normalizedName, normalizedName, true, iconKey = CategoryIcons.resolve(iconKey)),
         )
+        return true
+    }
+
+    suspend fun renameCategory(id: String, name: String, iconKey: String): Boolean {
+        val categories = repository.observeCategories().first()
+        val category = categories.firstOrNull { it.id == id && !it.isArchived } ?: return false
+        if (!categoryNameAvailable(name, categories, id)) return false
+        val language = repository.observeProfile().first()?.languageTag ?: "ru"
+        val originalName = if (language == "ru") category.nameRu ?: category.nameEn else category.nameEn ?: category.nameRu
+        val renamed = name.trim() != originalName
+        repository.saveCategory(category.copy(
+            nameRu = if (renamed) name.trim() else category.nameRu,
+            nameEn = if (renamed) name.trim() else category.nameEn,
+            iconKey = CategoryIcons.resolve(iconKey),
+        ))
+        return true
+    }
+
+    suspend fun archiveCategory(id: String): Boolean {
+        val category = repository.observeCategories().first().firstOrNull { it.id == id } ?: return false
+        repository.saveCategory(category.copy(isArchived = true))
         return true
     }
 }

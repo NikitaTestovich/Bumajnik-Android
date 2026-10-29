@@ -31,6 +31,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.personalfinance.tracker.domain.model.IncomeComment
 import com.personalfinance.tracker.FinanceApplication
 import com.personalfinance.tracker.R
 import com.personalfinance.tracker.domain.model.Category
@@ -81,7 +85,7 @@ fun TransactionFormScreen(
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(20.dp),
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
@@ -113,6 +117,17 @@ fun TransactionFormScreen(
                 readOnly = true,
                 singleLine = true,
             )
+            if (draft.type == TransactionType.INCOME) {
+                OutlinedTextField(
+                    value = draft.comment,
+                    onValueChange = { draft = draft.copy(comment = it); errorResult = null },
+                    modifier = Modifier.fillMaxWidth().testTag("income_comment"),
+                    label = { Text(stringResource(R.string.operation_comment)) },
+                    supportingText = { Text("${IncomeComment.length(draft.comment)}/${IncomeComment.MAX_LENGTH}") },
+                    isError = !IncomeComment.isValid(draft.comment),
+                    minLines = 2,
+                )
+            }
             if (draft.type == TransactionType.EXPENSE) {
                 Text(stringResource(R.string.operation_category), style = MaterialTheme.typography.titleMedium)
                 val selected = categories.firstOrNull { it.id == draft.categoryId }
@@ -126,8 +141,9 @@ fun TransactionFormScreen(
                             ?: stringResource(R.string.operation_select_category),
                         onValueChange = {},
                         readOnly = true,
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.menuAnchor().fillMaxWidth().testTag("expense_category"),
                         label = { Text(stringResource(R.string.operation_category)) },
+                        leadingIcon = { selected?.let { com.personalfinance.tracker.ui.categories.CategoryIcon(it.iconKey) } },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryMenuExpanded) },
                         singleLine = true,
                     )
@@ -136,9 +152,10 @@ fun TransactionFormScreen(
                         onDismissRequest = { categoryMenuExpanded = false },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        categories.forEach { category ->
+                        categories.filter { !it.isArchived || (transactionId != null && it.id == draft.categoryId) }.forEach { category ->
                             DropdownMenuItem(
                                 text = { Text(category.categoryLabel(profile?.languageTag ?: "en")) },
+                                leadingIcon = { com.personalfinance.tracker.ui.categories.CategoryIcon(category.iconKey) },
                                 onClick = {
                                     draft = draft.copy(categoryId = category.id)
                                     errorResult = null
@@ -149,6 +166,7 @@ fun TransactionFormScreen(
                     }
                 }
                 Text(stringResource(R.string.operation_category_profile_hint), style = MaterialTheme.typography.bodySmall)
+                if (categories.none { !it.isArchived }) Text(stringResource(R.string.category_none_active), color = MaterialTheme.colorScheme.error)
             }
             errorResult?.let { result ->
                 val message = when (result) {
@@ -156,6 +174,7 @@ fun TransactionFormScreen(
                     TransactionSaveResult.InvalidDate -> R.string.operation_error_date
                     TransactionSaveResult.InvalidAmount -> R.string.operation_error_amount
                     TransactionSaveResult.InvalidCurrency -> R.string.operation_error_currency
+                    TransactionSaveResult.InvalidComment -> R.string.operation_error_comment
                     TransactionSaveResult.NotFound -> R.string.operation_error_not_found
                     TransactionSaveResult.Saved -> return@let
                 }
@@ -176,6 +195,7 @@ fun TransactionFormScreen(
                                 amountText = draft.amountText,
                                 currencyCode = draft.currencyCode,
                                 categoryId = draft.categoryId,
+                                comment = draft.comment,
                             )
                             withContext(Dispatchers.Main.immediate) {
                                 if (result == TransactionSaveResult.Saved) onSaved() else errorResult = result

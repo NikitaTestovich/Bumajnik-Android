@@ -37,7 +37,7 @@ data class FinanceBar(val label: String, val valueMinorUnits: Long, val color: C
 
 data class FinanceBarGroup(val label: String, val bars: List<FinanceBar>)
 
-data class CategoryBreakdownItem(val label: String, val valueMinorUnits: Long, val share: Float)
+data class CategoryBreakdownItem(val label: String, val valueMinorUnits: Long, val share: Float, val iconKey: String = "other")
 
 /** Scales nonnegative chart magnitudes without integer multiplication or division by zero. */
 fun normalizedBarFraction(value: Long, maximum: Long): Float =
@@ -119,6 +119,7 @@ object FinanceCharts {
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        com.personalfinance.tracker.ui.categories.CategoryIcon(item.iconKey)
                         Text(item.label, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
                         Text(amount, style = MaterialTheme.typography.bodyMedium)
                     }

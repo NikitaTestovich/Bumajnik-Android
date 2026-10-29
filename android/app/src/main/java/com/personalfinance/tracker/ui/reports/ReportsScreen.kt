@@ -24,6 +24,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -33,6 +36,8 @@ import com.personalfinance.tracker.R
 import com.personalfinance.tracker.data.csv.ExportResult
 import com.personalfinance.tracker.data.csv.CreateCsvDocument
 import com.personalfinance.tracker.data.csv.ReportExportManager
+import com.personalfinance.tracker.data.csv.CsvFormat
+import androidx.compose.material3.Checkbox
 import com.personalfinance.tracker.domain.model.PeriodRange
 import com.personalfinance.tracker.domain.money.ExchangeRateService
 import com.personalfinance.tracker.domain.summary.SummaryService
@@ -67,6 +72,10 @@ fun ReportsScreen() {
     var showRateDialog by remember { mutableStateOf(false) }
     var exportResult by remember { mutableStateOf<ExportResult?>(null) }
     var dateError by remember { mutableStateOf<Int?>(null) }
+    var legacyExport by rememberSaveable { mutableStateOf(false) }
+    var pendingFormat by rememberSaveable { mutableStateOf(CsvFormat.CURRENT.name) }
+    var pendingStart by rememberSaveable { mutableStateOf("") }
+    var pendingEndExclusive by rememberSaveable { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val rateRepository = container.rateRepository
     val baseCurrency = profile?.baseCurrency ?: "USD"
@@ -81,7 +90,17 @@ fun ReportsScreen() {
     val savedRates by rateRepository.ratesFor(selectedRange, baseCurrency).collectAsState(initial = emptyMap())
     val createDocument = rememberLauncherForActivityResult(CreateCsvDocument()) { uri ->
         if (uri != null) {
-            scope.launch { exportResult = exportManager.exportReport(selectedRange, uri) }
+            // The external picker may recreate this screen. Export the request the
+            // user launched, not the newly initialized screen's range or format.
+            val requestRange = runCatching {
+                PeriodRange(LocalDate.parse(pendingStart), LocalDate.parse(pendingEndExclusive))
+            }.getOrNull()
+            val requestFormat = runCatching { CsvFormat.valueOf(pendingFormat) }.getOrNull()
+            scope.launch {
+                exportResult = if (requestRange != null && requestFormat != null)
+                    exportManager.exportReport(requestRange, uri, requestFormat)
+                else ExportResult(false, context.getString(R.string.reports_export_request_lost))
+            }
         }
     }
 
@@ -222,6 +241,7 @@ fun ReportsScreen() {
                                 items = current.categories.map { category ->
                                     CategoryBreakdownItem(
                                         label = category.name,
+                                        iconKey = category.iconKey,
                                         valueMinorUnits = category.minorUnits,
                                         share = if (summary.expense.minorUnits <= 0L) 0f
                                         else (category.minorUnits.toDouble() / summary.expense.minorUnits.toDouble()).toFloat(),
@@ -234,11 +254,22 @@ fun ReportsScreen() {
             }
 
             Button(
-                onClick = { createDocument.launch("finance_report_${selectedRange.start}_${selectedRange.endExclusive.minusDays(1)}.csv") },
+                onClick = {
+                    pendingFormat = (if (legacyExport) CsvFormat.LEGACY_1_1 else CsvFormat.CURRENT).name
+                    pendingStart = selectedRange.start.toString()
+                    pendingEndExclusive = selectedRange.endExclusive.toString()
+                    createDocument.launch("finance_report_${selectedRange.start}_${selectedRange.endExclusive.minusDays(1)}.csv")
+                },
                 enabled = current != null && current.error == null && current.missingCurrencies.isEmpty() && dateError == null,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.reports_export_csv))
+            }
+            Row(modifier = Modifier.fillMaxWidth().toggleable(
+                value = legacyExport, role = Role.Checkbox, onValueChange = { legacyExport = it },
+            )) {
+                Checkbox(checked = legacyExport, onCheckedChange = null)
+                Text(stringResource(R.string.reports_legacy_csv))
             }
             exportResult?.let { result ->
                 Text(

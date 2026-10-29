@@ -191,4 +191,32 @@
     <string name="security_recovered">Код приложения сброшен. Записи сохранены. Защиту можно снова включить в профиле.</string>
     <string name="security_unavailable">Не удалось подтвердить вход или сохранить защиту. Попробуйте снова.</string>
     <string name="security_storage_error">Не удалось прочитать настройки защиты. Нажмите «Забыли код приложения?», чтобы восстановить доступ через защиту телефона.</string>
+    <string name="operation_comment">Комментарий (необязательно)</string>
+    <string name="operation_error_comment">Комментарий должен содержать не более 150 символов.</string>
+    <string name="reports_legacy_csv">Для версии 1.1 — без комментариев</string>
+    <string name="reports_export_request_lost">Выберите период отчёта и повторите экспорт.</string>
+    <string name="category_edit">Изменить</string>
+    <string name="category_delete">Удалить категорию</string>
+    <string name="category_delete_message">Убрать категорию из новых расходов? В существующих записях и отчётах она сохранится.</string>
+    <string name="category_choose_icon">Выберите иконку</string>
+    <string name="category_invalid_name">Введите название, не занятое другой активной категорией.</string>
+    <string name="category_none_active">Перед добавлением нового расхода создайте категорию в профиле.</string>
+    <string-array name="category_icon_names">
+        <item>Продукты</item><item>Дом</item><item>Транспорт</item><item>Связь</item><item>Здоровье</item><item>Образование</item><item>Одежда</item><item>Кафе</item><item>Развлечения</item><item>Бытовые товары</item><item>Путешествия</item><item>Подарки</item><item>Питомцы</item><item>Спорт</item><item>Красота</item><item>Дети</item><item>Страхование</item><item>Налоги</item><item>Инструменты</item><item>Другое</item>
+    </string-array>
+    <string name="home_customize">Моя главная</string>
+    <string name="home_customize_hint">Удерживайте ручку для перетаскивания или используйте стрелки.</string>
+    <string name="home_quick_actions">Быстрые действия</string>
+    <string name="home_expense_breakdown">Расходы за месяц</string>
+    <string name="home_drag">Перетащить: %1$s</string>
+    <string name="home_move_up">Вверх</string>
+    <string name="home_move_down">Вниз</string>
+    <string name="home_reset">Сбросить порядок</string>
+    <string name="home_reset_confirm">Восстановить порядок и видимость по умолчанию?</string>
+    <string name="home_done">Готово</string>
+    <string name="home_all_hidden">Все блоки скрыты. Откройте «Моя главная», чтобы включить их.</string>
+    <string name="monthly_expenses_title">Расходы по категориям</string>
+    <string name="monthly_expenses_total">Всего</string>
+    <string name="monthly_expenses_rates">Укажите курс для расчёта расходов</string>
+    <string name="monthly_expenses_empty">В этом месяце расходов пока нет</string>
 </resources>

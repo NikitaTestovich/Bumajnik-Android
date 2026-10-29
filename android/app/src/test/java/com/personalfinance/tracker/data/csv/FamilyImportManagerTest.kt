@@ -15,6 +15,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FamilyImportManagerTest {
+    @Test fun incomeCommentIsPersistedInFamilySnapshot() = runBlocking {
+        val repository = RecordingFamilyRepository()
+        val manager = FamilyImportManager(repository) { error("unused") }
+        val csv = "owner,record_id,date,category,income,expense,currency,comment\r\nDemo,${uuid()},01-10-2026,,1.00,,USD,Salary\r\n"
+        val preview = manager.previewBytes(csv.toByteArray())
+        assertEquals(1, manager.import(preview, "USD", emptyMap()).addedCount)
+        assertEquals("Salary", repository.writes.single().single().comment)
+    }
     @Test
     fun malformedFileIsRejectedWithoutWritingAnyRows() {
         val repository = RecordingFamilyRepository()

@@ -3,6 +3,7 @@ package com.personalfinance.tracker.ui.operations
 import com.personalfinance.tracker.data.repository.FinanceRepository
 import com.personalfinance.tracker.domain.model.FinanceTransaction
 import com.personalfinance.tracker.domain.model.TransactionType
+import com.personalfinance.tracker.domain.model.IncomeComment
 import com.personalfinance.tracker.domain.money.Money
 import com.personalfinance.tracker.domain.money.SupportedCurrencies
 import com.personalfinance.tracker.domain.time.FinanceDateFormat
@@ -12,7 +13,7 @@ import java.time.LocalDate
 import java.util.UUID
 import kotlinx.coroutines.flow.first
 
-enum class TransactionSaveResult { Saved, CategoryRequired, InvalidDate, InvalidAmount, InvalidCurrency, NotFound }
+enum class TransactionSaveResult { Saved, CategoryRequired, InvalidDate, InvalidAmount, InvalidCurrency, InvalidComment, NotFound }
 
 data class TransactionDraft(
     val id: String?,
@@ -22,6 +23,7 @@ data class TransactionDraft(
     val amountText: String,
     val currencyCode: String,
     val categoryId: String?,
+    val comment: String = "",
 )
 
 class TransactionFormViewModel(private val repository: FinanceRepository) {
@@ -53,6 +55,7 @@ class TransactionFormViewModel(private val repository: FinanceRepository) {
             amountText = BigDecimal.valueOf(transaction.money.minorUnits, 2).toPlainString(),
             currencyCode = transaction.money.currencyCode,
             categoryId = transaction.categoryId,
+            comment = transaction.comment,
         )
     }
 
@@ -64,7 +67,9 @@ class TransactionFormViewModel(private val repository: FinanceRepository) {
         amountText: String,
         currencyCode: String,
         categoryId: String?,
+        comment: String = "",
     ): TransactionSaveResult {
+        if (!IncomeComment.isValid(comment)) return TransactionSaveResult.InvalidComment
         if (type == TransactionType.EXPENSE && categoryId.isNullOrBlank()) {
             return TransactionSaveResult.CategoryRequired
         }
@@ -81,6 +86,11 @@ class TransactionFormViewModel(private val repository: FinanceRepository) {
             repository.observeTransactions(null).first().firstOrNull { it.id == id }
                 ?: return TransactionSaveResult.NotFound
         }
+        if (type == TransactionType.EXPENSE) {
+            val category = repository.observeCategories().first().firstOrNull { it.id == categoryId }
+                ?: return TransactionSaveResult.CategoryRequired
+            if (category.isArchived && existing?.categoryId != category.id) return TransactionSaveResult.CategoryRequired
+        }
         // Existing entries keep the currency they were recorded in, even if the
         // profile's main currency changed. New entries use the profile currency.
         val savedCurrencyCode = existing?.money?.currencyCode ?: currencyCode
@@ -93,6 +103,7 @@ class TransactionFormViewModel(private val repository: FinanceRepository) {
                 date = date,
                 money = Money(minorUnits, savedCurrencyCode),
                 categoryId = if (type == TransactionType.EXPENSE) categoryId else null,
+                comment = if (type == TransactionType.INCOME) comment else "",
             ),
         )
         return TransactionSaveResult.Saved

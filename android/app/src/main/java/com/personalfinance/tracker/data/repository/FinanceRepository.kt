@@ -40,11 +40,15 @@ data class PersonalRestoreSummary(val addedCount: Int, val duplicateCount: Int)
 
 /** Shared conversion policy; persistence of these categories belongs to the batch transaction. */
 internal fun restoredCategory(name: String, categories: Collection<Category>): Category {
-    val normalized = name.trim().lowercase(Locale.ROOT)
+    val normalized = com.personalfinance.tracker.domain.model.normalizedCategoryName(name)
     return categories.firstOrNull { category ->
-        listOfNotNull(category.nameRu, category.nameEn).any { it.trim().lowercase(Locale.ROOT) == normalized }
+        listOfNotNull(category.nameRu, category.nameEn).any { com.personalfinance.tracker.domain.model.normalizedCategoryName(it) == normalized }
     } ?: Category(
-        id = "backup-" + UUID.nameUUIDFromBytes("personal-category:$normalized".toByteArray(Charsets.UTF_8)),
+        id = run {
+            val base = "backup-" + UUID.nameUUIDFromBytes("personal-category:$normalized".toByteArray(Charsets.UTF_8))
+            generateSequence(0) { it + 1 }.map { if (it == 0) base else "$base-$it" }
+                .first { candidate -> categories.none { it.id == candidate } }
+        },
         nameRu = name.trim(),
         nameEn = name.trim(),
         isCustom = true,
@@ -67,15 +71,20 @@ class RoomFinanceRepository(private val database: AppDatabase) : FinanceReposito
     ).map(FinanceTransactionEntity::toDomain)
 
     override suspend fun saveTransaction(transaction: FinanceTransaction) {
+        validateComment(transaction)
         requireUuid(transaction.id)
         require(transaction.owner.isNotBlank()) { "Transaction owner must not be blank" }
         require(transaction.money.minorUnits > 0) { "Transaction amount must be positive" }
-        dao.saveTransaction(transaction.toEntity())
+        database.withTransaction {
+            val order = dao.transactionById(transaction.id)?.createdOrder ?: Math.addExact(dao.maxCreatedOrder(), 1L)
+            dao.saveTransaction(transaction.copy(createdOrder = order).toEntity())
+        }
     }
 
     override suspend fun restorePersonalTransactions(records: List<PersonalRestoreRecord>): PersonalRestoreSummary {
         // Validate even duplicate rows before opening a write transaction.
         records.forEach { (transaction, categoryName) ->
+            validateComment(transaction)
             requireUuid(transaction.id)
             require(transaction.owner.isNotBlank())
             require(transaction.money.minorUnits > 0)
@@ -85,16 +94,18 @@ class RoomFinanceRepository(private val database: AppDatabase) : FinanceReposito
             val existingIds = dao.transactionIds().toSet()
             val categories = dao.categories().map(CategoryEntity::toDomain).toMutableList()
             val newRecords = records.distinctBy { it.transaction.id }.filterNot { it.transaction.id in existingIds }
+            var nextOrder = dao.maxCreatedOrder()
             val transactions = newRecords.map { record ->
                 val category = record.categoryName?.takeIf { it.isNotBlank() }?.let { name ->
                     restoredCategory(name, categories).also { mapped ->
                         if (categories.none { it.id == mapped.id }) {
-                            dao.insertRestoredCategory(CategoryEntity(mapped.id, mapped.nameRu, mapped.nameEn, mapped.isCustom))
+                            dao.insertRestoredCategory(CategoryEntity(mapped.id, mapped.nameRu, mapped.nameEn, mapped.isCustom, mapped.isArchived, mapped.iconKey))
                             categories += mapped
                         }
                     }
                 }
-                record.transaction.copy(categoryId = category?.id).toEntity()
+                nextOrder = Math.addExact(nextOrder, 1L)
+                record.transaction.copy(categoryId = category?.id, createdOrder = nextOrder).toEntity()
             }
             val added = dao.insertRestoredTransactions(transactions).count { it != -1L }
             PersonalRestoreSummary(added, records.size - added)
@@ -122,7 +133,16 @@ class RoomFinanceRepository(private val database: AppDatabase) : FinanceReposito
         dao.observeCategories().map { items -> items.map(CategoryEntity::toDomain) }
 
     override suspend fun saveCategory(category: Category) {
-        dao.saveCategory(CategoryEntity(category.id, category.nameRu, category.nameEn, category.isCustom))
+        database.withTransaction {
+            if (!category.isArchived) {
+                val categories = dao.categories().map(CategoryEntity::toDomain)
+                listOfNotNull(category.nameRu, category.nameEn).forEach { name ->
+                    require(com.personalfinance.tracker.domain.model.categoryNameAvailable(name, categories, category.id))
+                }
+            }
+            dao.saveCategory(CategoryEntity(category.id, category.nameRu, category.nameEn, category.isCustom, category.isArchived,
+                com.personalfinance.tracker.domain.model.CategoryIcons.resolve(category.iconKey)))
+        }
     }
 
     override fun observeGoal(): Flow<SavingsGoal?> = dao.observeGoal().map { entity -> entity?.toDomain() }
@@ -139,6 +159,11 @@ class RoomFinanceRepository(private val database: AppDatabase) : FinanceReposito
     }
 }
 
+private fun validateComment(transaction: FinanceTransaction) {
+    require(com.personalfinance.tracker.domain.model.IncomeComment.isValid(transaction.comment))
+    require(transaction.type == TransactionType.INCOME || transaction.comment.isEmpty())
+}
+
 private fun FinanceTransaction.toEntity() = FinanceTransactionEntity(
     id = id,
     owner = owner,
@@ -147,6 +172,8 @@ private fun FinanceTransaction.toEntity() = FinanceTransactionEntity(
     minorUnits = money.minorUnits,
     currencyCode = money.currencyCode,
     categoryId = categoryId,
+    comment = comment,
+    createdOrder = createdOrder,
 )
 
 private fun FinanceTransactionEntity.toDomain() = FinanceTransaction(
@@ -156,10 +183,12 @@ private fun FinanceTransactionEntity.toDomain() = FinanceTransaction(
     date = LocalDate.parse(date),
     money = Money(minorUnits, currencyCode),
     categoryId = categoryId,
+    comment = comment,
+    createdOrder = createdOrder,
 )
 
 private fun UserProfileEntity.toDomain() = UserProfile(name, languageTag, baseCurrency, onboardingComplete)
-private fun CategoryEntity.toDomain() = Category(id, nameRu, nameEn, isCustom)
+private fun CategoryEntity.toDomain() = Category(id, nameRu, nameEn, isCustom, isArchived, iconKey)
 private fun SavingsGoalEntity.toDomain() = SavingsGoal(
     target = Money(targetMinorUnits, targetCurrency),
     saved = Money(savedMinorUnits, savedCurrency),

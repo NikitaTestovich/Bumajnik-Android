@@ -15,6 +15,8 @@ data class FinanceTransaction(
     val date: LocalDate,
     val money: Money,
     val categoryId: String?,
+    val comment: String = "",
+    val createdOrder: Long = 0,
 )
 
 data class UserProfile(
@@ -35,6 +37,8 @@ data class Category(
     val nameRu: String?,
     val nameEn: String?,
     val isCustom: Boolean,
+    val isArchived: Boolean = false,
+    val iconKey: String = "other",
 ) {
     init {
         require(id.isNotBlank()) { "Category id must not be blank" }
@@ -63,6 +67,7 @@ data class FamilyTransaction(
     val type: TransactionType,
     val importRate: BigDecimal?,
     val importBaseCurrency: String = sourceMoney.currencyCode,
+    val comment: String = "",
 ) {
     init {
         require(owner.isNotBlank()) { "Family record owner must not be blank" }

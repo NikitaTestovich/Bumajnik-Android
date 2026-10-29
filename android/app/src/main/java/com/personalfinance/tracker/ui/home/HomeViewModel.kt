@@ -10,26 +10,29 @@ import com.personalfinance.tracker.domain.summary.SummaryService
 import java.math.BigDecimal
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
+import com.personalfinance.tracker.ui.charts.ExpenseSlice
+import com.personalfinance.tracker.ui.charts.expenseBreakdown
 
 data class HomeUiState(
     val summary: PeriodSummary?,
     val latestTransaction: FinanceTransaction?,
     val goal: SavingsGoal?,
     val missingCurrencies: Set<String>,
+    val expenses: List<ExpenseSlice> = emptyList(),
 )
 
 class HomeViewModel(
     private val repository: FinanceRepository,
     private val exchangeRateService: ExchangeRateService,
     private val summaryService: SummaryService,
-    private val today: LocalDate = LocalDate.now(),
+    private val today: () -> LocalDate = { LocalDate.now() },
 ) {
     fun currentMonthRange(): PeriodRange {
-        val firstDay = today.withDayOfMonth(1)
+        val firstDay = today().withDayOfMonth(1)
         return PeriodRange(firstDay, firstDay.plusMonths(1))
     }
 
-    suspend fun load(baseCurrency: String): HomeUiState {
+    suspend fun load(baseCurrency: String, languageTag: String = "en"): HomeUiState {
         val range = currentMonthRange()
         val periodTransactions = repository.transactionsBetween(range, null)
         val sourceCurrencies = periodTransactions.mapTo(mutableSetOf()) { it.money.currencyCode }
@@ -45,6 +48,7 @@ class HomeViewModel(
             latestTransaction = repository.observeTransactions(null).first().firstOrNull(),
             goal = repository.observeGoal().first(),
             missingCurrencies = missing,
+            expenses = if (missing.isEmpty()) expenseBreakdown(periodTransactions, repository.observeCategories().first(), languageTag, baseCurrency, rates) else emptyList(),
         )
     }
 

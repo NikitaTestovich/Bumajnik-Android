@@ -44,6 +44,29 @@ class PersonalBackupManagerTest {
 
     @After fun tearDown() { database.close(); file.delete() }
 
+    @Test fun restoreKeepsArchivedCategoryAndAvoidsRenamedIdCollision() = runBlocking {
+        val archived = Category("archived", "Food", "Food", true, true, "dining")
+        repository.saveCategory(archived)
+        assertTrue(manager.restoreBytes((header + row(id1, "Food")).toByteArray()).errors.isEmpty())
+        assertEquals(archived, repository.observeCategories().first().single())
+        assertEquals(archived.id, repository.observeTransactions(null).first().single().categoryId)
+        val generated = com.personalfinance.tracker.data.repository.restoredCategory("Travel", emptyList())
+        repository.saveCategory(generated.copy(nameRu = "Renamed", nameEn = "Renamed"))
+        assertTrue(manager.restoreBytes((header + row(id2, "Travel")).toByteArray()).errors.isEmpty())
+        val restored = repository.observeTransactions(null).first().first { it.id == id2 }
+        assertNotEquals(generated.id, restored.categoryId)
+        assertEquals("Renamed", repository.observeCategories().first().first { it.id == generated.id }.nameEn)
+    }
+
+    @Test fun repositoriesRejectInvalidCommentsBeforeWriting() = runBlocking {
+        val income = FinanceTransaction(id1, "Demo", TransactionType.INCOME, LocalDate.of(2026,10,1), Money(100,"USD"), null, comment = "😀".repeat(151))
+        assertTrue(runCatching { repository.saveTransaction(income) }.isFailure)
+        assertTrue(runCatching { repository.restorePersonalTransactions(listOf(com.personalfinance.tracker.data.repository.PersonalRestoreRecord(income, null))) }.isFailure)
+        val family = RoomFamilyRepository(database)
+        assertTrue(runCatching { family.saveImportBatch(listOf(FamilyTransaction(id = id1, owner = "Demo", type = TransactionType.INCOME, date = income.date, sourceMoney = income.money, categoryName = null, importRate = null, comment = income.comment))) }.isFailure)
+        assertTrue(repository.observeTransactions(null).first().isEmpty())
+    }
+
     @Test fun malformedFileLeavesRoomUnchanged() = runBlocking {
         val result = manager.restoreBytes((header + row(id1) + "Alex,$id2,invalid,,1.00,,USD\r\n").toByteArray())
         assertTrue(result.errors.isNotEmpty())
@@ -55,9 +78,10 @@ class PersonalBackupManagerTest {
         repository.saveCategory(Category("food", "Еда", "Food", false))
         val local = FinanceTransaction(id1, "Alex", TransactionType.INCOME, LocalDate.of(2026, 1, 1), Money(900, "EUR"), null)
         repository.saveTransaction(local)
+        val persistedLocal = repository.observeTransactions(null).first().single { it.id == id1 }
         val bytes = (header + row(id1) + row(id2, "Кофе") + row(id2, "Кофе")).toByteArray()
         assertEquals(BackupRestoreResult(1, 2, emptyList()), manager.restoreBytes(bytes))
-        assertEquals(local, repository.observeTransactions(null).first().single { it.id == id1 })
+        assertEquals(persistedLocal, repository.observeTransactions(null).first().single { it.id == id1 })
         val custom = repository.observeCategories().first().single { it.isCustom }
         assertEquals(custom.id, repository.observeTransactions(null).first().single { it.id == id2 }.categoryId)
         assertEquals(BackupRestoreResult(0, 3, emptyList()), manager.restoreBytes(bytes))

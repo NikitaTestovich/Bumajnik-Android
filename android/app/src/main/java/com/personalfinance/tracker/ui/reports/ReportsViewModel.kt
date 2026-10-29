@@ -10,7 +10,7 @@ import java.math.RoundingMode
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 
-data class CategoryExpense(val name: String, val minorUnits: Long)
+data class CategoryExpense(val name: String, val minorUnits: Long, val categoryId: String? = null, val iconKey: String = "other")
 
 enum class ReportError { BeforeFirstTransaction, InvalidRange }
 
@@ -65,14 +65,13 @@ class ReportsViewModel(
 
         val summary = summaryService.summarize(range, baseCurrency, rates)
         val previousSummary = summaryService.summarize(previousRange, baseCurrency, rates)
-        val categoryNames = repository.observeCategories().first().associate { category ->
-            category.id to if (languageTag == "ru") category.nameRu ?: category.nameEn.orEmpty()
-            else category.nameEn ?: category.nameRu.orEmpty()
-        }
+        val categoriesById = repository.observeCategories().first().associateBy { it.id }
         val expensesByCategory = transactions.asSequence()
             .filter { it.type.name == "EXPENSE" }
-            .groupBy { it.categoryId?.let(categoryNames::get).orEmpty() }
-            .map { (category, entries) ->
+            .groupBy { it.categoryId }
+            .map { (categoryId, entries) ->
+                val category = categoriesById[categoryId]
+                val name = category?.let { if (languageTag == "ru") it.nameRu ?: it.nameEn else it.nameEn ?: it.nameRu }.orEmpty()
                 val total = entries.fold(0L) { acc, transaction ->
                     val rate = rates.getValue(transaction.money.currencyCode)
                     val converted = BigDecimal.valueOf(transaction.money.minorUnits)
@@ -81,9 +80,10 @@ class ReportsViewModel(
                         .longValueExact()
                     Math.addExact(acc, converted)
                 }
-                CategoryExpense(category.ifBlank { if (languageTag == "ru") "Без категории" else "Uncategorized" }, total)
+                CategoryExpense(name.ifBlank { if (languageTag == "ru") "Без категории" else "Uncategorized" }, total,
+                    categoryId, com.personalfinance.tracker.domain.model.CategoryIcons.resolve(category?.iconKey ?: "other"))
             }
-            .sortedByDescending(CategoryExpense::minorUnits)
+            .sortedWith(compareByDescending<CategoryExpense> { it.minorUnits }.thenBy { it.categoryId.orEmpty() })
 
         return ReportUiState(
             range, first, summary, expensesByCategory, emptySet(),

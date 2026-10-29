@@ -236,9 +236,9 @@ fun AppNavigation() {
                             onSave = { name, language, currency ->
                                 scope.launch { profileViewModel.updateProfile(name, language, currency) }
                             },
-                            onAddCategory = { name, language ->
-                                scope.launch { profileViewModel.addCustomCategory(name, language) }
-                            },
+                            onAddCategory = { name, language, icon -> profileViewModel.addCustomCategory(name, language, icon) },
+                            onEditCategory = profileViewModel::renameCategory,
+                            onArchiveCategory = profileViewModel::archiveCategory,
                             onOpenFamily = { navController.navigate(FamilyRoute) },
                             onOpenGoal = { navController.navigate(GoalRoute) },
                             onExportBackup = {

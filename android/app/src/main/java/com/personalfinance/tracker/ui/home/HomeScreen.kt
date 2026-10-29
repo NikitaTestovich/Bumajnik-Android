@@ -20,6 +20,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +32,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import com.personalfinance.tracker.data.preferences.HomeLayoutStore
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -58,7 +64,11 @@ fun HomeScreen(
     val profile by repository.observeProfile().collectAsState(initial = null)
     val transactions by repository.observeTransactions(null).collectAsState(initial = emptyList())
     val goal by repository.observeGoal().collectAsState(initial = null)
+    val categories by repository.observeCategories().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
+    val layoutStore = remember { HomeLayoutStore(context) }
+    val layout by layoutStore.layout.collectAsState()
+    var customizing by remember { mutableStateOf(false) }
     val viewModel = remember {
         HomeViewModel(
             repository = repository,
@@ -66,16 +76,24 @@ fun HomeScreen(
             summaryService = SummaryService(repository),
         )
     }
-    val range = remember { viewModel.currentMonthRange() }
+    var range by remember { mutableStateOf(viewModel.currentMonthRange()) }
+    var resumeVersion by remember { mutableStateOf(0) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) { range = viewModel.currentMonthRange(); resumeVersion++ } }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     val baseCurrency = profile?.baseCurrency ?: "USD"
     val savedRates by rateRepository.ratesFor(range, baseCurrency).collectAsState(initial = emptyMap())
     var state by remember(baseCurrency) { mutableStateOf<HomeUiState?>(null) }
     var showRateDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(profile, transactions, goal, savedRates) {
+    val financialVisible = layout.any { it.visible && it.id in setOf(HomeBlock.SUMMARY, HomeBlock.EXPENSES) }
+    LaunchedEffect(profile, transactions, categories, goal, savedRates, range, resumeVersion, financialVisible) {
         val currentProfile = profile ?: return@LaunchedEffect
-        state = viewModel.load(currentProfile.baseCurrency)
-        if (state?.missingCurrencies?.isNotEmpty() == true) showRateDialog = true
+        state = viewModel.load(currentProfile.baseCurrency, currentProfile.languageTag)
+        showRateDialog = financialVisible && state?.missingCurrencies?.isNotEmpty() == true
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -83,8 +101,13 @@ fun HomeScreen(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            OutlinedButton(onClick = { customizing = true }, modifier = Modifier.fillMaxWidth().testTag("home_customize")) { Text(stringResource(R.string.home_customize)) }
+            if (layout.none { it.visible }) Text(stringResource(R.string.home_all_hidden))
             val current = state
             val summary = current?.summary
+            layout.filter { it.visible }.forEach { setting ->
+            when (setting.id) {
+            HomeBlock.SUMMARY -> {
             if (current == null || summary == null) {
                 Text(
                     stringResource(R.string.home_need_rates, baseCurrency),
@@ -140,6 +163,8 @@ fun HomeScreen(
                 }
             }
 
+            }
+            HomeBlock.QUICK_ACTIONS -> {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(onClick = onAddIncome, modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.home_add_income))
@@ -149,6 +174,8 @@ fun HomeScreen(
                 }
             }
 
+            }
+            HomeBlock.GOAL -> {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.home_goal), style = MaterialTheme.typography.titleMedium)
@@ -180,6 +207,8 @@ fun HomeScreen(
                 }
             }
 
+            }
+            HomeBlock.LATEST -> {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(stringResource(R.string.home_latest), style = MaterialTheme.typography.titleMedium)
@@ -194,15 +223,22 @@ fun HomeScreen(
                         }
                         Text("$title • ${FinanceDateFormat.format(latest.date)}")
                         Text(formatAmount(latest.money.minorUnits, latest.money.currencyCode))
+                        if (latest.type == TransactionType.INCOME && latest.comment.isNotBlank()) Text(latest.comment)
                     }
                 }
             }
 
+            }
+            HomeBlock.EXPENSES -> MonthlyExpensesWidget(current?.expenses.orEmpty(), baseCurrency, profile?.languageTag ?: "en", current == null || current.missingCurrencies.isNotEmpty(), { showRateDialog = true })
+            }
+            }
             OutlinedButton(onClick = onAllOperations, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.home_all_operations))
             }
         }
     }
+
+    if (customizing) HomeCustomizationSheet(layout, layoutStore::save, layoutStore::reset, { customizing = false })
 
     val missingCurrencies = state?.missingCurrencies.orEmpty()
     if (showRateDialog && missingCurrencies.isNotEmpty()) {
@@ -212,7 +248,7 @@ fun HomeScreen(
             onSave = { entered ->
                 scope.launch {
                     viewModel.saveRates(baseCurrency, entered)
-                    state = viewModel.load(baseCurrency)
+                    state = viewModel.load(baseCurrency, profile?.languageTag ?: "en")
                     showRateDialog = state?.missingCurrencies?.isNotEmpty() == true
                 }
             },

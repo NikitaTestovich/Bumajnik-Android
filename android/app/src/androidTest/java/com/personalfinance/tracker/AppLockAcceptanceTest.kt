@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Instrumentation
 import android.content.Intent
 import android.view.WindowManager
-import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -51,7 +50,7 @@ class AppLockAcceptanceTest {
         runBlocking { assertEquals(LockResult.SUCCESS, app.appLock.enable("Ab12", false, true)) }
         app.appLock.lockNow()
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        ui.waitUntil(10_000) { ui.onAllNodesWithTag("app_lock_screen").fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithTag("app_lock_screen").fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
     }
 
     @Test fun wrongCodeCannotOpenNavigationAndCorrectCodePreservesRecords() {
@@ -59,11 +58,11 @@ class AppLockAcceptanceTest {
         ui.onNodeWithText(app.getString(R.string.navigation_operations)).assertDoesNotExist()
         ui.onNodeWithTag("unlock_code").performTextInput("0000")
         ui.onNodeWithTag("unlock_button").performClick()
-        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.security_wrong_code)).fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.security_wrong_code)).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
         ui.onNodeWithTag("app_lock_screen").assertIsDisplayed()
         ui.onNodeWithTag("unlock_code").performTextReplacement("Ab12")
         ui.onNodeWithTag("unlock_button").performClick()
-        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.home_balance)).fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.home_balance)).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
         assertEquals(12345L, runBlocking { app.container.financeRepository.observeTransactions(null).first().single().money.minorUnits })
         scenario!!.onActivity { assertTrue(it.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE != 0) }
         // Screen-off is the production controller signal; navigation must disappear.
@@ -84,7 +83,7 @@ class AppLockAcceptanceTest {
 
     @Test fun profileCanEnableChangeAndDisableCodeWithCurrentAuthentication() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.home_balance)).fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.home_balance)).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
         var secure = false
         scenario!!.onActivity { secure = it.isDeviceSecure() }
         Assume.assumeTrue("Configure emulator PIN for settings tests", secure)
@@ -97,10 +96,10 @@ class AppLockAcceptanceTest {
         ui.onNodeWithTag("new_code").performScrollTo().performTextReplacement("Cd34")
         ui.onNodeWithTag("confirm_code").performScrollTo().performTextReplacement("Cd34")
         ui.onNodeWithTag("save_security").performScrollTo().performClick()
-        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.security_wrong_code)).fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.security_wrong_code)).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
         ui.onNodeWithTag("current_code").performScrollTo().performTextReplacement("Ab12")
         ui.onNodeWithTag("save_security").performScrollTo().performClick()
-        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.security_saved)).fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodesWithText(app.getString(R.string.security_saved)).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
         scenario!!.onActivity { app.appLock.lockNow() }
         ui.onNodeWithTag("unlock_code").performTextInput("Cd34")
         ui.onNodeWithTag("unlock_button").performClick()
@@ -157,11 +156,18 @@ class AppLockAcceptanceTest {
         Assume.assumeTrue("Supply emulator-only devicePin to exercise the real Android prompt", pin?.matches(Regex("[0-9]{4,10}")) == true)
         launchLocked()
         ui.onNodeWithText(app.getString(R.string.security_forgot)).performClick()
+        fun findNode(node: android.view.accessibility.AccessibilityNodeInfo?, matches: (android.view.accessibility.AccessibilityNodeInfo) -> Boolean): android.view.accessibility.AccessibilityNodeInfo? {
+            if (node == null) return null
+            if (matches(node)) return node
+            for (index in 0 until node.childCount) findNode(node.getChild(index), matches)?.let { return it }
+            return null
+        }
         val deadline = SystemClock.elapsedRealtime() + 10_000
         var systemWindow = false
         while (SystemClock.elapsedRealtime() < deadline) {
             val root = instrumentation.uiAutomation.rootInActiveWindow
-            if (root != null && root.packageName?.toString() != app.packageName && root.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT) != null) {
+            if (root != null && root.packageName?.toString() != app.packageName &&
+                root.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT) != null) {
                 systemWindow = true
                 break
             }
@@ -169,11 +175,25 @@ class AppLockAcceptanceTest {
         }
         assertTrue("Android credential input must be visible before entering the emulator PIN", systemWindow)
         assertTrue(app.appLock.state.value.locked)
-        // Actual Android credential confirmation: no ActivityMonitor and no synthetic RESULT_OK.
-        ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("input text $pin"))
-            .use { it.readBytes() }
-        ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("input keyevent 66"))
-            .use { it.readBytes() }
+        // API 37's confirmation UI uses a Compose PIN pad, not an editable text field.
+        // Click its real system keys so this exercises Android credential verification.
+        pin!!.forEach { digit ->
+            val keyDeadline = SystemClock.elapsedRealtime() + 10_000
+            var key: android.view.accessibility.AccessibilityNodeInfo? = null
+            var currentPackage: CharSequence? = null
+            while (key == null && SystemClock.elapsedRealtime() < keyDeadline) {
+                val root = instrumentation.uiAutomation.rootInActiveWindow
+                currentPackage = root?.packageName
+                key = findNode(root) { it.text?.toString() == digit.toString() }?.parent
+                if (key == null) SystemClock.sleep(100)
+            }
+            checkNotNull(key) { "System PIN digit key was not found; window=$currentPackage" }
+            assertTrue("System PIN key must be clickable", key.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+        }
+        val enter = checkNotNull(instrumentation.uiAutomation.rootInActiveWindow)
+            .let { findNode(it) { node -> node.viewIdResourceName == "com.android.systemui:id/key_enter" } }
+        assertNotNull("System PIN confirmation key must be present", enter)
+        assertTrue("System PIN confirmation must be clickable", enter!!.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
         ui.waitUntil(15_000) { !app.appLock.state.value.enabled }
         assertEquals(12345L, runBlocking { app.container.financeRepository.observeTransactions(null).first().single().money.minorUnits })
     }

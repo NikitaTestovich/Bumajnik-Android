@@ -61,6 +61,7 @@ class FamilyImportManager(
                 type = row.type,
                 importRate = if (row.amount.currencyCode == baseCurrency) BigDecimal.ONE else rates.getValue(row.amount.currencyCode),
                 importBaseCurrency = baseCurrency,
+                comment = row.comment,
             )
         }
         val summary = repository.saveImportBatch(imported)
@@ -75,6 +76,9 @@ class FamilyImportManager(
     ): List<String> = buildList {
         if (baseCurrency !in SupportedCurrencies.codes) add("Unsupported base currency: $baseCurrency")
         preview.records.forEachIndexed { index, row ->
+            if (!com.personalfinance.tracker.domain.model.IncomeComment.isValid(row.comment) ||
+                (row.type != com.personalfinance.tracker.domain.model.TransactionType.INCOME && row.comment.isNotEmpty()))
+                add("Row ${index + 2} has an invalid comment")
             if (row.owner.isBlank()) add("Row ${index + 2} has an empty owner")
             if (row.amount.minorUnits <= 0) add("Row ${index + 2} amount must be positive")
             if (!runCatching { LocalDate.parse(row.date.toString()) }.isSuccess) add("Row ${index + 2} has an invalid date")

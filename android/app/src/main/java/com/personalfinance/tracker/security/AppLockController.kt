@@ -15,6 +15,7 @@ data class AppLockState(
     val biometrics: Boolean = false,
     val retrySeconds: Int = 0,
     val storageError: Boolean = false,
+    val generation: Long = 0,
 )
 
 enum class LockResult { SUCCESS, WRONG_CODE, WAIT, INVALID_CODE, UNAVAILABLE }
@@ -26,6 +27,7 @@ class AppLockController(
 ) {
     private val mutex = Mutex()
     private val session = LockSession()
+    val biometricEntry = BiometricEntryPolicy()
     val instanceId: String = java.util.UUID.randomUUID().toString()
     private var damaged = false
     private var record = try { storage.read() } catch (_: Exception) { damaged = true; null }
@@ -43,16 +45,22 @@ class AppLockController(
 
     private fun remaining() = (retryDeadline - elapsed()).coerceIn(0, 30_000)
     private fun snapshot() = AppLockState(enabled, enabled && session.locked,
-        enabled && record?.biometrics == true && !damaged, ((remaining() + 999) / 1000).toInt(), damaged)
+        enabled && record?.biometrics == true && !damaged, ((remaining() + 999) / 1000).toInt(), damaged, generation)
     fun refresh() { mutableState.value = snapshot() }
-    fun background() { session.background(elapsed()) }
+    fun background() {
+        biometricEntry.activeAttempt?.let(biometricEntry::fallback)
+        session.background(elapsed())
+    }
     fun foreground() {
         val wasLocked = session.locked
         session.foreground(elapsed())
         if (!wasLocked && session.locked) generation++
         refresh()
     }
-    fun lockNow() { generation++; session.screenOff(); refresh() }
+    fun lockNow() {
+        biometricEntry.activeAttempt?.let(biometricEntry::fallback)
+        generation++; session.screenOff(); refresh()
+    }
 
     // A caller leaving the screen must not cancel between a durable write and its in-memory mirror.
     private suspend fun operation(block: suspend () -> LockResult): LockResult =
@@ -96,9 +104,10 @@ class AppLockController(
         }
     }
 
-    suspend fun biometricSucceeded(expectedGeneration: Long): LockResult = operation {
+    suspend fun biometricSucceeded(expectedGeneration: Long, attempt: Long? = null): LockResult = operation {
         if (!enabled || record?.biometrics != true || expectedGeneration != generation || damaged)
             return@operation LockResult.UNAVAILABLE
+        if (attempt == null || !biometricEntry.acceptSuccess(attempt)) return@operation LockResult.UNAVAILABLE
         persist { authorize() }
     }
 

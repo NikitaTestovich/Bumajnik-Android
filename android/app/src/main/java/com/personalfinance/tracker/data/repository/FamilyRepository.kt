@@ -32,6 +32,8 @@ class RoomFamilyRepository(private val database: AppDatabase) : FamilyRepository
 
     override suspend fun saveImportBatch(transactions: List<FamilyTransaction>): FamilyImportSummary {
         transactions.forEach { transaction ->
+            require(com.personalfinance.tracker.domain.model.IncomeComment.isValid(transaction.comment))
+            require(transaction.type == TransactionType.INCOME || transaction.comment.isEmpty())
             requireUuid(transaction.id)
             require(transaction.sourceMoney.minorUnits > 0) { "Family transaction amount must be positive" }
         }
@@ -82,6 +84,7 @@ private fun FamilyTransaction.toEntity(batchId: String) = FamilyTransactionEntit
     categoryName = categoryName,
     importRate = importRate?.stripTrailingZeros()?.toPlainString(),
     importBaseCurrency = importBaseCurrency,
+    comment = comment,
     batchId = batchId,
 )
 
@@ -94,4 +97,5 @@ private fun FamilyTransactionEntity.toDomain() = FamilyTransaction(
     type = TransactionType.valueOf(type),
     importRate = importRate?.let(::BigDecimal),
     importBaseCurrency = importBaseCurrency,
+    comment = comment,
 )
