@@ -1,5 +1,6 @@
 package com.personalfinance.tracker
 
+import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.personalfinance.tracker.domain.model.*
@@ -20,7 +21,7 @@ import org.junit.runner.RunWith
 class UpgradeDataTest {
     @Test fun preservesEveryStoreAcrossApkUpdate() = runBlocking {
         val phase = InstrumentationRegistry.getArguments().getString("upgradePhase")
-        assumeTrue("Seed with preserved 1.1 test APK, then run this verifier explicitly", phase == "verify")
+        assumeTrue("Seed with preserved 1.1 test APK, then run this verifier explicitly", phase == "verify" || phase == "restart")
         val app = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as FinanceApplication
         val container = app.container
         val repository = container.financeRepository
@@ -40,16 +41,26 @@ class UpgradeDataTest {
         )
         assertEquals(profile, repository.observeProfile().first())
         assertEquals(personal.toSet(), repository.observeTransactions(null).first().toSet())
-        val expectedGroceries = category.copy(iconKey = "groceries")
+        val expectedGroceries = if (phase == "restart") category.copy(nameRu = "Food upgraded", nameEn = "Food upgraded", iconKey = "dining", isArchived = true) else category.copy(iconKey = "groceries")
         assertEquals(setOf(expectedGroceries, custom), repository.observeCategories().first().toSet())
         assertEquals(goal, repository.observeGoal().first())
         assertEquals(family.toSet(), container.familyRepository.observeFamilyTransactions(range).first().toSet())
         assertEquals(BigDecimal("1.1"), container.rateRepository.ratesFor(range, "USD").first().getValue("EUR"))
         assertEquals(3, container.database.openHelper.readableDatabase.version)
         assertTrue(app.appLock.state.value.enabled)
+        assertTrue("A fresh process must require unlock", app.appLock.state.value.locked)
         assertEquals(LockResult.SUCCESS, app.appLock.unlock("Ab12"))
-        assertTrue(ProfileViewModel(repository).renameCategory("groceries", "Food upgraded", "dining"))
-        assertTrue(ProfileViewModel(repository).archiveCategory("groceries"))
+        if (phase == "restart") {
+            ActivityScenario.launch(MainActivity::class.java).use {
+                InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+                assertTrue(app.appLock.state.value.enabled)
+                assertEquals(expectedGroceries, repository.observeCategories().first().single { it.id == "groceries" })
+            }
+        }
+        if (phase == "verify") {
+            assertTrue(ProfileViewModel(repository).renameCategory("groceries", "Food upgraded", "dining"))
+            assertTrue(ProfileViewModel(repository).archiveCategory("groceries"))
+        }
         assertEquals("Food upgraded", repository.observeCategories().first().first { it.id == "groceries" }.nameEn)
         assertTrue(repository.observeCategories().first().first { it.id == "groceries" }.isArchived)
         assertEquals("groceries", repository.observeTransactions(null).first().first { it.type == TransactionType.EXPENSE }.categoryId)

@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Instrumentation
 import android.content.Intent
 import android.view.WindowManager
-import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -157,11 +156,18 @@ class AppLockAcceptanceTest {
         Assume.assumeTrue("Supply emulator-only devicePin to exercise the real Android prompt", pin?.matches(Regex("[0-9]{4,10}")) == true)
         launchLocked()
         ui.onNodeWithText(app.getString(R.string.security_forgot)).performClick()
+        fun findNode(node: android.view.accessibility.AccessibilityNodeInfo?, matches: (android.view.accessibility.AccessibilityNodeInfo) -> Boolean): android.view.accessibility.AccessibilityNodeInfo? {
+            if (node == null) return null
+            if (matches(node)) return node
+            for (index in 0 until node.childCount) findNode(node.getChild(index), matches)?.let { return it }
+            return null
+        }
         val deadline = SystemClock.elapsedRealtime() + 10_000
         var systemWindow = false
         while (SystemClock.elapsedRealtime() < deadline) {
             val root = instrumentation.uiAutomation.rootInActiveWindow
-            if (root != null && root.packageName?.toString() != app.packageName && root.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT) != null) {
+            if (root != null && root.packageName?.toString() != app.packageName &&
+                root.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT) != null) {
                 systemWindow = true
                 break
             }
@@ -169,11 +175,25 @@ class AppLockAcceptanceTest {
         }
         assertTrue("Android credential input must be visible before entering the emulator PIN", systemWindow)
         assertTrue(app.appLock.state.value.locked)
-        // Actual Android credential confirmation: no ActivityMonitor and no synthetic RESULT_OK.
-        ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("input text $pin"))
-            .use { it.readBytes() }
-        ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("input keyevent 66"))
-            .use { it.readBytes() }
+        // API 37's confirmation UI uses a Compose PIN pad, not an editable text field.
+        // Click its real system keys so this exercises Android credential verification.
+        pin!!.forEach { digit ->
+            val keyDeadline = SystemClock.elapsedRealtime() + 10_000
+            var key: android.view.accessibility.AccessibilityNodeInfo? = null
+            var currentPackage: CharSequence? = null
+            while (key == null && SystemClock.elapsedRealtime() < keyDeadline) {
+                val root = instrumentation.uiAutomation.rootInActiveWindow
+                currentPackage = root?.packageName
+                key = findNode(root) { it.text?.toString() == digit.toString() }?.parent
+                if (key == null) SystemClock.sleep(100)
+            }
+            checkNotNull(key) { "System PIN digit key was not found; window=$currentPackage" }
+            assertTrue("System PIN key must be clickable", key.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+        }
+        val enter = checkNotNull(instrumentation.uiAutomation.rootInActiveWindow)
+            .let { findNode(it) { node -> node.viewIdResourceName == "com.android.systemui:id/key_enter" } }
+        assertNotNull("System PIN confirmation key must be present", enter)
+        assertTrue("System PIN confirmation must be clickable", enter!!.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
         ui.waitUntil(15_000) { !app.appLock.state.value.enabled }
         assertEquals(12345L, runBlocking { app.container.financeRepository.observeTransactions(null).first().single().money.minorUnits })
     }

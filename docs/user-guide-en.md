@@ -84,7 +84,7 @@ After changing the main currency, the app can convert the saved target and saved
 
 ## App protection
 
-Open **More → Profile → App protection**. Protection is optional and starts disabled, including after an update. First configure a PIN, password or pattern in your phone settings so you can recover access if you forget the app code.
+Open **More → Profile → App protection**. Protection is optional and starts disabled for a new or unprotected installation. An update preserves the existing protection setting. First configure a PIN, password or pattern in your phone settings so you can recover access if you forget the app code.
 
 1. Enter and repeat a code of **4–10 characters**. Letters, digits and symbols are allowed; case and spaces matter.
 2. Optionally enable **Biometric unlock** if your phone has an available, enrolled fingerprint or face method. Android performs biometric authentication; the app does not receive biometric data.
