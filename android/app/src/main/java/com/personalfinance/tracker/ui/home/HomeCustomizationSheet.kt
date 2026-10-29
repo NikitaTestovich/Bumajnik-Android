@@ -108,4 +108,3 @@ fun HomeCustomizationSheet(settings: List<HomeBlockSetting>, onSave: (List<HomeB
     }
     if (confirmReset) AlertDialog(onDismissRequest = { confirmReset = false }, title = { Text(stringResource(R.string.home_reset)) }, text = { Text(stringResource(R.string.home_reset_confirm)) }, confirmButton = { TextButton(onClick = { onReset(); confirmReset = false }) { Text(stringResource(R.string.home_reset)) } }, dismissButton = { TextButton(onClick = { confirmReset = false }) { Text(stringResource(R.string.home_done)) } })
 }
-
