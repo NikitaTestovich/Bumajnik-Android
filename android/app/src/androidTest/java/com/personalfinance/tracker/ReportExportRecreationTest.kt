@@ -44,7 +44,40 @@ class ReportExportRecreationTest {
     }
     @After fun cleanup() { if (prepared) { app.container.database.clearAllTables(); if (::output.isInitialized) output.delete() } }
 
-    @Test fun legacyPickerResultAfterSavedStateRestoreKeepsSevenColumns() {
+    @Test fun systemPickerExportsCurrentComments() {
+        ui.setContent { FinanceTheme { ReportsScreen() } }
+        val label = app.getString(R.string.reports_export_csv)
+        ui.waitUntil(10000) { ui.onAllNodesWithText(label).fetchSemanticsNodes(atLeastOneRootRequired=false).isNotEmpty() }
+        ui.onNodeWithText(label).performScrollTo().performClick()
+        val automation = instrumentation.uiAutomation
+        fun find(node: android.view.accessibility.AccessibilityNodeInfo?, predicate: (android.view.accessibility.AccessibilityNodeInfo) -> Boolean): android.view.accessibility.AccessibilityNodeInfo? {
+            if (node == null) return null
+            if (predicate(node)) return node
+            for (index in 0 until node.childCount) find(node.getChild(index), predicate)?.let { return it }
+            return null
+        }
+        fun awaitNode(predicate: (android.view.accessibility.AccessibilityNodeInfo) -> Boolean): android.view.accessibility.AccessibilityNodeInfo {
+            val until = android.os.SystemClock.uptimeMillis() + 10000
+            while (android.os.SystemClock.uptimeMillis() < until) {
+                find(automation.rootInActiveWindow, predicate)?.let { return it }
+                android.os.SystemClock.sleep(100)
+            }
+            error("System document picker control missing")
+        }
+        val filename = "finance-picker-${UUID.randomUUID()}.csv"
+        val name = awaitNode { it.viewIdResourceName == "android:id/title" && it.isEditable }
+        assertTrue(name.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT, android.os.Bundle().apply {
+            putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, filename)
+        }))
+        assertTrue(awaitNode { it.isClickable && it.text?.toString()?.equals("Save", ignoreCase = true) == true }.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+        ui.waitUntil(10000) { ui.onAllNodesWithText(app.getString(R.string.reports_export_success)).fetchSemanticsNodes(atLeastOneRootRequired=false).isNotEmpty() }
+        val csv = android.os.ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("cat /sdcard/Download/$filename")).use { it.readBytes().toString(Charsets.UTF_8) }
+        assertTrue(csv.startsWith("owner,record_id,date,category,income,expense,currency,comment"))
+        assertTrue(csv.contains("Salary"))
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("rm /sdcard/Download/$filename")).close()
+    }
+
+    @Test fun pickerResultAfterSavedStateRestoreKeepsCommentsAndEightColumns() {
         var pendingCode: Int? = null
         val registry = object : ActivityResultRegistry() {
             override fun <I, O> onLaunch(requestCode: Int, contract: ActivityResultContract<I, O>, input: I, options: ActivityOptionsCompat?) { pendingCode = requestCode }
@@ -54,16 +87,15 @@ class ReportExportRecreationTest {
         restoration.setContent { CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) { FinanceTheme { ReportsScreen() } } }
         val exportLabel = app.getString(R.string.reports_export_csv)
         ui.waitUntil(10000) { ui.onAllNodesWithText(exportLabel).fetchSemanticsNodes(atLeastOneRootRequired=false).isNotEmpty() }
-        ui.onNodeWithText(app.getString(R.string.reports_legacy_csv)).performScrollTo()
-        ui.onNode(isToggleable()).performClick()
+        ui.onAllNodes(isToggleable()).assertCountEquals(0)
         ui.onNodeWithText(exportLabel).performScrollTo().performClick()
         ui.waitUntil(10000) { pendingCode != null }
         restoration.emulateSavedInstanceStateRestore()
-        ui.onNodeWithText(app.getString(R.string.reports_legacy_csv)).performScrollTo().assertIsOn()
+        ui.onAllNodes(isToggleable()).assertCountEquals(0)
         ui.runOnIdle { registry.dispatchResult(pendingCode!!, Activity.RESULT_OK, Intent().setData(Uri.fromFile(output))) }
         ui.waitUntil(10000) { output.length() > 0 }
-        assertEquals("owner,record_id,date,category,income,expense,currency", output.readLines().first())
+        assertEquals("owner,record_id,date,category,income,expense,currency,comment", output.readLines().first())
         assertTrue(output.readText().contains("Export Demo"))
-        assertFalse(output.readText().contains("Salary"))
+        assertTrue(output.readText().contains("Salary"))
     }
 }

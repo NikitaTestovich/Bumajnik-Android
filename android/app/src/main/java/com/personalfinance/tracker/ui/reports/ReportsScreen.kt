@@ -2,6 +2,9 @@ package com.personalfinance.tracker.ui.reports
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,10 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import com.personalfinance.tracker.ui.theme.FinanceButton as Button
+import com.personalfinance.tracker.ui.theme.FinanceCard as Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import com.personalfinance.tracker.ui.theme.FinanceOutlinedButton as OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,8 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -37,7 +38,6 @@ import com.personalfinance.tracker.data.csv.ExportResult
 import com.personalfinance.tracker.data.csv.CreateCsvDocument
 import com.personalfinance.tracker.data.csv.ReportExportManager
 import com.personalfinance.tracker.data.csv.CsvFormat
-import androidx.compose.material3.Checkbox
 import com.personalfinance.tracker.domain.model.PeriodRange
 import com.personalfinance.tracker.domain.money.ExchangeRateService
 import com.personalfinance.tracker.domain.summary.SummaryService
@@ -46,13 +46,14 @@ import com.personalfinance.tracker.ui.charts.CategoryBreakdownItem
 import com.personalfinance.tracker.ui.charts.FinanceBar
 import com.personalfinance.tracker.ui.charts.FinanceBarGroup
 import com.personalfinance.tracker.ui.charts.FinanceCharts
-import com.personalfinance.tracker.ui.theme.FinancePalette
+import com.personalfinance.tracker.ui.theme.financeColors
 import com.personalfinance.tracker.ui.common.DatePickerField
 import com.personalfinance.tracker.ui.summary.ExchangeRatePromptDialog
 import java.math.BigDecimal
 import java.time.LocalDate
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ReportsScreen() {
     val context = LocalContext.current
@@ -72,8 +73,6 @@ fun ReportsScreen() {
     var showRateDialog by remember { mutableStateOf(false) }
     var exportResult by remember { mutableStateOf<ExportResult?>(null) }
     var dateError by remember { mutableStateOf<Int?>(null) }
-    var legacyExport by rememberSaveable { mutableStateOf(false) }
-    var pendingFormat by rememberSaveable { mutableStateOf(CsvFormat.CURRENT.name) }
     var pendingStart by rememberSaveable { mutableStateOf("") }
     var pendingEndExclusive by rememberSaveable { mutableStateOf("") }
     val scope = rememberCoroutineScope()
@@ -91,14 +90,14 @@ fun ReportsScreen() {
     val createDocument = rememberLauncherForActivityResult(CreateCsvDocument()) { uri ->
         if (uri != null) {
             // The external picker may recreate this screen. Export the request the
-            // user launched, not the newly initialized screen's range or format.
+            // user launched, not the newly initialized screen's range.
+            // Reports always use the current format, including restored requests.
             val requestRange = runCatching {
                 PeriodRange(LocalDate.parse(pendingStart), LocalDate.parse(pendingEndExclusive))
             }.getOrNull()
-            val requestFormat = runCatching { CsvFormat.valueOf(pendingFormat) }.getOrNull()
             scope.launch {
-                exportResult = if (requestRange != null && requestFormat != null)
-                    exportManager.exportReport(requestRange, uri, requestFormat)
+                exportResult = if (requestRange != null)
+                    exportManager.exportReport(requestRange, uri, CsvFormat.CURRENT)
                 else ExportResult(false, context.getString(R.string.reports_export_request_lost))
             }
         }
@@ -117,28 +116,35 @@ fun ReportsScreen() {
         showRateDialog = state?.missingCurrencies?.isNotEmpty() == true
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(stringResource(R.string.reports_title), style = MaterialTheme.typography.headlineMedium)
             Text(stringResource(R.string.reports_period), style = MaterialTheme.typography.titleMedium)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                DatePickerField(
-                    value = startText,
-                    onValueChange = { startText = it; exportResult = null; dateError = null },
-                    modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.reports_from),
-                    supportingText = stringResource(R.string.reports_date_format),
-                )
-                DatePickerField(
-                    value = endText,
-                    onValueChange = { endText = it; exportResult = null; dateError = null },
-                    modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.reports_to),
-                    supportingText = stringResource(R.string.reports_date_format),
-                )
+            BoxWithConstraints {
+                val minimumRowWidth = 360.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    maxItemsInEachRow = if (maxWidth < minimumRowWidth) 1 else 2,
+                ) {
+                    DatePickerField(
+                        value = startText,
+                        onValueChange = { startText = it; exportResult = null; dateError = null },
+                        modifier = Modifier.weight(1f),
+                        label = stringResource(R.string.reports_from),
+                        supportingText = stringResource(R.string.reports_date_format),
+                    )
+                    DatePickerField(
+                        value = endText,
+                        onValueChange = { endText = it; exportResult = null; dateError = null },
+                        modifier = Modifier.weight(1f),
+                        label = stringResource(R.string.reports_to),
+                        supportingText = stringResource(R.string.reports_date_format),
+                    )
+                }
             }
             Button(
                 onClick = {
@@ -192,12 +198,12 @@ fun ReportsScreen() {
                             FinanceCharts.GroupedColumnChart(
                                 groups = listOf(
                                     FinanceBarGroup(stringResource(R.string.chart_income), listOf(
-                                        FinanceBar(stringResource(R.string.chart_selected_period), summary.income.minorUnits, FinancePalette.income),
-                                        FinanceBar(stringResource(R.string.chart_previous_period), current.previousSummary?.income?.minorUnits ?: 0L, FinancePalette.income.copy(alpha = 0.45f)),
+                                        FinanceBar(stringResource(R.string.chart_selected_period), summary.income.minorUnits, financeColors.income),
+                                        FinanceBar(stringResource(R.string.chart_previous_period), current.previousSummary?.income?.minorUnits ?: 0L, financeColors.income.copy(alpha = 0.45f)),
                                     )),
                                     FinanceBarGroup(stringResource(R.string.chart_expense), listOf(
-                                        FinanceBar(stringResource(R.string.chart_selected_period), summary.expense.minorUnits, FinancePalette.expense),
-                                        FinanceBar(stringResource(R.string.chart_previous_period), current.previousSummary?.expense?.minorUnits ?: 0L, FinancePalette.expense.copy(alpha = 0.45f)),
+                                        FinanceBar(stringResource(R.string.chart_selected_period), summary.expense.minorUnits, financeColors.expense),
+                                        FinanceBar(stringResource(R.string.chart_previous_period), current.previousSummary?.expense?.minorUnits ?: 0L, financeColors.expense.copy(alpha = 0.45f)),
                                     )),
                                 ),
                             )
@@ -255,7 +261,6 @@ fun ReportsScreen() {
 
             Button(
                 onClick = {
-                    pendingFormat = (if (legacyExport) CsvFormat.LEGACY_1_1 else CsvFormat.CURRENT).name
                     pendingStart = selectedRange.start.toString()
                     pendingEndExclusive = selectedRange.endExclusive.toString()
                     createDocument.launch("finance_report_${selectedRange.start}_${selectedRange.endExclusive.minusDays(1)}.csv")
@@ -264,12 +269,6 @@ fun ReportsScreen() {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.reports_export_csv))
-            }
-            Row(modifier = Modifier.fillMaxWidth().toggleable(
-                value = legacyExport, role = Role.Checkbox, onValueChange = { legacyExport = it },
-            )) {
-                Checkbox(checked = legacyExport, onCheckedChange = null)
-                Text(stringResource(R.string.reports_legacy_csv))
             }
             exportResult?.let { result ->
                 Text(

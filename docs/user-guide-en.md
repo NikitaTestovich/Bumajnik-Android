@@ -1,5 +1,15 @@
 # Finance Tracker — user guide
 
+## Version 1.17: appearance, goals and everyday controls
+
+In Profile, open **Themes** and select Financial journal (2, default), Electric graphite (6), Color mosaic (8), or Night analytics (9). The choice applies immediately throughout the app, including protection, and survives restart and compatible updates. Unknown or retired choices use the available default. Night analytics uses labelled horizontal breakdown bars. Theme settings are local and excluded from CSV backups.
+
+The goal screen shows four segments and 0/25/50/75/100% milestones, actual savings, target, remaining amount and the amount to the next milestone. Partial segments follow actual progress. Over-target savings remain visible; remaining amounts stop at zero. Factual same-currency progress remains available when forecast rates are missing. Forecasts still use completed months; no historical increases or dates are invented. After changing the main currency, the app automatically converts and saves the target and saved amount when all required rates match the forecast period and new currency. Missing rates are requested; the original goal remains until they are supplied. If conversion cannot be calculated (for example, no completed forecast period exists or the converted amount is invalid), re-enter both amounts in the new currency and save the goal.
+
+Operations remembers Income or Expenses across navigation and restart. Saving an operation selects its type for the next Operations visit; canceling preserves the previous choice. The tabs share the available width. In the category editor, switch icon labels on or off; labels are on initially, the choice persists, and accessible icon names remain available. Icons do not restrict category use.
+
+Saving security settings during temporary biometric unavailability now preserves an enabled biometric choice. App-code fallback and explicit disabling remain available. The reported personal-phone upgrade symptom has not been proven to share this cause; see [release verification](testing-1.17.md).
+
 [Русская версия](user-guide-ru.md) · [Build and install](../android/README.md)
 
 Finance Tracker stores your data locally on your Android phone. It needs no account and has no automatic synchronization or cloud backup. Family sharing uses files that you exchange yourself. Export a personal backup before clearing app data, uninstalling, or moving to another phone.
@@ -16,9 +26,9 @@ Export a personal CSV backup before an update as an extra precaution. It covers 
 2. The initial language follows the device: Russian or English, with English as the fallback for other languages.
 3. Use the four bottom tabs: **Home**, **Operations**, **Reports**, and **More**. **More** opens **Profile**, which also contains the family report, goal, backup actions, and categories. Scroll to see lower controls.
 
-**Home** shows the current calendar month's income, expenses, and balance (income minus expenses), quick entry buttons, saved goal progress, and the latest transaction. Tap **Customize home** to show or hide blocks and change their order. Drag a block by its handle, use the accessible up/down buttons, or reset to defaults. The settings button remains visible when every block is hidden. **Monthly expenses** starts hidden; enable it to see a category doughnut and cards. Tap a segment or card to focus on one category; tap it again to restore the total. **All operations** opens the personal transaction list. Open **Savings goal planner** for the forecast.
+**Home** shows the current calendar month's income, expenses, and balance (income minus expenses), quick entry buttons, saved goal progress, and the latest transaction. Tap **Customize home** to show or hide blocks and change their order. Drag a block by its handle, use the accessible up/down buttons, or reset to defaults. The settings button remains visible when every block is hidden. **Monthly expenses** is visible by default and shows a category doughnut in themes 2, 6 and 8, or a horizontal breakdown in Night analytics (9), with category cards in every theme. You can hide it in **Customize home**. Saved visibility and order are retained, including a previously hidden widget; the widget is shown for new installations, missing entries and **Restore defaults**. Tap a category card (or a doughnut segment where shown) to focus on one category; tap it again to restore the total. **All operations** opens the personal transaction list. Open **Savings goal planner** for the forecast.
 
-Changing only a standard category icon preserves its translated names when you switch languages. The expense doughnut shortens long selected names in its centre to keep the amount visible; the category card retains the full name. Expenses that convert to 0.00 still have cards with 0% share; when all amounts convert to zero, no segments are drawn.
+Changing only a standard category icon preserves its translated names when you switch languages. In themes 2, 6 and 8, the expense doughnut shortens long selected names in its centre to keep the amount visible; the category card retains the full name. Expenses that convert to 0.00 still have cards with 0% share; when all amounts convert to zero, no segments are drawn.
 
 ## Add, edit, and delete transactions
 
@@ -50,7 +60,7 @@ Personal totals store rates for the exact date range and main currency. Screens 
 1. Open **Reports**. Normally the initial period runs from the start of this month through today; it starts later if your first personal entry is later. Check the displayed dates.
 2. Enter **From** and **Through** in `DD-MM-YYYY`, then tap **Apply period**. Both dates are included. The start cannot precede your first personal transaction or follow the end.
 3. Supply missing rates. The report shows income, expenses, and net balance, plus category amounts with share bars. A comparison card gives the absolute and percentage change from an equal-length period shifted back one calendar month. The entered report rates are reused for both periods. An empty expense breakdown says **No expenses in this period.**
-4. Tap **Export CSV**, choose a name and location in Android's file picker, and save. Wait for **CSV report saved.** The current eight-column format includes income comments. Select the clearly labelled **For version 1.1** option when sending a report to an older app; that seven-column format omits comments. Export uses the applied period and requires a valid period and any requested rates.
+4. Tap **Export CSV**, choose a name and location in Android's file picker, and save. Wait for **CSV report saved.** The current eight-column format includes income comments. Reports always use this current format; the version 1.1 checkbox has been removed. Version 1.1 cannot read these exports. Export uses the applied period and requires a valid period and any requested rates.
 
 The CSV contains personal entries in that period, original amounts and currencies, and category names in the current app language. It is suitable for family import on another phone. For a copy of all personal transactions, use the separate personal backup action.
 
@@ -82,7 +92,7 @@ The remaining amount is `max(target − already saved, 0)`. With a positive aver
 
 The screen explains when there are no completed months, or when the average surplus is zero or negative and no finish time can be estimated. If the saved amount reaches the target, it shows **Goal reached**. The estimate assumes the past average continues.
 
-After changing the main currency, the app can convert the saved target and saved amount using the forecast-period rate for the old goal currency. Supply requested rates. If conversion cannot be calculated (for example, no completed forecast period exists), follow the prompt to re-enter both amounts in the new currency and **Save goal**.
+After changing the main currency, the app automatically converts and saves the target and saved amount when all required rates match the forecast period and new currency. Missing rates are requested; the original goal remains until they are supplied. If conversion cannot be calculated (for example, no completed forecast period exists or the converted amount is invalid), re-enter both amounts in the new currency and save the goal.
 
 ## App protection
 
@@ -129,7 +139,7 @@ owner,record_id,date,category,income,expense,currency,comment
 | `currency` | Original `USD`, `EUR`, `RUB`, or `BYN`, uppercase. |
 | `comment` | Optional income comment, up to 150 Unicode code points. Empty for expenses. Quoting protects commas and line breaks. |
 
-Family import and personal restore also accept the old seven-column header without `comment`; those rows have an empty comment. The **For version 1.1** report export writes exactly seven columns and omits comments. Personal backups always use eight columns so comments are preserved.
+Family import and personal restore also accept the old seven-column header without `comment`; those rows have an empty comment. Report export always writes eight columns with comments. Version 1.1 cannot read current exports. Personal backups always use eight columns so comments are preserved.
 
 Amounts must be representable to two decimal places. Fields with commas, quotes, or line breaks are quoted, and embedded quotes doubled. Use app exports where possible; spreadsheet tools can change dates, separators, encoding, or identifiers. Check these fields if an import fails. CSV files are readable financial data; share them only with intended recipients.
 

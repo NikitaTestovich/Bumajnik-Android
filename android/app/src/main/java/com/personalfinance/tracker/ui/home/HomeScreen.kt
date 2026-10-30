@@ -1,5 +1,12 @@
 package com.personalfinance.tracker.ui.home
 
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalConfiguration
+import com.personalfinance.tracker.ui.theme.LocalAppTheme
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,12 +17,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import com.personalfinance.tracker.ui.theme.FinanceButton as Button
+import com.personalfinance.tracker.ui.theme.FinanceCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import com.personalfinance.tracker.ui.theme.FinanceOutlinedButton as OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,11 +52,12 @@ import com.personalfinance.tracker.domain.time.FinanceDateFormat
 import com.personalfinance.tracker.domain.money.ExchangeRateService
 import com.personalfinance.tracker.domain.summary.SummaryService
 import com.personalfinance.tracker.ui.summary.ExchangeRatePromptDialog
-import com.personalfinance.tracker.ui.theme.FinancePalette
+import com.personalfinance.tracker.ui.theme.financeColors
 import java.math.BigDecimal
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
+import com.personalfinance.tracker.domain.goal.GoalProgress
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     onAddIncome: () -> Unit,
@@ -57,6 +65,8 @@ fun HomeScreen(
     onAllOperations: () -> Unit,
     onOpenGoal: () -> Unit,
 ) {
+    val theme = LocalAppTheme.current
+    val paired = theme.id in listOf(6,8) && LocalDensity.current.fontScale < 1.3f && LocalConfiguration.current.screenWidthDp >= 360
     val context = LocalContext.current
     val container = remember { (context.applicationContext as FinanceApplication).container }
     val repository = container.financeRepository
@@ -89,6 +99,10 @@ fun HomeScreen(
     var state by remember(baseCurrency) { mutableStateOf<HomeUiState?>(null) }
     var showRateDialog by remember { mutableStateOf(false) }
 
+    val visibleLayout = layout.filter { it.visible }
+    val pairedBlocks = if (paired) visibleLayout.map { it.id }.windowed(2)
+        .filter { it.toSet() == setOf(HomeBlock.GOAL, HomeBlock.LATEST) }
+        .flatten().toSet() else emptySet()
     val financialVisible = layout.any { it.visible && it.id in setOf(HomeBlock.SUMMARY, HomeBlock.EXPENSES) }
     LaunchedEffect(profile, transactions, categories, goal, savedRates, range, resumeVersion, financialVisible) {
         val currentProfile = profile ?: return@LaunchedEffect
@@ -96,7 +110,7 @@ fun HomeScreen(
         showRateDialog = financialVisible && state?.missingCurrencies?.isNotEmpty() == true
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -105,7 +119,9 @@ fun HomeScreen(
             if (layout.none { it.visible }) Text(stringResource(R.string.home_all_hidden))
             val current = state
             val summary = current?.summary
-            layout.filter { it.visible }.forEach { setting ->
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
+            visibleLayout.forEach { setting ->
+            Column(Modifier.fillMaxWidth(if (setting.id in pairedBlocks) .48f else 1f).testTag("home_block_${setting.id.key}")) {
             when (setting.id) {
             HomeBlock.SUMMARY -> {
             if (current == null || summary == null) {
@@ -119,27 +135,29 @@ fun HomeScreen(
             } else {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = if(theme.id in listOf(2,9)) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
+                    border = if(theme.id == 6) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null,
+                    colors = CardDefaults.cardColors(containerColor = when(theme.id) { 8 -> MaterialTheme.colorScheme.primary; 2,9 -> MaterialTheme.colorScheme.background; else -> MaterialTheme.colorScheme.surface }, contentColor = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface),
                 ) {
-                    Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Column(modifier = Modifier.padding(horizontal = if(theme.id in listOf(2,9)) 0.dp else 24.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(if(theme.id == 2) 12.dp else 20.dp)) {
                         Text(
                             stringResource(R.string.home_balance),
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.primary,
                         )
                         Text(
                             formatSignedBalance(summary.balance.minorUnits, summary.balance.currencyCode),
                             style = MaterialTheme.typography.displaySmall,
                             color = when {
-                                summary.balance.minorUnits > 0 -> FinancePalette.income
-                                summary.balance.minorUnits < 0 -> FinancePalette.expense
-                                else -> MaterialTheme.colorScheme.onSurface
+                                summary.balance.minorUnits > 0 -> if(theme.id == 8) Color(0xFFD4F9BA) else financeColors.income
+                                summary.balance.minorUnits < 0 -> if(theme.id == 8) Color(0xFFFFDAD6) else financeColors.expense
+                                else -> if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface
                             },
                         )
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Surface(
-                                color = FinancePalette.income.copy(alpha = 0.06f),
+                                color = if(theme.id == 8) MaterialTheme.colorScheme.primary else if(theme.id == 2) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                contentColor = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface,
                                 shape = RoundedCornerShape(12.dp),
                             ) {
                                 Text(
@@ -149,7 +167,8 @@ fun HomeScreen(
                                 )
                             }
                             Surface(
-                                color = FinancePalette.expense.copy(alpha = 0.06f),
+                                color = if(theme.id == 8) MaterialTheme.colorScheme.primary else if(theme.id == 2) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                contentColor = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface,
                                 shape = RoundedCornerShape(12.dp),
                             ) {
                                 Text(
@@ -166,26 +185,26 @@ fun HomeScreen(
             }
             HomeBlock.QUICK_ACTIONS -> {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(onClick = onAddIncome, modifier = Modifier.weight(1f)) {
+                Button(onClick = onAddIncome, modifier = Modifier.weight(1f), colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = if(theme.id == 8) financeColors.latest else MaterialTheme.colorScheme.primary, contentColor = if(theme.id == 8) financeColors.latestInk else MaterialTheme.colorScheme.onPrimary)) {
                     Text(stringResource(R.string.home_add_income))
                 }
-                OutlinedButton(onClick = onAddExpense, modifier = Modifier.weight(1f)) {
+                OutlinedButton(onClick = onAddExpense, modifier = Modifier.weight(1f), colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(containerColor = if(theme.id == 8) financeColors.goal else Color.Transparent, contentColor = if(theme.id == 8) financeColors.goalInk else MaterialTheme.colorScheme.primary)) {
                     Text(stringResource(R.string.home_add_expense))
                 }
             }
 
             }
             HomeBlock.GOAL -> {
-            Card(modifier = Modifier.fillMaxWidth()) {
+            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = financeColors.goal, contentColor = financeColors.goalInk)) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.home_goal), style = MaterialTheme.typography.titleMedium)
                     val currentGoal = current?.goal
                     if (currentGoal == null) {
                         Text(stringResource(R.string.home_no_goal))
                     } else {
-                        val progress = (currentGoal.saved.minorUnits.toFloat() / currentGoal.target.minorUnits)
-                            .coerceIn(0f, 1f)
-                        val progressLabel = stringResource(R.string.home_goal_progress, (progress * 100).roundToInt())
+                        val goalProgress = GoalProgress.calculate(currentGoal.target.minorUnits, currentGoal.saved.minorUnits)
+                        val progress = goalProgress.segmentFractions.sum() / 4f
+                        val progressLabel = stringResource(R.string.home_goal_progress, goalProgress.percent)
                         Text(
                             stringResource(
                                 R.string.goal_progress,
@@ -193,15 +212,15 @@ fun HomeScreen(
                                 formatAmount(currentGoal.target.minorUnits, currentGoal.target.currencyCode),
                             ),
                         )
-                        Text(progressLabel, style = MaterialTheme.typography.labelLarge, color = FinancePalette.accent)
+                        Text(progressLabel, style = MaterialTheme.typography.labelLarge, color = financeColors.goalInk)
                         LinearProgressIndicator(
                             progress = { progress },
                             modifier = Modifier.fillMaxWidth().height(8.dp).semantics { contentDescription = progressLabel },
-                            color = FinancePalette.accent,
-                            trackColor = FinancePalette.accent.copy(alpha = 0.12f),
+                            color = financeColors.goalInk,
+                            trackColor = financeColors.goalInk.copy(alpha = 0.12f),
                         )
                     }
-                    OutlinedButton(onClick = onOpenGoal, modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = onOpenGoal, modifier = Modifier.fillMaxWidth(), colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = financeColors.goalInk)) {
                         Text(stringResource(R.string.goal_open))
                     }
                 }
@@ -209,7 +228,7 @@ fun HomeScreen(
 
             }
             HomeBlock.LATEST -> {
-            Card(modifier = Modifier.fillMaxWidth()) {
+            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = financeColors.latest, contentColor = financeColors.latestInk)) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(stringResource(R.string.home_latest), style = MaterialTheme.typography.titleMedium)
                     val latest = current?.latestTransaction
@@ -230,6 +249,8 @@ fun HomeScreen(
 
             }
             HomeBlock.EXPENSES -> MonthlyExpensesWidget(current?.expenses.orEmpty(), baseCurrency, profile?.languageTag ?: "en", current == null || current.missingCurrencies.isNotEmpty(), { showRateDialog = true })
+            }
+            }
             }
             }
             OutlinedButton(onClick = onAllOperations, modifier = Modifier.fillMaxWidth()) {

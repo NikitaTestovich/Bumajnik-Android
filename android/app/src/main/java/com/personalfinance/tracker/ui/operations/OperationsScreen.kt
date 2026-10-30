@@ -6,15 +6,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
+import com.personalfinance.tracker.ui.theme.FinanceCard as Card
+import com.personalfinance.tracker.ui.theme.FinanceButton as Button
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -58,7 +60,8 @@ fun OperationsScreen(
     val repository = container.financeRepository
     val rateRepository = container.rateRepository
     val viewModel = remember(repository) { OperationsViewModel(repository) }
-    val selectedType by viewModel.selectedType.collectAsState()
+    val tabStore = (context.applicationContext as FinanceApplication).operationsTabStore
+    val selectedType by tabStore.selectedType.collectAsState()
     val pendingDeleteId by viewModel.pendingDeleteIdFlow.collectAsState()
     val profile by repository.observeProfile().collectAsState(initial = null)
     val transactions by remember(selectedType) { viewModel.transactions(selectedType) }
@@ -92,7 +95,7 @@ fun OperationsScreen(
         }
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Scaffold(
             bottomBar = {
                 Button(
@@ -108,17 +111,28 @@ fun OperationsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(stringResource(R.string.operations_title), style = MaterialTheme.typography.headlineMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = selectedType == TransactionType.EXPENSE,
-                        onClick = { viewModel.selectType(TransactionType.EXPENSE) },
-                        label = { Text(stringResource(R.string.operation_expenses)) },
-                    )
-                    FilterChip(
-                        selected = selectedType == TransactionType.INCOME,
-                        onClick = { viewModel.selectType(TransactionType.INCOME) },
-                        label = { Text(stringResource(R.string.operation_income)) },
-                    )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(TransactionType.EXPENSE, TransactionType.INCOME).forEach { type ->
+                        val selected = selectedType == type
+                        Surface(
+                            modifier = Modifier.weight(1f)
+                                .selectable(selected = selected, role = Role.Tab, onClick = { tabStore.select(type) }),
+                            shape = MaterialTheme.shapes.small,
+                            color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                            border = androidx.compose.foundation.BorderStroke(
+                                if (selected) 2.dp else 1.dp,
+                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                            ),
+                        ) {
+                            Text(
+                                stringResource(if (type == TransactionType.EXPENSE) R.string.operation_expenses else R.string.operation_income),
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 8.dp, vertical = 12.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                        }
+                    }
                 }
                 Text(stringResource(R.string.operation_month_total), style = MaterialTheme.typography.titleMedium)
                 val currentSummary = summary

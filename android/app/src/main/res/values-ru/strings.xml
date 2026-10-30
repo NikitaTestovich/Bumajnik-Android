@@ -155,7 +155,7 @@
     <string name="chart_category_breakdown">Диаграмма расходов по категориям</string>
     <string name="chart_value_description">%1$s, %2$s: %3$s</string>
     <string name="chart_category_description">%1$s: %2$s, %3$s</string>
-    <string name="home_goal_progress">Прогресс цели: %1$d%%</string>
+    <string name="home_goal_progress">Прогресс цели: %1$s%%</string>
     <string name="family_balance">Баланс семьи</string>
     <string name="family_chart_scroll">Прокрутите диаграмму по горизонтали, чтобы сравнить всех членов семьи.</string>
     <string name="family_imported_members">Импортированные члены семьи</string>
@@ -193,12 +193,13 @@
     <string name="security_storage_error">Не удалось прочитать настройки защиты. Нажмите «Забыли код приложения?», чтобы восстановить доступ через защиту телефона.</string>
     <string name="operation_comment">Комментарий (необязательно)</string>
     <string name="operation_error_comment">Комментарий должен содержать не более 150 символов.</string>
-    <string name="reports_legacy_csv">Для версии 1.1 — без комментариев</string>
     <string name="reports_export_request_lost">Выберите период отчёта и повторите экспорт.</string>
     <string name="category_edit">Изменить</string>
     <string name="category_delete">Удалить категорию</string>
     <string name="category_delete_message">Убрать категорию из новых расходов? В существующих записях и отчётах она сохранится.</string>
     <string name="category_choose_icon">Выберите иконку</string>
+    <string name="category_icon_hint">Для категории подойдёт любая иконка.</string>
+    <string name="category_icon_labels">Показывать подписи иконок</string>
     <string name="category_invalid_name">Введите название, не занятое другой активной категорией.</string>
     <string name="category_none_active">Перед добавлением нового расхода создайте категорию в профиле.</string>
     <string-array name="category_icon_names">
@@ -219,4 +220,12 @@
     <string name="monthly_expenses_total">Всего</string>
     <string name="monthly_expenses_rates">Укажите курс для расчёта расходов</string>
     <string name="monthly_expenses_empty">В этом месяце расходов пока нет</string>
+    <string name="themes_title">Темы</string>
+    <string name="theme_journal">Финансовый журнал</string>
+    <string name="theme_graphite">Электрический графит</string>
+    <string name="theme_mosaic">Цветная мозаика</string>
+    <string name="theme_analytics">Ночная аналитика</string>
+    <string name="goal_percent">%1$s%%</string>
+    <string name="goal_remaining">Осталось: %1$s %2$s</string>
+    <string name="goal_next_milestone">До этапа %1$d%%: %2$s %3$s</string>
 </resources>

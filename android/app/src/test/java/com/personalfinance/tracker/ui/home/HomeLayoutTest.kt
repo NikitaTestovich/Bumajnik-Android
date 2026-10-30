@@ -9,7 +9,7 @@ class HomeLayoutTest {
         assertEquals(HomeBlock.LATEST, result.first().id)
         assertFalse(result.first().visible)
         assertEquals(5, result.size)
-        assertFalse(result.single { it.id == HomeBlock.EXPENSES }.visible)
+        assertTrue(result.single { it.id == HomeBlock.EXPENSES }.visible)
     }
     @Test fun movePreservesVisibilityAndClampsBoundaries() {
         val initial = normalizeHomeLayout(emptyList())
@@ -21,6 +21,11 @@ class HomeLayoutTest {
     @Test fun allHiddenRemainsHiddenAndResetRestoresDefaults() {
         val hidden = normalizeHomeLayout(emptyList()).map { it.copy(visible = false) }
         assertTrue(normalizeHomeLayout(hidden).none { it.visible })
-        assertEquals(4, normalizeHomeLayout(emptyList()).count { it.visible })
+        assertEquals(5, normalizeHomeLayout(emptyList()).count { it.visible })
+    }
+    @Test fun explicitlyHiddenExpensesAndSavedOrderSurviveNormalization() {
+        val saved = listOf(HomeBlockSetting(HomeBlock.EXPENSES, false), HomeBlockSetting(HomeBlock.GOAL, true))
+        assertEquals(saved, normalizeHomeLayout(saved).take(2))
+        assertFalse(normalizeHomeLayout(saved).first().visible)
     }
 }

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.17 — 2026-10-29
+
+- Monthly expenses is visible for fresh/missing/reset Home settings; saved visibility and order, including a previously hidden widget, remain. Users can hide it.
+- Removed the version 1.1 report checkbox. Reports always export eight columns with income comments, including after picker recreation. Seven-column import remains; version 1.1 cannot read current exports.
+
+- Four persistent app-wide themes with previews and accessible controls; Night analytics uses labelled horizontal breakdown bars.
+- Four-segment savings goal with partial fill, safe milestone arithmetic and factual progress independent of forecast exchange rates.
+- Persistent full-width Operations tabs and a persistent category icon-label switch.
+- Preserve enabled biometric preference when saving settings during sensor unavailability; the personal-phone update symptom remains unproven.
+- Version code 4, unchanged package, schema and compatible signer. See [release evidence](docs/testing-1.17.md) for checks and limitations.
+
 ## 1.15 — 2026-10-28
 
 - Biometric-first unlock with automatic Android prompt, code fallback, explicit retry and stale-response protection.

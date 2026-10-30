@@ -31,17 +31,24 @@ class CategoryAcceptanceTest {
     private val app get() = instrumentation.targetContext.applicationContext as FinanceApplication
     private val repository get() = app.container.financeRepository
     private var prepared = false
+    private var originalTab = TransactionType.EXPENSE
     private val expenseId = UUID.randomUUID().toString()
     @Before fun prepare() = runBlocking {
         val emulated = android.os.ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("getprop ro.kernel.qemu")).use { it.readBytes().toString(Charsets.UTF_8).trim() }
         check(emulated == "1") { "Synthetic category tests require disposable emulator" }
         prepared = true
+        originalTab = app.operationsTabStore.selectedType.value
+        app.operationsTabStore.select(TransactionType.EXPENSE)
         app.container.database.clearAllTables()
         repository.saveProfile(UserProfile("Category Demo", "en", "USD", true))
         repository.saveCategory(Category("groceries", "Продукты", "Groceries", false, iconKey = "groceries"))
         repository.saveTransaction(FinanceTransaction(expenseId, "Category Demo", TransactionType.EXPENSE, LocalDate.now(), Money(1500, "USD"), "groceries"))
     }
-    @After fun cleanup() { if (prepared) app.container.database.clearAllTables() }
+    @After fun cleanup() {
+        if (!prepared) return
+        app.operationsTabStore.select(originalTab)
+        app.container.database.clearAllTables()
+    }
 
     @Composable private fun Profile() {
         val categories by repository.observeCategories().collectAsState(initial = emptyList())

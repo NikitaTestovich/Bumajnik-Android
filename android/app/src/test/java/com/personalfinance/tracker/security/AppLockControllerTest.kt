@@ -62,6 +62,29 @@ class AppLockControllerTest {
         assertEquals(LockResult.SUCCESS, lock.unlock("1234"))
         assertFalse(lock.state.value.locked)
     }
+    @Test fun unavailableSensorFallsBackToCodeWithoutErasingPreferenceAndCanRecover() = runBlocking {
+        val store = MemoryStorage()
+        val lock = AppLockController(store, { 1000 }, { 1000 })
+        lock.enable("1234", true, true)
+        lock.lockNow()
+        lock.biometricEntry.beginSession(lock.generation, lock.state.value.biometrics, false)
+        assertEquals(BiometricEntryPolicy.Phase.CODE, lock.biometricEntry.phase.value)
+        assertNull(lock.biometricEntry.beginAttempt())
+        assertTrue(lock.state.value.locked)
+        assertEquals(LockResult.WRONG_CODE, lock.unlock("0000"))
+        assertTrue(lock.state.value.locked)
+        assertEquals(LockResult.SUCCESS, lock.unlock("1234"))
+        val restarted = AppLockController(store, { 1000 }, { 1000 })
+        assertTrue(restarted.state.value.biometrics)
+        restarted.biometricEntry.beginSession(restarted.generation, restarted.state.value.biometrics, true)
+        val attempt = restarted.biometricEntry.beginAttempt()!!
+        assertEquals(LockResult.SUCCESS, restarted.biometricSucceeded(restarted.generation, attempt))
+        assertEquals(LockResult.SUCCESS, restarted.recoverAfterDeviceCredential(restarted.generation))
+        assertFalse(restarted.state.value.enabled)
+        assertFalse(restarted.state.value.biometrics)
+        assertNull(store.record)
+    }
+
     private class MemoryStorage : LockStorage {
         var record: StoredLock? = null
         var afterWrite: () -> Unit = {}

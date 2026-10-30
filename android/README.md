@@ -1,5 +1,9 @@
 # Finance Tracker for Android
 
+## Version 1.17
+
+Version 1.17 (code 4) adds four app-wide themes, segmented savings progress, remembered Operations tabs and optional icon labels. It preserves enabled biometric preference during temporary unavailability when settings are saved. Package, schema 3 and debug signer remain compatible. Install the matching APK with `adb -s <disposable-emulator-serial> install -r` to retain data. `:app:archiveDebugApk` builds the ignored root ZIP. Full verification, upgrade evidence and remaining device limitations: [release report](../docs/testing-1.17.md).
+
 ## Version 1.15 verification (2026-10-28)
 
 Version 1.15 uses `versionCode=3` and a non-destructive database migration to schema 3. It adds biometric-first entry, optional income comments and compatible CSV formats, editable/archivable categories with bundled icons, saved Home customization and an optional monthly expense doughnut. The package ID remains `com.personalfinance.tracker`; install the matching debug APK with `adb install -r` to retain local records. The generated APK is `app/build/outputs/apk/debug/app-debug.apk`; `:app:archiveDebugApk` refreshes the local root `AppAndroidBudjets.zip` containing the same APK. These outputs and signing keys are excluded from Git.
@@ -84,3 +88,7 @@ On 2026-10-21, `:app:testDebugUnitTest` passed all 60 JVM tests. The Android ins
 On 2026-10-22, the visual redesign uses gray-blue (#52697F), teal (#247A75), neutral cards, a pale teal navigation indicator, and accessible text colors. Home includes monthly totals and goal progress; reports and family use comparison columns and category bars. All 74 JVM tests passed, including a regression check for Material 3 container colors. Both app and test APKs compiled, and the complete FinanceTrackerAcceptanceTest passed 18 tests on emulator-5554. The archive task refreshes the root AppAndroidBudjets.zip with AppAndroidBudjets/app-debug.apk. Physical-device testing was not repeated for this redesign.
 
 The version 1.15 regression suite covers unchanged category translations, selected chart text at 1.5x font scale, zero-conversion expense cards, and an opt-in seed/force-stop/verify Home layout persistence test (HomeProcessRestartTest).
+
+## Version 1.17 Home and export update
+
+Monthly expenses is visible for new installations, missing preference entries and Restore defaults. Users can hide it; saved visibility (including previously hidden expenses) and order are retained. Reports always export the current eight-column CSV including income comments; the version 1.1 checkbox is removed. Version 1.1 cannot read these exports. Seven-column import remains supported. A pending export retains its chosen period through recreation and writes current format.

@@ -1,4 +1,4 @@
-# Optional app protection — version 1.15
+# Optional app protection — version 1.17
 
 Protection defaults off for new or unprotected installations; updates preserve the existing setting. A device screen lock must already be configured. The user sets and confirms a masked application code of 4–10 characters; enrolled device biometrics may be enabled as an alternative unlock method.
 
@@ -9,3 +9,7 @@ Five incorrect code attempts cause a 30-second pause. Restarting the app or chan
 The code is never stored in plaintext. A salted, slow verifier is held in app-private storage protected with Android Keystore. Biometric matching takes place in Android's system prompt. Neither the code verifier nor protection preferences are included in CSV exports. This feature is an application access lock; it does not encrypt exported CSV files or the finance database.
 
 Automated coverage includes code rules, retry policy, lock lifecycle, settings changes, cancellation, blocked navigation and actual Android biometric prompts on an enrolled emulator. Real system-PIN recovery initially timed out because the test sent text/key events to the Android 17 Compose keypad without entering digits. After driving the actual system keypad through accessibility actions, all six app-lock acceptance tests passed on 29 October 2026, including recovery with financial records retained. See [version 1.15 verification](../testing-1.15.md) for results and limits. The connected physical phone displayed the automatic prompt after the user enabled biometrics; a successful physical match and failure/recovery matrix have not been independently confirmed.
+
+## Version 1.17 biometric availability
+
+Saving settings preserves an enabled biometric preference during temporary sensor unavailability. Code fallback remains locked until successful authentication; explicit disabling is supported. The reproduced settings-save defect does not prove the cause of the reported personal-phone upgrade symptom. See [verification](../testing-1.17.md).

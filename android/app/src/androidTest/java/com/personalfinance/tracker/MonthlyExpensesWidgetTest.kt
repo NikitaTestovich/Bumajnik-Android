@@ -107,7 +107,7 @@ class MonthlyExpensesWidgetTest {
         ui.onNodeWithTag("expense_slice_tiny").performClick().assertIsSelected()
         ui.onNodeWithTag("expense_center").assertTextEquals("0.00 USD")
     }
-    @Test fun enableHiddenWidgetThroughHomeSettings() {
+    @Test fun defaultWidgetCanBeHiddenAndResetRestoresIt() {
         val app = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as FinanceApplication
         val store = HomeLayoutStore(app)
         runBlocking { app.container.financeRepository.saveProfile(UserProfile("Widget Demo", "en", "USD", true)) }
@@ -115,12 +115,31 @@ class MonthlyExpensesWidgetTest {
         try {
             ui.setContent { FinanceTheme { HomeScreen({}, {}, {}, {}) } }
             ui.waitUntil(10_000) { ui.onAllNodesWithTag("home_customize").fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
-            ui.onNodeWithTag("monthly_expenses").assertDoesNotExist()
+            ui.onNodeWithTag("monthly_expenses").performScrollTo().assertIsDisplayed()
             ui.onNodeWithTag("home_customize").performClick()
             ui.onNodeWithTag("home_settings_list").performScrollToNode(hasTestTag("home_visible_expenses"))
             ui.onNodeWithTag("home_visible_expenses").performClick()
             ui.onNodeWithText(app.getString(R.string.home_done)).performClick()
+            ui.onNodeWithTag("monthly_expenses").assertDoesNotExist()
+            assertFalse(HomeLayoutStore(app).layout.value.single { it.id == HomeBlock.EXPENSES }.visible)
+            ui.onNodeWithTag("home_customize").performClick()
+            ui.onNodeWithText(app.getString(R.string.home_reset)).performClick()
+            ui.onAllNodesWithText(app.getString(R.string.home_reset)).onLast().performClick()
+            ui.onNodeWithText(app.getString(R.string.home_done)).performClick()
             ui.onNodeWithTag("monthly_expenses").performScrollTo().assertIsDisplayed()
+        } finally { store.reset() }
+    }
+    @Test fun savedHiddenWidgetAndOrderSurviveOpeningHome() {
+        val app = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as FinanceApplication
+        val store = HomeLayoutStore(app)
+        val saved = normalizeHomeLayout(listOf(HomeBlockSetting(HomeBlock.EXPENSES, false), HomeBlockSetting(HomeBlock.LATEST, true)))
+        store.save(saved)
+        runBlocking { app.container.financeRepository.saveProfile(UserProfile("Widget Demo", "en", "USD", true)) }
+        try {
+            ui.setContent { FinanceTheme { HomeScreen({}, {}, {}, {}) } }
+            ui.waitUntil(10_000) { ui.onAllNodesWithTag("home_customize").fetchSemanticsNodes(atLeastOneRootRequired=false).isNotEmpty() }
+            ui.onNodeWithTag("monthly_expenses").assertDoesNotExist()
+            assertEquals(saved, HomeLayoutStore(app).layout.value)
         } finally { store.reset() }
     }
 }

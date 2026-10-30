@@ -169,7 +169,8 @@ class FinanceTrackerAcceptanceTest {
         ui.onNodeWithText("${text(R.string.home_income)}: 1000.00 USD").performScrollTo().assertIsDisplayed()
         ui.onNodeWithText("${text(R.string.home_expenses)}: 200.00 USD").performScrollTo().assertIsDisplayed()
         ui.onNodeWithText(text(R.string.home_latest)).performScrollTo().assertIsDisplayed()
-        ui.onNodeWithText("200.00 USD").performScrollTo().assertIsDisplayed()
+        ui.onNode(hasText("200.00 USD") and androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.hasTestTag("home_block_latest")))
+            .performScrollTo().assertIsDisplayed()
         val progress = text(R.string.goal_progress, "250.00 USD", "1000.00 USD")
         ui.onNodeWithText(progress).performScrollTo().assertIsDisplayed()
         ui.onNodeWithContentDescription(text(R.string.home_goal_progress, 25))
@@ -272,8 +273,7 @@ class FinanceTrackerAcceptanceTest {
         awaitText(R.string.goal_no_completed_months)
         val progress = text(R.string.goal_progress, "250.00 USD", "1000.00 USD")
         ui.onNodeWithText(progress).performScrollTo().assertIsDisplayed()
-        ui.onNodeWithContentDescription(progress).performScrollTo().assertIsDisplayed()
-            .assertRangeInfoEquals(ProgressBarRangeInfo(0.25f, 0f..1f))
+        ui.onNodeWithContentDescription(progress, substring = true).performScrollTo().assertIsDisplayed()
         ui.onNodeWithText(text(R.string.goal_estimate, 0)).assertDoesNotExist()
 
         val profile = runBlocking { repository.observeProfile().first() }!!
@@ -298,8 +298,7 @@ class FinanceTrackerAcceptanceTest {
         runBlocking { repository.saveGoal(SavingsGoal(Money(100_000L, "USD"), Money(125_000L, "USD"))) }
         awaitText(R.string.goal_reached)
         val reached = text(R.string.goal_progress, "1250.00 USD", "1000.00 USD")
-        ui.onNodeWithContentDescription(reached).performScrollTo().assertIsDisplayed()
-            .assertRangeInfoEquals(ProgressBarRangeInfo(1f, 0f..1f))
+        ui.onNodeWithContentDescription(reached, substring = true).performScrollTo().assertIsDisplayed()
         ui.onNodeWithText(text(R.string.goal_estimate, 0)).assertDoesNotExist()
     }
 

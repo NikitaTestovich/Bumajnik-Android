@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.ContextWrapper
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import com.personalfinance.tracker.ui.theme.FinanceOutlinedButton as OutlinedButton
+import com.personalfinance.tracker.ui.theme.FinanceButton as Button
+import com.personalfinance.tracker.ui.theme.FinanceCard as Card
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -42,8 +45,8 @@ fun SecuritySettings() {
         scope.launch {
             val result = when {
                 disable -> controller.disable(currentCode)
-                !state.enabled -> controller.enable(newCode, useBiometrics && biometricAvailable, activity.isDeviceSecure())
-                else -> controller.update(currentCode, newCode.takeIf { it.isNotEmpty() }, useBiometrics && biometricAvailable)
+                !state.enabled -> controller.enable(newCode, useBiometrics, activity.isDeviceSecure())
+                else -> controller.update(currentCode, newCode.takeIf { it.isNotEmpty() }, useBiometrics)
             }
             status = result.messageResource() ?: if (disable) R.string.security_disabled_done else R.string.security_saved
             currentCode = ""
@@ -64,7 +67,8 @@ fun SecuritySettings() {
             if (biometricAvailable || state.biometrics) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(stringResource(R.string.security_biometrics), Modifier.weight(1f))
-                    Switch(useBiometrics, { useBiometrics = it }, enabled = !busy && biometricAvailable)
+                    Switch(useBiometrics, { useBiometrics = it }, enabled = !busy && (biometricAvailable || useBiometrics))
+                    // Sensor availability controls prompting, never the persisted choice.
                 }
             } else Text(stringResource(R.string.security_biometrics_unavailable), style = MaterialTheme.typography.bodySmall)
             if (state.retrySeconds > 0) Text(stringResource(R.string.security_wait, state.retrySeconds))

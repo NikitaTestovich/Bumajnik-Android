@@ -19,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.personalfinance.tracker.ui.theme.LocalAppTheme
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -29,7 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import com.personalfinance.tracker.R
-import com.personalfinance.tracker.ui.theme.FinancePalette
+import com.personalfinance.tracker.ui.theme.financeColors
 import java.math.BigDecimal
 import java.text.NumberFormat
 
@@ -49,6 +51,22 @@ object FinanceCharts {
     fun GroupedColumnChart(groups: List<FinanceBarGroup>, modifier: Modifier = Modifier, barWidth: Dp = 80.dp) {
         val maximum = groups.flatMap { it.bars }.maxOfOrNull { it.valueMinorUnits } ?: 0L
         val chartDescription = stringResource(R.string.chart_income_expense_comparison)
+        if (LocalAppTheme.current.id == 9) {
+            Column(modifier.fillMaxWidth().testTag("comparison_horizontal"), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                groups.forEach { group ->
+                    Text(group.label, style = MaterialTheme.typography.titleMedium)
+                    group.bars.forEach { bar ->
+                        val amount = formatChartAmount(bar.valueMinorUnits)
+                        val description = stringResource(R.string.chart_value_description, group.label, bar.label, amount)
+                        Column(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description }, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("${bar.label}: $amount", style = MaterialTheme.typography.bodyMedium)
+                            LinearProgressIndicator(progress = { normalizedBarFraction(bar.valueMinorUnits, maximum) }, modifier = Modifier.fillMaxWidth().height(20.dp), color = bar.color, trackColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+                        }
+                    }
+                }
+            }
+            return
+        }
         Row(
             modifier = modifier
                 .fillMaxWidth()
@@ -126,8 +144,8 @@ object FinanceCharts {
                     LinearProgressIndicator(
                         progress = { normalizedBarFraction(item.valueMinorUnits, maximum) },
                         modifier = Modifier.fillMaxWidth().height(8.dp),
-                        color = FinancePalette.accent,
-                        trackColor = FinancePalette.accent.copy(alpha = 0.12f),
+                        color = MaterialTheme.colorScheme.secondary,
+                        trackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
                     )
                     Text(shareLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

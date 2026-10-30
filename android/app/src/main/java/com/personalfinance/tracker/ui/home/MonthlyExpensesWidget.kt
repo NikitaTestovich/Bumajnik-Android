@@ -7,11 +7,16 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import com.personalfinance.tracker.ui.theme.FinanceOutlinedButton as OutlinedButton
+import com.personalfinance.tracker.ui.theme.FinanceCard as Card
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import com.personalfinance.tracker.ui.theme.LocalAppTheme
+import com.personalfinance.tracker.ui.theme.financeColors
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.testTag
@@ -31,11 +36,11 @@ import com.personalfinance.tracker.ui.charts.ExpenseSlice
 import java.math.BigDecimal
 import kotlin.math.*
 
-private val sliceColors = listOf(Color(0xFF527B9C), Color(0xFF438D87), Color(0xFFC28C57), Color(0xFF8074A5), Color(0xFFAB657A), Color(0xFF78944E))
-internal fun expenseColor(id: String?): Color = sliceColors[Math.floorMod((id ?: "uncategorized").hashCode(), sliceColors.size)]
-
 @Composable
 fun MonthlyExpensesWidget(slices: List<ExpenseSlice>, currency: String, languageTag: String, missingRates: Boolean = false, onRates: () -> Unit = {}) {
+    val theme = LocalAppTheme.current
+    val chartColors = financeColors.chart
+    fun expenseColor(id: String?) = chartColors[Math.floorMod((id ?: "uncategorized").hashCode(), chartColors.size)]
     val heading = stringResource(R.string.monthly_expenses_title)
     val totalLabel = stringResource(R.string.monthly_expenses_total)
     var selected by remember { mutableStateOf<String?>(null) }
@@ -51,7 +56,7 @@ fun MonthlyExpensesWidget(slices: List<ExpenseSlice>, currency: String, language
                 missingRates -> { Text(stringResource(R.string.monthly_expenses_rates)); OutlinedButton(onRates) { Text(stringResource(R.string.exchange_rate_open)) } }
                 slices.isEmpty() -> Text(stringResource(R.string.monthly_expenses_empty), Modifier.testTag("expenses_empty"))
                 else -> {
-                    Box(Modifier.fillMaxWidth().height(260.dp), contentAlignment = Alignment.Center) {
+                    if (theme.id != 9) Box(Modifier.fillMaxWidth().height(260.dp), contentAlignment = Alignment.Center) {
                         Canvas(Modifier.size(250.dp).testTag("expense_ring").semantics { contentDescription = "$heading: ${amount(total)}" }.pointerInput(slices) {
                             detectTapGestures { point ->
                                 val dx = point.x - size.width / 2f
@@ -74,7 +79,7 @@ fun MonthlyExpensesWidget(slices: List<ExpenseSlice>, currency: String, language
                                 if (slice.share >= .075) {
                                     val radians = Math.toRadians((angle + sweep / 2).toDouble())
                                     val radius = (size.minDimension-width)/2
-                                    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = android.graphics.Color.WHITE; textAlign = android.graphics.Paint.Align.CENTER; textSize = 13.dp.toPx(); isFakeBoldText = true }
+                                    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = (if (theme.dark) Color(0xFF181818) else Color.White).toArgb(); textAlign = android.graphics.Paint.Align.CENTER; textSize = 13.dp.toPx(); isFakeBoldText = true }
                                     drawContext.canvas.nativeCanvas.drawText("${(slice.share*100).roundToInt()}%", center.x + cos(radians).toFloat()*radius, center.y + sin(radians).toFloat()*radius + paint.textSize/3, paint)
                                 }
                                 angle += sweep
@@ -85,13 +90,22 @@ fun MonthlyExpensesWidget(slices: List<ExpenseSlice>, currency: String, language
                             BasicText(amount(chosen?.minorUnits ?: total), style = MaterialTheme.typography.titleMedium.copy(color = LocalContentColor.current), modifier = Modifier.testTag("expense_center"), autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MaterialTheme.typography.titleMedium.fontSize), maxLines = 1)
                         }
                     }
+                    if (theme.id == 9) Column(Modifier.fillMaxWidth().testTag("expense_horizontal"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(chosen?.name ?: totalLabel, style = MaterialTheme.typography.labelLarge, modifier = Modifier.testTag("expense_center_name"))
+                        Text(amount(chosen?.minorUnits ?: total), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.testTag("expense_center"))
+                        Row(Modifier.fillMaxWidth().height(32.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            slices.filter { it.share > 0 }.forEach { slice ->
+                                Surface(Modifier.weight(slice.share.toFloat()).fillMaxHeight(), color = expenseColor(slice.categoryId), shape = RoundedCornerShape(4.dp)) {}
+                            }
+                        }
+                    }
                     slices.forEach { slice ->
                         val active = chosen?.categoryId == slice.categoryId && hasSelection
                         OutlinedCard(Modifier.fillMaxWidth().testTag("expense_slice_${slice.categoryId}").semantics(mergeDescendants = true) { this.selected = active; contentDescription = "${slice.name}, ${amount(slice.minorUnits)}, ${(slice.share*100).roundToInt()}%" }.clickable { if (hasSelection && selected == slice.categoryId) hasSelection = false else { selected = slice.categoryId; hasSelection = true } }, shape = RoundedCornerShape(16.dp), border = BorderStroke(if (active) 2.dp else 1.dp, if (active) expenseColor(slice.categoryId) else MaterialTheme.colorScheme.outlineVariant)) {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) { CategoryIcon(slice.iconKey, Modifier.size(24.dp)); Text(slice.name, Modifier.weight(1f)); Text("${(slice.share*100).roundToInt()}%") }
                                 Text(amount(slice.minorUnits), style = MaterialTheme.typography.titleMedium)
-                                LinearProgressIndicator(progress = { slice.share.toFloat() }, modifier = Modifier.fillMaxWidth(), color = expenseColor(slice.categoryId))
+                                LinearProgressIndicator(progress = { slice.share.toFloat() }, modifier = Modifier.fillMaxWidth().height(if (theme.id == 9) 8.dp else 4.dp), color = expenseColor(slice.categoryId), trackColor = MaterialTheme.colorScheme.surfaceContainerHighest)
                             }
                         }
                     }
