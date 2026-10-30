@@ -30,6 +30,7 @@ class BiometricPromptAcceptanceTest {
     @Before fun prepare() {
         Assume.assumeTrue("Requires the external emulator finger driver",
             InstrumentationRegistry.getArguments().getString("emulatorFingerDriver") == "true")
+        check(android.os.Build.HARDWARE in listOf("ranchu", "goldfish")) { "Disposable emulator required" }
         runBlocking {
             app.appLock.recoverAfterDeviceCredential(app.appLock.generation)
             app.container.financeRepository.saveProfile(UserProfile("Biometric Demo", "en", "USD", true))

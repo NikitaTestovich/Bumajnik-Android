@@ -10,12 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import com.personalfinance.tracker.ui.theme.FinanceButton as Button
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
+import com.personalfinance.tracker.ui.theme.FinanceCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import com.personalfinance.tracker.ui.theme.FinanceOutlinedButton as OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,7 +45,7 @@ import com.personalfinance.tracker.ui.charts.CategoryBreakdownItem
 import com.personalfinance.tracker.ui.charts.FinanceBar
 import com.personalfinance.tracker.ui.charts.FinanceBarGroup
 import com.personalfinance.tracker.ui.charts.FinanceCharts
-import com.personalfinance.tracker.ui.theme.FinancePalette
+import com.personalfinance.tracker.ui.theme.financeColors
 import com.personalfinance.tracker.domain.model.PeriodRange
 import com.personalfinance.tracker.domain.time.FinanceDateFormat
 import com.personalfinance.tracker.ui.summary.ExchangeRatePromptDialog
@@ -121,7 +121,7 @@ fun FamilyScreen(onBack: () -> Unit) {
         }
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -188,17 +188,17 @@ fun FamilyScreen(onBack: () -> Unit) {
                             "${if (balance > 0) "+" else if (balance < 0) "−" else ""}${BigDecimal.valueOf(balance, 2).abs().setScale(2).toPlainString()} $baseCurrency",
                             style = MaterialTheme.typography.displaySmall,
                             color = when {
-                                balance > 0 -> FinancePalette.income
-                                balance < 0 -> FinancePalette.expense
+                                balance > 0 -> financeColors.income
+                                balance < 0 -> financeColors.expense
                                 else -> MaterialTheme.colorScheme.onSurface
                             },
                         )
                         Text(stringResource(R.string.home_income), style = MaterialTheme.typography.labelLarge)
                         Text("${amount(report.incomeMinorUnits)} $baseCurrency",
-                            style = MaterialTheme.typography.headlineSmall, color = FinancePalette.income)
+                            style = MaterialTheme.typography.headlineSmall, color = financeColors.income)
                         Text(stringResource(R.string.home_expenses), style = MaterialTheme.typography.labelLarge)
                         Text("${amount(report.expensesMinorUnits)} $baseCurrency",
-                            style = MaterialTheme.typography.headlineSmall, color = FinancePalette.expense)
+                            style = MaterialTheme.typography.headlineSmall, color = financeColors.expense)
                     }
                 }
                 Text(stringResource(R.string.family_by_owner), style = MaterialTheme.typography.titleLarge)
@@ -207,10 +207,10 @@ fun FamilyScreen(onBack: () -> Unit) {
                         Text(baseCurrency, style = MaterialTheme.typography.labelLarge)
                         FinanceCharts.GroupedColumnChart(groups = listOf(
                             FinanceBarGroup(stringResource(R.string.chart_income), report.byOwner.map { (owner, totals) ->
-                                FinanceBar(owner, totals.incomeMinorUnits, FinancePalette.income)
+                                FinanceBar(owner, totals.incomeMinorUnits, financeColors.income)
                             }),
                             FinanceBarGroup(stringResource(R.string.chart_expense), report.byOwner.map { (owner, totals) ->
-                                FinanceBar(owner, totals.expensesMinorUnits, FinancePalette.expense)
+                                FinanceBar(owner, totals.expensesMinorUnits, financeColors.expense)
                             }),
                         ), barWidth = 72.dp)
                         Text(stringResource(R.string.family_chart_scroll), style = MaterialTheme.typography.bodySmall)

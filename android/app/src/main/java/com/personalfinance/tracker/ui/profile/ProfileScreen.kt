@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import com.personalfinance.tracker.ui.theme.FinanceButton as Button
+import com.personalfinance.tracker.ui.theme.FinanceCard as Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -49,6 +49,8 @@ fun ProfileScreen(
     onOpenGoal: () -> Unit,
     onExportBackup: () -> Unit,
     onRestoreBackup: () -> Unit,
+    selectedTheme: com.personalfinance.tracker.ui.theme.AppTheme = com.personalfinance.tracker.ui.theme.AppThemeRegistry.default,
+    onSelectTheme: (Int) -> Unit = {},
     backupBusy: Boolean = false,
     backupStatus: String? = null,
 ) {
@@ -61,7 +63,7 @@ fun ProfileScreen(
     val scope = rememberCoroutineScope()
     var currencyMenu by remember { mutableStateOf(false) }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -106,6 +108,7 @@ fun ProfileScreen(
             Button(onClick = onOpenGoal, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.goal_open))
             }
+            com.personalfinance.tracker.ui.theme.ThemePicker(selectedTheme, onSelectTheme)
             com.personalfinance.tracker.ui.security.SecuritySettings()
             Text(stringResource(R.string.backup_title), style = MaterialTheme.typography.titleLarge)
             Text(stringResource(R.string.backup_description))

@@ -1,5 +1,7 @@
 package com.personalfinance.tracker.ui.goals
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,12 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import com.personalfinance.tracker.ui.theme.FinanceButton as Button
+import com.personalfinance.tracker.ui.theme.FinanceCard as Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import com.personalfinance.tracker.ui.theme.FinanceOutlinedButton as OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -38,12 +40,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.personalfinance.tracker.FinanceApplication
 import com.personalfinance.tracker.R
+import com.personalfinance.tracker.domain.goal.GoalProgress
+import com.personalfinance.tracker.domain.model.SavingsGoal
 import com.personalfinance.tracker.domain.goal.GoalForecastStatus
 import com.personalfinance.tracker.domain.money.Money
 import com.personalfinance.tracker.domain.summary.SummaryService
-import com.personalfinance.tracker.ui.charts.normalizedBarFraction
 import com.personalfinance.tracker.ui.summary.ExchangeRatePromptDialog
-import com.personalfinance.tracker.ui.theme.FinancePalette
+import com.personalfinance.tracker.ui.theme.financeColors
 import java.math.BigDecimal
 import java.math.RoundingMode
 import kotlinx.coroutines.launch
@@ -80,7 +83,7 @@ fun GoalScreen(onBack: () -> Unit) {
     val canSave = targetMinor != null && targetMinor > 0L && savedMinor != null && savedMinor >= 0L
     val current = state
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -130,6 +133,9 @@ fun GoalScreen(onBack: () -> Unit) {
                 Text(stringResource(R.string.goal_save))
             }
 
+            if (current?.goal != null && !current.goalCurrencyChanged) {
+                GoalProgressCard(current.goal)
+            }
             if (current?.goal == null) {
                 Text(stringResource(R.string.goal_create_hint))
             } else if (current.missingCurrencies.isNotEmpty()) {
@@ -148,42 +154,14 @@ fun GoalScreen(onBack: () -> Unit) {
                     ) {
                         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Text(stringResource(R.string.goal_forecast), style = MaterialTheme.typography.titleLarge)
-                            current.goal?.let { goalValue ->
-                                val progress = normalizedBarFraction(goalValue.saved.minorUnits, goalValue.target.minorUnits)
-                                val progressDescription = stringResource(
-                                    R.string.goal_progress,
-                                    goalValue.saved.toDisplayAmount(),
-                                    goalValue.target.toDisplayAmount(),
-                                )
-                                Text(
-                                    progressDescription,
-                                    style = MaterialTheme.typography.titleMedium,
-                                )
-                                LinearProgressIndicator(
-                                    progress = { progress },
-                                    modifier = Modifier.fillMaxWidth().height(12.dp).semantics {
-                                        contentDescription = progressDescription
-                                    },
-                                    color = FinancePalette.accent,
-                                    trackColor = FinancePalette.accent.copy(alpha = 0.12f),
-                                )
-                                Text(
-                                    stringResource(R.string.home_goal_progress, (progress * 100).toInt()),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                                Text(
-                                    stringResource(R.string.goal_months_used, current.completedMonthCount),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
+                            Text(stringResource(R.string.goal_months_used, current.completedMonthCount))
                             when (forecast.status) {
                                 GoalForecastStatus.READY -> {
                                     if (forecast.remainingMinorUnits == 0L) {
                                         Text(
                                             stringResource(R.string.goal_reached),
                                             style = MaterialTheme.typography.headlineSmall,
-                                            color = FinancePalette.income,
+                                            color = financeColors.income,
                                         )
                                     } else {
                                         Text(
@@ -225,6 +203,42 @@ fun GoalScreen(onBack: () -> Unit) {
 }
 
 private fun Money.toAmountText(): String = BigDecimal.valueOf(minorUnits, 2).stripTrailingZeros().toPlainString()
+
+@Composable
+internal fun GoalProgressCard(goal: SavingsGoal) {
+    val progress = GoalProgress.calculate(goal.target.minorUnits, goal.saved.minorUnits)
+    val percentage = stringResource(R.string.goal_percent, progress.percent)
+    val amounts = stringResource(R.string.goal_progress, goal.saved.toDisplayAmount(), goal.target.toDisplayAmount())
+    val remaining = stringResource(R.string.goal_remaining, formatMinor(progress.remainingMinorUnits), goal.target.currencyCode)
+    val next = stringResource(R.string.goal_next_milestone, progress.nextMilestonePercent,
+        formatMinor(progress.nextMilestoneMinorUnits), goal.target.currencyCode)
+    val status = if (progress.completed) stringResource(R.string.goal_reached) else next
+    val description = listOf(percentage, amounts, remaining, status).joinToString(". ")
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+        containerColor = financeColors.goal, contentColor = financeColors.goalInk,
+    )) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(percentage, style = MaterialTheme.typography.displaySmall)
+            Text(amounts, style = MaterialTheme.typography.titleMedium)
+            Row(Modifier.fillMaxWidth().height(52.dp).testTag("goal_segments").semantics {
+                contentDescription = description
+            }, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                progress.segmentFractions.forEach { fraction ->
+                    Box(Modifier.weight(1f).height(52.dp).background(financeColors.goalInk.copy(alpha = 0.12f))) {
+                        if (fraction > 0f) Box(Modifier.fillMaxWidth(fraction).height(52.dp).background(financeColors.goalInk))
+                    }
+                }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                listOf(0, 25, 50, 75, 100).forEach {
+                    Text(stringResource(R.string.goal_percent, it.toString()), style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            Text(remaining, style = MaterialTheme.typography.titleMedium)
+            Text(status, style = MaterialTheme.typography.titleMedium)
+        }
+    }
+}
 private fun Money.toDisplayAmount(): String = "${formatMinor(minorUnits)} $currencyCode"
 private fun formatMinor(minorUnits: Long): String = BigDecimal.valueOf(minorUnits, 2).setScale(2).toPlainString()
 

@@ -83,3 +83,11 @@ Update the current specification, protection specification, English and Russian 
 ## Builder discretion
 
 Use the existing Kotlin/Compose/Room architecture. Choose migration structure, icon implementation, chart drawing mechanics and preference storage without introducing a new framework. Resolve minor layout details within selected B/2 designs. Do not add cloud synchronization, arbitrary income categories or data deletion as part of this release.
+
+## Superseded appearance and controls
+
+This file records historical 1.15 behavior. Version 1.17 adds app-wide themes, segmented goal progress, remembered Operations tabs, icon-label preference and preserves enabled biometrics when settings are saved during sensor unavailability. Current behavior: [1.17 specification](version-1.17.md).
+
+## Version 1.17 Home and export update
+
+Monthly expenses is visible for new installations, missing preference entries and Restore defaults. Users can hide it; saved visibility (including previously hidden expenses) and order are retained. Reports always export the current eight-column CSV including income comments; the version 1.1 checkbox is removed. Version 1.1 cannot read these exports. Seven-column import remains supported. A pending export retains its chosen period through recreation and writes current format.

@@ -77,6 +77,8 @@ private val mainDestinations = listOf(
 
 @Composable
 fun AppNavigation() {
+    val themeStore = (LocalContext.current.applicationContext as FinanceApplication).themeStore
+    val selectedTheme by themeStore.theme.collectAsState()
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val context = LocalContext.current
@@ -151,7 +153,7 @@ fun AppNavigation() {
         }
     }
 
-    FinanceTheme {
+    FinanceTheme(selectedTheme) {
         Scaffold(
             bottomBar = {
                 if (profile?.onboardingComplete == true && currentRoute != WelcomeRoute && currentRoute != TransactionFormRoute && currentRoute != FamilyRoute && currentRoute != GoalRoute) {
@@ -223,7 +225,10 @@ fun AppNavigation() {
                     TransactionFormScreen(
                         transactionId = entry.arguments?.getString("transactionId"),
                         type = transactionType,
-                        onSaved = { navController.popBackStack() },
+                        onSaved = {
+                            (context.applicationContext as FinanceApplication).operationsTabStore.select(transactionType)
+                            navController.popBackStack()
+                        },
                         onCancel = { navController.popBackStack() },
                     )
                 }
@@ -233,6 +238,8 @@ fun AppNavigation() {
                         ProfileScreen(
                             profile = currentProfile,
                             categories = categories,
+                            selectedTheme = selectedTheme,
+                            onSelectTheme = themeStore::select,
                             onSave = { name, language, currency ->
                                 scope.launch { profileViewModel.updateProfile(name, language, currency) }
                             },

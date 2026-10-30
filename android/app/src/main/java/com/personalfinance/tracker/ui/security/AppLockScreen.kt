@@ -6,6 +6,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import com.personalfinance.tracker.ui.theme.FinanceOutlinedButton as OutlinedButton
+import com.personalfinance.tracker.ui.theme.FinanceButton as Button
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -31,7 +33,7 @@ fun AppLockScreen(controller: AppLockController, onBiometric: () -> Unit, onReco
     val scope = rememberCoroutineScope()
     BackHandler { onExit() }
     LaunchedEffect(controller) { while (true) { controller.refresh(); delay(500) } }
-    Surface(Modifier.fillMaxSize().testTag("app_lock_screen")) {
+    Surface(Modifier.fillMaxSize().testTag("app_lock_screen"), color = MaterialTheme.colorScheme.background) {
         Column(
             Modifier.fillMaxSize().systemBarsPadding().imePadding().verticalScroll(rememberScrollState()).padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),

@@ -77,9 +77,11 @@ class MainActivity : AppCompatActivity() {
         }
         setContent {
             val lock by appLock.state.collectAsState()
-            if (lock.locked) FinanceTheme {
-                AppLockScreen(appLock, ::authenticateBiometric, ::recoverAppCode, ::finish)
-            } else AppNavigation()
+            val theme by (application as FinanceApplication).themeStore.theme.collectAsState()
+            FinanceTheme(theme) {
+                if (lock.locked) AppLockScreen(appLock, ::authenticateBiometric, ::recoverAppCode, ::finish)
+                else AppNavigation()
+            }
         }
     }
 

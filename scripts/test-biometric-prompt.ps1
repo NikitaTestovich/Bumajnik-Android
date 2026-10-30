@@ -1,10 +1,19 @@
 param(
-    [string]$Adb = 'C:/Users/tikur/AppData/Local/Android/Sdk/platform-tools/adb.exe',
+    [string]$Adb = '',
     [string]$Serial = 'emulator-5554',
-    [string]$DevicePin = '4826',
+    [Parameter(Mandatory = $true)][string]$DevicePin,
     [string]$TestClass = 'com.personalfinance.tracker.BiometricPromptAcceptanceTest'
 )
 $ErrorActionPreference = 'Stop'
+if (-not $Adb) {
+    $sdkRoot = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } elseif ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'Android/Sdk' }
+    if ($sdkRoot) { $Adb = Join-Path $sdkRoot 'platform-tools/adb.exe' }
+    if (-not $Adb -or -not (Test-Path -LiteralPath $Adb -PathType Leaf)) {
+        $adbCommand = Get-Command adb -ErrorAction SilentlyContinue
+        if (-not $adbCommand) { throw 'Set ANDROID_HOME or ANDROID_SDK_ROOT, add adb to PATH, or pass -Adb.' }
+        $Adb = $adbCommand.Source
+    }
+}
 if ($Serial -notmatch '^emulator-\d+$') { throw 'This driver is for disposable emulators only.' }
 if ($DevicePin -notmatch '^\d{4,10}$') { throw 'Expected an emulator-only numeric PIN.' }
 $log = Join-Path $env:TEMP "biometric-prompt-$([guid]::NewGuid()).log"

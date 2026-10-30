@@ -20,6 +20,10 @@ data class FinanceContainer(
 )
 
 class FinanceApplication : Application() {
+    lateinit var operationsTabStore: com.personalfinance.tracker.data.preferences.OperationsTabStore
+        private set
+    lateinit var themeStore: com.personalfinance.tracker.data.preferences.ThemeStore
+        private set
     lateinit var appLock: com.personalfinance.tracker.security.AppLockController
         private set
     lateinit var container: FinanceContainer
@@ -27,6 +31,8 @@ class FinanceApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        operationsTabStore = com.personalfinance.tracker.data.preferences.OperationsTabStore(this)
+        themeStore = com.personalfinance.tracker.data.preferences.ThemeStore(this)
         appLock = com.personalfinance.tracker.security.AppLockController(
             com.personalfinance.tracker.security.AppLockStore(this),
         )
