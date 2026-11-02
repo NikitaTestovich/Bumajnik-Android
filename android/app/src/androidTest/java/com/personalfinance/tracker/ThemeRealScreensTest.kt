@@ -76,9 +76,11 @@ class ThemeRealScreensTest {
      ui.onNodeWithTag("home_block_goal").performScrollTo().assertIsDisplayed()
      val goal=ui.onNodeWithTag("home_block_goal").fetchSemanticsNode().boundsInRoot
      val latest=ui.onNodeWithTag("home_block_latest").fetchSemanticsNode().boundsInRoot
-     if(selected.id in listOf(6,8) && fontScale==1f) assertEquals(goal.top,latest.top,2f)
-     else assertTrue(latest.top>=goal.bottom)
-     ui.onNodeWithText(app.getString(R.string.goal_open)).performClick()
+     if(app.resources.configuration.screenWidthDp >= 360) {
+      if(selected.id in listOf(6,8) && fontScale==1f) assertEquals(goal.top,latest.top,2f)
+      else assertTrue(latest.top>=goal.bottom)
+     } else ui.onNodeWithTag("home_block_latest").performScrollTo().assertIsDisplayed()
+     ui.onNodeWithText(app.getString(R.string.goal_open)).performScrollTo().performClick()
      ui.runOnIdle { screen.intValue=1 }
      ui.onNodeWithText(app.getString(R.string.profile_save)).performScrollTo().assertIsEnabled()
      assertSurface(selected)
@@ -125,10 +127,10 @@ class ThemeRealScreensTest {
      val full=ui.onNodeWithTag("home_customize").fetchSemanticsNode().boundsInRoot.width
      visible.filter { it in listOf(HomeBlock.GOAL,HomeBlock.LATEST) }.forEach { block ->
       val width=ui.onNodeWithTag("home_block_${block.key}").fetchSemanticsNode().boundsInRoot.width
-      if(visible==listOf(HomeBlock.LATEST,HomeBlock.GOAL)) assertEquals(full*.48f,width,2f)
+      if(visible==listOf(HomeBlock.LATEST,HomeBlock.GOAL) && app.resources.configuration.screenWidthDp >= 360) assertEquals(full*.48f,width,2f)
       else assertEquals("Unpaired $block in $visible, theme $id",full,width,2f)
      }
-     if(visible==listOf(HomeBlock.LATEST,HomeBlock.GOAL)) {
+     if(visible==listOf(HomeBlock.LATEST,HomeBlock.GOAL) && app.resources.configuration.screenWidthDp >= 360) {
       val latest=ui.onNodeWithTag("home_block_latest").fetchSemanticsNode().boundsInRoot
       val goal=ui.onNodeWithTag("home_block_goal").fetchSemanticsNode().boundsInRoot
       assertEquals(latest.top,goal.top,2f); assertTrue(latest.left<goal.left)

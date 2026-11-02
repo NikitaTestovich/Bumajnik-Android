@@ -10,6 +10,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class FamilyReportCalculatorTest {
+    @Test fun detailRowsReconcileToCombinedCategoriesAndKeepOwners() {
+        val date = LocalDate.of(2026, 10, 1)
+        val imported = listOf(FamilyTransaction("a", "Partner", Money(101, "EUR"), date, "Groceries", TransactionType.EXPENSE, BigDecimal("1.5"), "USD", comment = "Milk"))
+        val personal = listOf(FinanceTransaction("b", "Owner", TransactionType.EXPENSE, date, Money(200, "USD"), "groceries", comment = "Bread"))
+        val report = FamilyReportCalculator.calculate(imported, personal, "USD", emptyMap(), mapOf("groceries" to "Groceries"))
+        val details = report.expenseDetailsByCategory.getValue("Groceries")
+        assertEquals(report.expensesByCategory.getValue("Groceries"), details.sumOf { it.convertedMinorUnits })
+        assertEquals(setOf("Owner", "Partner"), details.map { it.owner }.toSet())
+        assertEquals(setOf("Bread", "Milk"), details.map { it.comment }.toSet())
+    }
     @Test fun renamedStandardPersonalLabelDoesNotRenameImportedSnapshot() {
         val date = LocalDate.of(2026, 10, 1)
         val imported = listOf(FamilyTransaction("a", "Partner", Money(1000, "USD"), date, "Groceries", TransactionType.EXPENSE, null, "USD"))

@@ -50,7 +50,7 @@ class GoalProgressScreenTest {
             val root = ui.onRoot().fetchSemanticsNode().boundsInRoot
             org.junit.Assert.assertTrue("Bar fits root in theme ${selected.id}", bar.left >= root.left && bar.right <= root.right)
             listOf("0%", "25%", "50%", "75%", "100%").forEach { label ->
-                val node = ui.onNodeWithText(label).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+                 val node = ui.onNodeWithText(label).performScrollTo().assertIsDisplayed().fetchSemanticsNode().boundsInRoot
                 org.junit.Assert.assertTrue("Milestone $label fits bar", node.left >= bar.left && node.right <= bar.right)
             }
             ui.onNodeWithTag("goal_segments").assertContentDescriptionContains("38%", substring = true)

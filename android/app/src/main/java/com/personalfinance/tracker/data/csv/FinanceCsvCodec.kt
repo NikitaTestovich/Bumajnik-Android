@@ -39,7 +39,6 @@ object FinanceCsvCodec {
         val builder = StringBuilder().append((if (format == CsvFormat.CURRENT) header else legacyHeader).joinToString(",")).append("\r\n")
         records.forEach { transaction ->
             require(IncomeComment.isValid(transaction.comment))
-            require(transaction.type == TransactionType.INCOME || transaction.comment.isEmpty())
             val amount = BigDecimal.valueOf(transaction.money.minorUnits, 2).toPlainString()
             val fields = listOf(
                 owner,
@@ -114,7 +113,6 @@ object FinanceCsvCodec {
         }
         val comment = if (columns == header.size) fields[7] else ""
         require(IncomeComment.isValid(comment)) { "Row $rowNumber comment exceeds 150 characters" }
-        require(type == TransactionType.INCOME || comment.isEmpty()) { "Row $rowNumber expense comment must be blank" }
         CsvTransactionRow(id, owner, date, type, money, category, comment)
     }
 

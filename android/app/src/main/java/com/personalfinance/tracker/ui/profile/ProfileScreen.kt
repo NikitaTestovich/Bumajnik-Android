@@ -36,6 +36,7 @@ import com.personalfinance.tracker.domain.model.Category
 import com.personalfinance.tracker.domain.model.UserProfile
 
 private val supportedCurrencies = listOf("USD", "EUR", "RUB", "BYN")
+enum class ProfileSection { ALL, MORE, THEMES, SECURITY, BACKUP, CATEGORIES, UPDATES }
 
 @Composable
 fun ProfileScreen(
@@ -53,6 +54,11 @@ fun ProfileScreen(
     onSelectTheme: (Int) -> Unit = {},
     backupBusy: Boolean = false,
     backupStatus: String? = null,
+    section: ProfileSection = ProfileSection.ALL,
+    onOpenSection: (ProfileSection) -> Unit = {},
+    onBack: () -> Unit = {},
+    onExportFullBackup: () -> Unit = {},
+    onRestoreFullBackup: () -> Unit = {},
 ) {
     var name by remember(profile.name) { mutableStateOf(profile.name) }
     var language by remember(profile.languageTag) { mutableStateOf(profile.languageTag) }
@@ -68,6 +74,10 @@ fun ProfileScreen(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            if (section != ProfileSection.ALL && section != ProfileSection.MORE) {
+                TextButton(onClick = onBack) { Text(stringResource(R.string.family_back)) }
+            }
+            if (section == ProfileSection.ALL || section == ProfileSection.MORE) {
             Text(stringResource(R.string.profile_title), style = MaterialTheme.typography.headlineMedium)
             OutlinedTextField(
                 value = name,
@@ -108,9 +118,28 @@ fun ProfileScreen(
             Button(onClick = onOpenGoal, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.goal_open))
             }
-            com.personalfinance.tracker.ui.theme.ThemePicker(selectedTheme, onSelectTheme)
-            com.personalfinance.tracker.ui.security.SecuritySettings()
+            if (section == ProfileSection.MORE) {
+                listOf(ProfileSection.THEMES to R.string.themes_title, ProfileSection.SECURITY to R.string.security_title,
+                    ProfileSection.BACKUP to R.string.backup_title, ProfileSection.CATEGORIES to R.string.profile_categories,
+                    ProfileSection.UPDATES to R.string.updates_title).forEach { (target, label) ->
+                    Button(onClick = { onOpenSection(target) }, modifier = Modifier.fillMaxWidth().testTag("open_${target.name}")) { Text(stringResource(label)) }
+                }
+            }
+            }
+            if (section == ProfileSection.ALL || section == ProfileSection.THEMES) com.personalfinance.tracker.ui.theme.ThemePicker(selectedTheme, onSelectTheme)
+            if (section == ProfileSection.ALL || section == ProfileSection.SECURITY) {
+                Text(stringResource(R.string.security_title), style = MaterialTheme.typography.titleLarge)
+                com.personalfinance.tracker.ui.security.SecuritySettings()
+            }
+            if (section == ProfileSection.ALL || section == ProfileSection.BACKUP) {
             Text(stringResource(R.string.backup_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.full_backup_unencrypted))
+            Button(onClick = onExportFullBackup, enabled = !backupBusy, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.full_backup_export))
+            }
+            Button(onClick = onRestoreFullBackup, enabled = !backupBusy, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.full_backup_restore))
+            }
             Text(stringResource(R.string.backup_description))
             Button(onClick = onExportBackup, enabled = !backupBusy, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.backup_export))
@@ -120,7 +149,9 @@ fun ProfileScreen(
             }
             if (backupBusy) Text(stringResource(R.string.backup_working))
             backupStatus?.let { Text(it) }
+            }
 
+            if (section == ProfileSection.ALL || section == ProfileSection.CATEGORIES) {
             Text(stringResource(R.string.profile_categories), style = MaterialTheme.typography.titleLarge)
             categories.filterNot { it.isArchived }.forEach { category ->
                 val label = if (language == "ru") category.nameRu ?: category.nameEn.orEmpty()
@@ -146,6 +177,7 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth().testTag("category_add"),
             ) {
                 Text(stringResource(R.string.profile_add_category))
+            }
             }
         }
     }

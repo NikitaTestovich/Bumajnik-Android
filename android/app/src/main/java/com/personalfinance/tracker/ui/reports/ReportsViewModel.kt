@@ -10,7 +10,8 @@ import java.math.RoundingMode
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 
-data class CategoryExpense(val name: String, val minorUnits: Long, val categoryId: String? = null, val iconKey: String = "other")
+data class CategoryDetail(val transaction: com.personalfinance.tracker.domain.model.FinanceTransaction, val convertedMinorUnits: Long)
+data class CategoryExpense(val name: String, val minorUnits: Long, val categoryId: String? = null, val iconKey: String = "other", val details: List<CategoryDetail> = emptyList())
 
 enum class ReportError { BeforeFirstTransaction, InvalidRange }
 
@@ -72,16 +73,17 @@ class ReportsViewModel(
             .map { (categoryId, entries) ->
                 val category = categoriesById[categoryId]
                 val name = category?.let { if (languageTag == "ru") it.nameRu ?: it.nameEn else it.nameEn ?: it.nameRu }.orEmpty()
-                val total = entries.fold(0L) { acc, transaction ->
+                val details = entries.map { transaction ->
                     val rate = rates.getValue(transaction.money.currencyCode)
                     val converted = BigDecimal.valueOf(transaction.money.minorUnits)
                         .multiply(rate)
                         .setScale(0, RoundingMode.HALF_UP)
                         .longValueExact()
-                    Math.addExact(acc, converted)
+                    CategoryDetail(transaction, converted)
                 }
+                val total = details.fold(0L) { acc, detail -> Math.addExact(acc, detail.convertedMinorUnits) }
                 CategoryExpense(name.ifBlank { if (languageTag == "ru") "Без категории" else "Uncategorized" }, total,
-                    categoryId, com.personalfinance.tracker.domain.model.CategoryIcons.resolve(category?.iconKey ?: "other"))
+                    categoryId, com.personalfinance.tracker.domain.model.CategoryIcons.resolve(category?.iconKey ?: "other"), details.sortedByDescending { it.transaction.date })
             }
             .sortedWith(compareByDescending<CategoryExpense> { it.minorUnits }.thenBy { it.categoryId.orEmpty() })
 

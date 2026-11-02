@@ -33,6 +33,7 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.BasicText
 import com.personalfinance.tracker.ui.categories.CategoryIcon
 import com.personalfinance.tracker.ui.charts.ExpenseSlice
+import com.personalfinance.tracker.ui.charts.chartColorIndices
 import java.math.BigDecimal
 import kotlin.math.*
 
@@ -40,7 +41,10 @@ import kotlin.math.*
 fun MonthlyExpensesWidget(slices: List<ExpenseSlice>, currency: String, languageTag: String, missingRates: Boolean = false, onRates: () -> Unit = {}) {
     val theme = LocalAppTheme.current
     val chartColors = financeColors.chart
-    fun expenseColor(id: String?) = chartColors[Math.floorMod((id ?: "uncategorized").hashCode(), chartColors.size)]
+    val visibleSlices = slices.filter { it.share > 0 }
+    val assignedColors = visibleSlices.zip(chartColorIndices(visibleSlices.size, chartColors.size))
+        .associate { (slice, index) -> slice.categoryId to chartColors[index] }
+    fun expenseColor(id: String?) = assignedColors[id] ?: chartColors.first()
     val heading = stringResource(R.string.monthly_expenses_title)
     val totalLabel = stringResource(R.string.monthly_expenses_total)
     var selected by remember { mutableStateOf<String?>(null) }
@@ -56,7 +60,7 @@ fun MonthlyExpensesWidget(slices: List<ExpenseSlice>, currency: String, language
                 missingRates -> { Text(stringResource(R.string.monthly_expenses_rates)); OutlinedButton(onRates) { Text(stringResource(R.string.exchange_rate_open)) } }
                 slices.isEmpty() -> Text(stringResource(R.string.monthly_expenses_empty), Modifier.testTag("expenses_empty"))
                 else -> {
-                    if (theme.id != 9) Box(Modifier.fillMaxWidth().height(260.dp), contentAlignment = Alignment.Center) {
+                    Box(Modifier.fillMaxWidth().height(260.dp), contentAlignment = Alignment.Center) {
                         Canvas(Modifier.size(250.dp).testTag("expense_ring").semantics { contentDescription = "$heading: ${amount(total)}" }.pointerInput(slices) {
                             detectTapGestures { point ->
                                 val dx = point.x - size.width / 2f
@@ -88,15 +92,6 @@ fun MonthlyExpensesWidget(slices: List<ExpenseSlice>, currency: String, language
                         Column(Modifier.width(125.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(chosen?.name ?: totalLabel, style = MaterialTheme.typography.labelLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag("expense_center_name"))
                             BasicText(amount(chosen?.minorUnits ?: total), style = MaterialTheme.typography.titleMedium.copy(color = LocalContentColor.current), modifier = Modifier.testTag("expense_center"), autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MaterialTheme.typography.titleMedium.fontSize), maxLines = 1)
-                        }
-                    }
-                    if (theme.id == 9) Column(Modifier.fillMaxWidth().testTag("expense_horizontal"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(chosen?.name ?: totalLabel, style = MaterialTheme.typography.labelLarge, modifier = Modifier.testTag("expense_center_name"))
-                        Text(amount(chosen?.minorUnits ?: total), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.testTag("expense_center"))
-                        Row(Modifier.fillMaxWidth().height(32.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            slices.filter { it.share > 0 }.forEach { slice ->
-                                Surface(Modifier.weight(slice.share.toFloat()).fillMaxHeight(), color = expenseColor(slice.categoryId), shape = RoundedCornerShape(4.dp)) {}
-                            }
                         }
                     }
                     slices.forEach { slice ->

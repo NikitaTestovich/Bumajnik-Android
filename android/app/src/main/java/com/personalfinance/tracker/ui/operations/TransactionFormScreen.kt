@@ -117,11 +117,11 @@ fun TransactionFormScreen(
                 readOnly = true,
                 singleLine = true,
             )
-            if (draft.type == TransactionType.INCOME) {
+            run {
                 OutlinedTextField(
                     value = draft.comment,
                     onValueChange = { draft = draft.copy(comment = it); errorResult = null },
-                    modifier = Modifier.fillMaxWidth().testTag("income_comment"),
+                    modifier = Modifier.fillMaxWidth().testTag(if (draft.type == TransactionType.INCOME) "income_comment" else "expense_comment"),
                     label = { Text(stringResource(R.string.operation_comment)) },
                     supportingText = { Text("${IncomeComment.length(draft.comment)}/${IncomeComment.MAX_LENGTH}") },
                     isError = !IncomeComment.isValid(draft.comment),

@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.view.inputmethod.InputMethodManager
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -24,6 +25,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
@@ -65,8 +67,13 @@ class FinanceTrackerAcceptanceTest {
     private var scenario: ActivityScenario<MainActivity>? = null
     private var originalLocales: androidx.core.os.LocaleListCompat? = null
     private val temporaryCsvUris = mutableListOf<Uri>()
+    private var prepared = false
 
     @Before fun resetLocalStateAndLaunch() {
+        val emulated = android.os.ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("getprop ro.kernel.qemu"))
+            .use { it.readBytes().toString(Charsets.UTF_8).trim() }
+        assumeTrue("This suite resets data and requires a disposable emulator", isDisposableEmulator(emulated, android.os.Build.HARDWARE))
+        prepared = true
         // The empty rule does not launch an activity before this reset.
         app.container.database.clearAllTables()
         instrumentation.runOnMainSync {
@@ -77,6 +84,7 @@ class FinanceTrackerAcceptanceTest {
     }
 
     @After fun closeAndReset() {
+        if (!prepared) return
         scenario?.close()
         temporaryCsvUris.forEach { app.contentResolver.delete(it, null, null) }
         temporaryCsvUris.clear()
@@ -398,7 +406,7 @@ class FinanceTrackerAcceptanceTest {
             assertEquals("text/csv", intent.type)
             assertTrue(intent.getStringExtra(Intent.EXTRA_TITLE)!!.endsWith(".csv"))
         }
-        awaitText(R.string.reports_period)
+        awaitText(R.string.reports_export_csv)
     }
 
     @Test fun familyImportLaunchesOpenDocumentAndCancelKeepsEmptyState() {
@@ -473,6 +481,152 @@ class FinanceTrackerAcceptanceTest {
             if (profile.languageTag == "ru") groceries.nameRu else groceries.nameEn,
             exportedExpense.categoryName,
         )
+    }
+
+    @Test fun familyThreeMonthCsvUsesRealSystemDocumentPicker() {
+        assumeTrue(android.os.Build.HARDWARE in listOf("ranchu", "goldfish"))
+        onboard()
+        val csv = instrumentation.context.assets.open("fixtures-120/person-3.csv").use { it.readBytes() }
+        val source = createTemporaryCsv("real-picker-family", csv)
+        val name = app.contentResolver.query(source, arrayOf(MediaStore.MediaColumns.DISPLAY_NAME), null, null, null)!!.use {
+            check(it.moveToFirst()); it.getString(0)
+        }
+        navigate(R.string.navigation_more)
+        click(R.string.family_open)
+        awaitText(R.string.family_no_records)
+        click(R.string.family_import)
+        if (clickSystemDocumentNode(listOf(name, "FinanceTrackerTests")) != name) clickSystemDocumentNode(listOf(name))
+        awaitLiteral(text(R.string.family_import_done, 420, 0))
+        val range = PeriodRange(LocalDate.of(2026, 7, 1), LocalDate.of(2026, 10, 1))
+        assertEquals(420, runBlocking { app.container.familyRepository.observeFamilyTransactions(range).first() }.size)
+    }
+
+    @Test fun fullBackupUsesRealSystemDocumentPicker() {
+        assumeTrue(android.os.Build.HARDWARE in listOf("ranchu", "goldfish"))
+        onboard()
+        val original = FinanceTransaction(
+            id = UUID.randomUUID().toString(), owner = "Acceptance User", type = TransactionType.INCOME,
+            date = LocalDate.of(2026, 8, 12), money = Money(32100, "USD"), categoryId = null,
+        )
+        runBlocking { repository.saveTransaction(original) }
+        navigate(R.string.navigation_more)
+        ui.onNodeWithTag("open_BACKUP").performScrollTo().performClick()
+        val backupName = "finance-test-${UUID.randomUUID()}.ftb"
+        val monitor = object : Instrumentation.ActivityMonitor() {
+            override fun onStartActivity(intent: Intent): Instrumentation.ActivityResult? {
+                if (intent.action == Intent.ACTION_CREATE_DOCUMENT) intent.putExtra(Intent.EXTRA_TITLE, backupName)
+                return null
+            }
+        }
+        instrumentation.addMonitor(monitor)
+        try { click(R.string.full_backup_export) } finally { instrumentation.removeMonitor(monitor) }
+        clickSystemDocumentNode(listOf("Save", "SAVE", "Сохранить", "СОХРАНИТЬ"))
+        awaitText(R.string.full_backup_export_done)
+        runBlocking { repository.saveTransaction(original.copy(id = UUID.randomUUID().toString())) }
+        click(R.string.full_backup_restore)
+        clickSystemDocumentNode(listOf(backupName))
+        awaitText(R.string.full_backup_confirm_title)
+        ui.onNode(hasText(text(R.string.full_backup_restore)) and hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
+        awaitText(R.string.full_backup_restore_done)
+        assertEquals(listOf(original.id), runBlocking { repository.observeTransactions(null).first() }.map { it.id })
+    }
+
+    private fun clickSystemDocumentNode(labels: List<String>): String {
+        var found: AccessibilityNodeInfo? = null
+        fun clickableAncestor(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+            var current = node
+            repeat(8) {
+                if (current == null) return null
+                if (current!!.isClickable) return current
+                current = current!!.parent
+            }
+            return null
+        }
+        try { ui.waitUntil(15_000) {
+            val root = instrumentation.uiAutomation.rootInActiveWindow
+            if (root == null || root.packageName == app.packageName) false else {
+                found = labels.asSequence().flatMap { label ->
+                    root.findAccessibilityNodeInfosByText(label).asSequence().filter { it.text?.toString() == label }
+                }.firstOrNull { it.isVisibleToUser && clickableAncestor(it) != null }
+                if (found == null) root.findAccessibilityNodeInfosByViewId("com.google.android.documentsui:id/dir_list")
+                    .firstOrNull()?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+                found != null
+            }
+        } } catch (error: Throwable) {
+            fun describe(node: AccessibilityNodeInfo?, depth: Int = 0): String {
+                if (node == null || depth > 20) return ""
+                return "[${node.text}|${node.contentDescription}|${node.viewIdResourceName}|click=${node.isClickable}]" +
+                    (0 until node.childCount).joinToString("") { describe(node.getChild(it), depth + 1) }
+            }
+            val tree = describe(instrumentation.uiAutomation.rootInActiveWindow)
+            cancelSystemPicker()
+            throw AssertionError("System document selection failed for $labels: $tree", error)
+        }
+        val node = requireNotNull(found)
+        val label = node.text.toString()
+        assertTrue(requireNotNull(clickableAncestor(node)).performAction(AccessibilityNodeInfo.ACTION_CLICK))
+        return label
+    }
+
+    @Test fun fullBackupUiRejectsCorruptionAndRestoresOnlyAfterConfirmation() {
+        onboard()
+        val liveLayout = com.personalfinance.tracker.data.preferences.HomeLayoutStore(app)
+        val savedLayout = liveLayout.layout.value.map {
+            if (it.id == com.personalfinance.tracker.ui.home.HomeBlock.EXPENSES) it.copy(visible = false) else it
+        }
+        liveLayout.save(savedLayout)
+        val original = FinanceTransaction(
+            id = UUID.randomUUID().toString(), owner = "Acceptance User", type = TransactionType.INCOME,
+            date = LocalDate.of(2026, 9, 1), money = Money(12345, "USD"), categoryId = null,
+        )
+        runBlocking { repository.saveTransaction(original) }
+        navigate(R.string.navigation_more)
+        ui.onNodeWithTag("open_BACKUP").performScrollTo().performClick()
+        val destination = createTemporaryCsv("full-backup", ByteArray(0))
+        launchPickerAndReturnUri(R.string.full_backup_export, Intent.ACTION_CREATE_DOCUMENT, destination) { intent ->
+            assertEquals("application/octet-stream", intent.type)
+            assertTrue(intent.getStringExtra(Intent.EXTRA_TITLE)!!.endsWith(".ftb"))
+        }
+        awaitText(R.string.full_backup_export_done)
+        assertTrue(app.contentResolver.openInputStream(destination)!!.use { it.readBytes().isNotEmpty() })
+
+        val addedLater = original.copy(id = UUID.randomUUID().toString(), money = Money(500, "USD"))
+        runBlocking { repository.saveTransaction(addedLater) }
+        liveLayout.save(savedLayout.map {
+            if (it.id == com.personalfinance.tracker.ui.home.HomeBlock.EXPENSES) it.copy(visible = true) else it
+        })
+        val invalid = createTemporaryCsv("invalid-backup", "damaged".toByteArray())
+        launchPickerAndReturnUri(R.string.full_backup_restore, Intent.ACTION_OPEN_DOCUMENT, invalid) { }
+        awaitText(R.string.full_backup_invalid)
+        assertEquals(2, runBlocking { repository.observeTransactions(null).first() }.size)
+
+        launchPickerAndReturnUri(R.string.full_backup_restore, Intent.ACTION_OPEN_DOCUMENT, destination) { }
+        awaitText(R.string.full_backup_confirm_title)
+        ui.onNode(hasText(text(R.string.operation_cancel)) and hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
+        assertEquals(2, runBlocking { repository.observeTransactions(null).first() }.size)
+        launchPickerAndReturnUri(R.string.full_backup_restore, Intent.ACTION_OPEN_DOCUMENT, destination) { }
+        awaitText(R.string.full_backup_confirm_title)
+        ui.onNode(hasText(text(R.string.full_backup_restore)) and hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
+        awaitText(R.string.full_backup_restore_done)
+        assertEquals(listOf(original.id), runBlocking { repository.observeTransactions(null).first() }.map { it.id })
+        ui.waitUntil(10_000) { liveLayout.layout.value == savedLayout }
+        liveLayout.reset()
+        liveLayout.close()
+    }
+
+    @Test fun familyThreeMonthFixtureImportsAndSkipsDuplicates() {
+        onboard()
+        navigate(R.string.navigation_more)
+        click(R.string.family_open)
+        awaitText(R.string.family_no_records)
+        val csv = instrumentation.context.assets.open("fixtures-120/person-3.csv").use { it.readBytes() }
+        val source = createTemporaryCsv("three-month-fixture", csv)
+        launchPickerAndReturnUri(R.string.family_import, Intent.ACTION_OPEN_DOCUMENT, source) { }
+        awaitLiteral(text(R.string.family_import_done, 420, 0))
+        launchPickerAndReturnUri(R.string.family_import, Intent.ACTION_OPEN_DOCUMENT, source) { }
+        awaitLiteral(text(R.string.family_import_done, 0, 420))
+        val range = PeriodRange(LocalDate.of(2026, 7, 1), LocalDate.of(2026, 10, 1))
+        assertEquals(420, runBlocking { app.container.familyRepository.observeFamilyTransactions(range).first() }.size)
     }
 
     @Test fun familyCsvImportConvertsTotalsAndSkipsTheSameFileOnRepeat() {
@@ -569,6 +723,8 @@ class FinanceTrackerAcceptanceTest {
         awaitText(R.string.exchange_rate_title)
         fill(R.string.exchange_rate_label, "2", "EUR", "USD")
         click(R.string.exchange_rate_save)
+        ui.waitUntil(10_000) { ui.onAllNodesWithText(text(R.string.exchange_rate_title)).fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty() }
+        ui.onNodeWithContentDescription(text(R.string.chart_income_expense_comparison)).performScrollTo()
         ui.onNodeWithContentDescription(text(R.string.chart_value_description, text(R.string.chart_income), profile.name, "200.00"))
             .performScrollTo().assertIsDisplayed()
     }
@@ -638,7 +794,16 @@ class FinanceTrackerAcceptanceTest {
     private fun awaitText(@StringRes resource: Int) = awaitLiteral(text(resource))
 
     private fun awaitLiteral(value: String) {
-        ui.waitUntil(10_000) { ui.onAllNodesWithText(value).fetchSemanticsNodes().isNotEmpty() }
+        try { ui.waitUntil(10_000) { ui.onAllNodesWithText(value).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() } }
+        catch (error: Throwable) {
+            fun describe(node: AccessibilityNodeInfo?, depth: Int = 0): String {
+                if (node == null || depth > 20) return ""
+                return "[${node.text}|${node.contentDescription}|${node.viewIdResourceName}|click=${node.isClickable}]" +
+                    (0 until node.childCount).joinToString("") { describe(node.getChild(it), depth + 1) }
+            }
+            val tree = describe(instrumentation.uiAutomation.rootInActiveWindow)
+            throw AssertionError("Awaited $value; current window: $tree", error)
+        }
     }
 
     private fun awaitProfile(language: String, currency: String) {
@@ -679,12 +844,24 @@ class FinanceTrackerAcceptanceTest {
                 val root = instrumentation.uiAutomation.rootInActiveWindow
                 root != null && root.packageName != app.packageName
             }
-            assertTrue(instrumentation.uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK))
-            ui.waitUntil(10_000) {
-                instrumentation.uiAutomation.rootInActiveWindow?.packageName == app.packageName
-            }
+            cancelSystemPicker()
         } finally {
             instrumentation.removeMonitor(monitor)
+        }
+    }
+
+    private fun cancelSystemPicker() {
+        var lastBack = 0L
+        ui.waitUntil(15_000) {
+            val owner = instrumentation.uiAutomation.rootInActiveWindow?.packageName?.toString()
+            if (owner == app.packageName) true else {
+                val now = android.os.SystemClock.elapsedRealtime()
+                if (owner?.contains("documentsui") == true && now - lastBack >= 1_000) {
+                    assertTrue(instrumentation.uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK))
+                    lastBack = now
+                }
+                false
+            }
         }
     }
 

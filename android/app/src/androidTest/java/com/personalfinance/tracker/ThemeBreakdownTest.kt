@@ -13,10 +13,10 @@ import org.junit.*
 class ThemeBreakdownTest {
  @get:Rule val ui = createComposeRule()
  @Before fun emulatorOnly() { Assume.assumeTrue(android.os.Build.HARDWARE in listOf("ranchu","goldfish")) }
- @Test fun analyticsUsesSelectableBarsAndOtherDesignsKeepRing() {
+ @Test fun analyticsAndOtherThemesShowRingAndSelectableCards() {
   val theme=mutableStateOf(AppThemeRegistry.resolve(9))
   ui.setContent { FinanceTheme(theme.value) { Column(Modifier.verticalScroll(rememberScrollState())) { MonthlyExpensesWidget(listOf(ExpenseSlice("food","Food","food",7500,.75),ExpenseSlice("travel","Travel","transport",2500,.25)),"USD","en") } } }
-  ui.onNodeWithTag("expense_ring").assertDoesNotExist()
+  ui.onNodeWithTag("expense_ring").assertExists()
   ui.onNodeWithTag("expense_slice_food").performScrollTo().performClick().assertIsSelected()
   ui.onNodeWithTag("expense_center_name").assertTextEquals("Food")
   ui.onNodeWithTag("expense_slice_food").performScrollTo().performClick().assertIsNotSelected()

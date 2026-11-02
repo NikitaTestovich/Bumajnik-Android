@@ -15,6 +15,7 @@ AppAndroidBudjets.zip
 *.zip
 *.csv
 !android/app/src/androidTest/assets/*.csv
+!android/app/src/androidTest/assets/fixtures-120/*.csv
 *.keystore
 *.jks
 *.p12
@@ -29,6 +30,7 @@ credentials.json
 *.db
 *.sqlite
 *.sqlite3
+*.ftb
 *.log
 Thumbs.db
 .DS_Store
@@ -36,3 +38,4 @@ Thumbs.db
 # Internal working notes
 .superpowers/
 docs/superpowers/
+*.hprof

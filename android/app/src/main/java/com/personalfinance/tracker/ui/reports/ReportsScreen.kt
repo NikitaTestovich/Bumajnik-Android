@@ -73,6 +73,7 @@ fun ReportsScreen() {
     var showRateDialog by remember { mutableStateOf(false) }
     var exportResult by remember { mutableStateOf<ExportResult?>(null) }
     var dateError by remember { mutableStateOf<Int?>(null) }
+    var expandedCategory by remember { mutableStateOf<String?>(null) }
     var pendingStart by rememberSaveable { mutableStateOf("") }
     var pendingEndExclusive by rememberSaveable { mutableStateOf("") }
     val scope = rememberCoroutineScope()
@@ -252,6 +253,23 @@ fun ReportsScreen() {
                                         share = if (summary.expense.minorUnits <= 0L) 0f
                                         else (category.minorUnits.toDouble() / summary.expense.minorUnits.toDouble()).toFloat(),
                                     )
+                                },
+                                onCategoryClick = { index ->
+                                    val key = current.categories[index].categoryId ?: "__uncategorized__"
+                                    expandedCategory = if (expandedCategory == key) null else key
+                                },
+                                details = { index ->
+                                val category = current.categories[index]
+                                val key = category.categoryId ?: "__uncategorized__"
+                                if (expandedCategory == key) category.details.forEach { detail ->
+                                    val transaction = detail.transaction
+                                    Column(Modifier.fillMaxWidth().padding(start = 12.dp, bottom = 8.dp)) {
+                                        Text(FinanceDateFormat.format(transaction.date))
+                                        if (transaction.comment.isNotBlank()) Text(transaction.comment)
+                                        Text("${formatAmount(detail.convertedMinorUnits)} $baseCurrency")
+                                        if (transaction.money.currencyCode != baseCurrency) Text("${formatAmount(transaction.money.minorUnits)} ${transaction.money.currencyCode}", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
                                 },
                             )
                         }

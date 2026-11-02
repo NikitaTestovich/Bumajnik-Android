@@ -33,7 +33,6 @@ class RoomFamilyRepository(private val database: AppDatabase) : FamilyRepository
     override suspend fun saveImportBatch(transactions: List<FamilyTransaction>): FamilyImportSummary {
         transactions.forEach { transaction ->
             require(com.personalfinance.tracker.domain.model.IncomeComment.isValid(transaction.comment))
-            require(transaction.type == TransactionType.INCOME || transaction.comment.isEmpty())
             requireUuid(transaction.id)
             require(transaction.sourceMoney.minorUnits > 0) { "Family transaction amount must be positive" }
         }

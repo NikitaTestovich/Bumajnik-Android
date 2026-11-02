@@ -103,7 +103,7 @@ class TransactionFormViewModel(private val repository: FinanceRepository) {
                 date = date,
                 money = Money(minorUnits, savedCurrencyCode),
                 categoryId = if (type == TransactionType.EXPENSE) categoryId else null,
-                comment = if (type == TransactionType.INCOME) comment else "",
+                comment = comment,
             ),
         )
         return TransactionSaveResult.Saved

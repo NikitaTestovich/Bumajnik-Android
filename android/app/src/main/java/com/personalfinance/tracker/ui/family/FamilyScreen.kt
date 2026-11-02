@@ -98,6 +98,7 @@ fun FamilyScreen(onBack: () -> Unit) {
     var importRates by remember { mutableStateOf<Map<String, BigDecimal>>(emptyMap()) }
     var dateErrorRes by remember { mutableStateOf<Int?>(null) }
     var ownerToClear by remember { mutableStateOf<String?>(null) }
+    var expandedCategory by remember { mutableStateOf<String?>(null) }
     val picker = rememberLauncherForActivityResult(OpenCsvDocument()) { uri ->
         if (uri != null) {
             importError = null
@@ -221,13 +222,29 @@ fun FamilyScreen(onBack: () -> Unit) {
                         Text(stringResource(R.string.family_by_category), style = MaterialTheme.typography.titleMedium)
                         Text(baseCurrency, style = MaterialTheme.typography.labelLarge)
                         if (report.expensesByCategory.isEmpty()) Text(stringResource(R.string.reports_no_expenses))
-                        else FinanceCharts.CategoryBreakdownBars(items = report.expensesByCategory.entries
-                            .sortedByDescending { it.value }
-                            .map { (category, value) ->
-                                CategoryBreakdownItem(category, value,
-                                    if (report.expensesMinorUnits <= 0L) 0f
-                                    else (value.toDouble() / report.expensesMinorUnits.toDouble()).toFloat())
-                            })
+                        else {
+                        val sortedCategories = report.expensesByCategory.entries.sortedByDescending { it.value }
+                        FinanceCharts.CategoryBreakdownBars(items = sortedCategories.map { (category, value) ->
+                            val categoryId = categoryNamesById.entries.firstOrNull { it.value.trim().equals(category.trim(), ignoreCase = true) }?.key
+                            val icon = categories.firstOrNull { it.id == categoryId }?.iconKey ?: "other"
+                            CategoryBreakdownItem(category, value, if (report.expensesMinorUnits <= 0L) 0f else (value.toDouble() / report.expensesMinorUnits).toFloat(), icon)
+                        }, onCategoryClick = { index ->
+                            val category = sortedCategories[index].key
+                            expandedCategory = if (expandedCategory == category) null else category
+                        }, details = { index ->
+                            val category = sortedCategories[index].key
+                            if (expandedCategory == category) {
+                                report.expenseDetailsByCategory[category].orEmpty().forEach { detail ->
+                                    Column(Modifier.fillMaxWidth().padding(start = 12.dp, bottom = 8.dp)) {
+                                        Text(listOf(detail.owner, FinanceDateFormat.format(detail.date)).joinToString(" · "))
+                                        if (detail.comment.isNotBlank()) Text(detail.comment)
+                                        Text("${amount(detail.convertedMinorUnits)} $baseCurrency")
+                                        if (detail.original.currencyCode != baseCurrency) Text("${amount(detail.original.minorUnits)} ${detail.original.currencyCode}", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                            }
+                        })
+                        }
                     }
                 }
             }

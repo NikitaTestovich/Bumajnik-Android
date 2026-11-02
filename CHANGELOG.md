@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.20 — unreleased
+
+- Add operations search and expense comments, expandable report categories, distinct settings pages and chart palette improvements; display the expense doughnut in all four themes.
+- Add full backup and GitHub update flows. Personal-data restoration to the owner-signed release was verified with synthetic data on an emulator; a complete GitHub download/update and a user's actual data transfer remain unverified.
+- Add fictional three-month CSV fixtures and a work-in-progress test report.
+- Update the Android build toolchain to Gradle 9.6.0, Android Gradle Plugin 9.4.0 and KSP 2.3.6 for API 37 support.
+
 ## 1.17 — 2026-10-29
 
 - Monthly expenses is visible for fresh/missing/reset Home settings; saved visibility and order, including a previously hidden widget, remain. Users can hide it.

@@ -161,7 +161,6 @@ class RoomFinanceRepository(private val database: AppDatabase) : FinanceReposito
 
 private fun validateComment(transaction: FinanceTransaction) {
     require(com.personalfinance.tracker.domain.model.IncomeComment.isValid(transaction.comment))
-    require(transaction.type == TransactionType.INCOME || transaction.comment.isEmpty())
 }
 
 private fun FinanceTransaction.toEntity() = FinanceTransactionEntity(

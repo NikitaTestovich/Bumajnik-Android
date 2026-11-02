@@ -33,6 +33,20 @@ class MonthlyExpensesWidgetTest {
     @get:Rule val ui = createComposeRule()
     @Before fun emulatorOnly() { Assume.assumeTrue(android.os.Build.HARDWARE in listOf("ranchu", "goldfish")) }
     private fun awaitWidget() = ui.waitUntil(10_000) { ui.onAllNodesWithTag("monthly_expenses").fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
+    @Test fun expenseRingIsAvailableInEveryTheme() {
+        var themeId by mutableIntStateOf(2)
+        ui.setContent {
+            FinanceTheme(com.personalfinance.tracker.ui.theme.AppThemeRegistry.resolve(themeId)) {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    MonthlyExpensesWidget(listOf(ExpenseSlice("a", "Food", "groceries", 600, .6), ExpenseSlice("b", "Transport", "transport", 400, .4)), "USD", "en")
+                }
+            }
+        }
+        listOf(2, 6, 8, 9).forEach { id ->
+            ui.runOnIdle { themeId = id }
+            ui.onNodeWithTag("expense_ring").performScrollTo().assertIsDisplayed()
+        }
+    }
     @Test fun selectionByCardAndRingResetAndRemovedSelection() {
         var slices by mutableStateOf(listOf(ExpenseSlice("a", "Groceries", "groceries", 600, .6), ExpenseSlice("b", "Transport", "transport", 400, .4)))
         ui.setContent { FinanceTheme { Column(Modifier.verticalScroll(rememberScrollState())) { MonthlyExpensesWidget(slices, "USD", "en") } } }
@@ -116,13 +130,13 @@ class MonthlyExpensesWidgetTest {
             ui.setContent { FinanceTheme { HomeScreen({}, {}, {}, {}) } }
             ui.waitUntil(10_000) { ui.onAllNodesWithTag("home_customize").fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
             ui.onNodeWithTag("monthly_expenses").performScrollTo().assertIsDisplayed()
-            ui.onNodeWithTag("home_customize").performClick()
+            ui.onNodeWithTag("home_customize").performScrollTo().performClick()
             ui.onNodeWithTag("home_settings_list").performScrollToNode(hasTestTag("home_visible_expenses"))
             ui.onNodeWithTag("home_visible_expenses").performClick()
             ui.onNodeWithText(app.getString(R.string.home_done)).performClick()
             ui.onNodeWithTag("monthly_expenses").assertDoesNotExist()
             assertFalse(HomeLayoutStore(app).layout.value.single { it.id == HomeBlock.EXPENSES }.visible)
-            ui.onNodeWithTag("home_customize").performClick()
+            ui.onNodeWithTag("home_customize").performScrollTo().performClick()
             ui.onNodeWithText(app.getString(R.string.home_reset)).performClick()
             ui.onAllNodesWithText(app.getString(R.string.home_reset)).onLast().performClick()
             ui.onNodeWithText(app.getString(R.string.home_done)).performClick()

@@ -76,8 +76,7 @@ class FamilyImportManager(
     ): List<String> = buildList {
         if (baseCurrency !in SupportedCurrencies.codes) add("Unsupported base currency: $baseCurrency")
         preview.records.forEachIndexed { index, row ->
-            if (!com.personalfinance.tracker.domain.model.IncomeComment.isValid(row.comment) ||
-                (row.type != com.personalfinance.tracker.domain.model.TransactionType.INCOME && row.comment.isNotEmpty()))
+            if (!com.personalfinance.tracker.domain.model.IncomeComment.isValid(row.comment))
                 add("Row ${index + 2} has an invalid comment")
             if (row.owner.isBlank()) add("Row ${index + 2} has an empty owner")
             if (row.amount.minorUnits <= 0) add("Row ${index + 2} amount must be positive")

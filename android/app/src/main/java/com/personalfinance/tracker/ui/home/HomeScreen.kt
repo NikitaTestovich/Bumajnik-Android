@@ -77,6 +77,7 @@ fun HomeScreen(
     val categories by repository.observeCategories().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
     val layoutStore = remember { HomeLayoutStore(context) }
+    DisposableEffect(layoutStore) { onDispose { layoutStore.close() } }
     val layout by layoutStore.layout.collectAsState()
     var customizing by remember { mutableStateOf(false) }
     val viewModel = remember {
