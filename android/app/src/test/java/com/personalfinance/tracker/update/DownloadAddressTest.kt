@@ -5,7 +5,7 @@ import org.junit.Test
 
 class DownloadAddressTest {
     @Test fun acceptsOnlyHttpsGithubDownloadHosts() {
-        assertTrue(isTrustedDownloadAddress("https://github.com/NikitaTestovich/AppAndroidBudjets/releases/download/v1/file.apk"))
+        assertTrue(isTrustedDownloadAddress("https://github.com/NikitaTestovich/Bumajnik-Android/releases/download/v1/file.apk"))
         assertTrue(isTrustedDownloadAddress("https://release-assets.githubusercontent.com/path?signature=test"))
         assertFalse(isTrustedDownloadAddress("http://release-assets.githubusercontent.com/path"))
         assertFalse(isTrustedDownloadAddress("https://release-assets.githubusercontent.com.evil.example/path"))

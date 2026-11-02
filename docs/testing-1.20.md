@@ -6,6 +6,7 @@ Not ready for public release: the GitHub update flow and migration on the intend
 
 ## Latest complete run, 2026-11-02
 
+- A separate empty public repository was created for releases; the checker and approved asset URL were switched together. A regression test first failed on the new location, then passed after the change. The full JVM suite passed 158 tests, and the debug app and Android test APK assembled. Real GitHub release download and a newer-version installation have not yet been tested.
 - `:app:assembleDebug :app:testDebugUnitTest :app:connectedDebugAndroidTest`: successful on the disposable API 37 emulator. JVM: 155 tests, zero failures. Android: 128 cases, zero failures, including 19 assumption-based skips; skipped cases are not counted as passes.
 - A subsequent full JVM run after adding offline-download and redirect-loop checks passed 157 tests with zero failures. Both new checks verify that the temporary download is removed on failure.
 - Review found that full-backup validation rejected some UUID representations accepted by existing CSV imports. A regression test reproduced the failure; validation now preserves the exact identifiers. After the fix, all 158 JVM tests and both focused in-memory Android database capture/restore tests passed. The debug bridge archive was rebuilt and verified. The owner rebuilt the release with the same certificate, and the revised APK was installed over the previous 1.20 release on the test phone with the fictional personal balance retained. This does not test a higher-version update or GitHub download.

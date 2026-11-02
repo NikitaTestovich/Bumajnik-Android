@@ -19,6 +19,6 @@ From `android`, run `gradlew.bat :app:assembleRelease` with JDK 21 and the varia
 
 ## GitHub Releases
 
-The in-app checker currently reads the latest non-prerelease of `NikitaTestovich/AppAndroidBudjets`. Its APK asset must be named `finance-tracker-vc<versionCode>.apk`; the numeric versionCode must increase and GitHub must expose the asset's SHA-256 digest. The release description is shown as the list of changes. The downloaded file is checked against the expected digest, package, version and certificate before Android's installation confirmation.
+The in-app checker reads the latest non-prerelease of `NikitaTestovich/Bumajnik-Android`. Its APK asset must be named `finance-tracker-vc<versionCode>.apk`; the numeric versionCode must increase and GitHub must expose the asset's SHA-256 digest. The release description is shown as the list of changes. The downloaded file is checked against the expected digest, package, version and certificate before Android's installation confirmation.
 
 On an emulator, a full backup was transferred from the 1.17-compatible debug signer to a disposable second signer through the system document picker; see the test report for scope and limitations. An owner-signed release APK was also built, verified, installed and identically reinstalled with a synthetic profile retained. The GitHub-to-phone installation flow and migration to that release certificate on the target phone remain unverified. A test build signed with a disposable key is not a production release and must not be published or used as an upgrade.

@@ -11,7 +11,7 @@ import org.junit.Test
 class UpdateDownloaderTest {
     private val payload = "sample apk".toByteArray()
     private val sha = MessageDigest.getInstance("SHA-256").digest(payload).joinToString("") { "%02x".format(it) }
-    private val start = "https://github.com/NikitaTestovich/AppAndroidBudjets/releases/download/v1/finance-tracker-vc5.apk"
+    private val start = "https://github.com/NikitaTestovich/Bumajnik-Android/releases/download/v1/finance-tracker-vc5.apk"
     private val target = "https://release-assets.githubusercontent.com/example?token=1"
 
     @Test fun followsTrustedRedirectAndVerifiesFile() {

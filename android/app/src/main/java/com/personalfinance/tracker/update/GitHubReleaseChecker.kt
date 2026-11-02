@@ -17,7 +17,7 @@ sealed interface ReleaseCheckResult {
 class GitHubReleaseChecker {
     suspend fun check(installedVersionCode: Long): ReleaseCheckResult = withContext(Dispatchers.IO) {
         try {
-            val connection = URL("https://api.github.com/repos/NikitaTestovich/AppAndroidBudjets/releases/latest").openConnection() as HttpsURLConnection
+            val connection = URL("https://api.github.com/repos/$RELEASE_REPOSITORY/releases/latest").openConnection() as HttpsURLConnection
             try {
                 connection.connectTimeout = 10000
                 connection.readTimeout = 10000
