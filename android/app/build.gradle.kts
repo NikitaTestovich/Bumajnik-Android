@@ -3,7 +3,6 @@ import org.gradle.api.tasks.bundling.Zip
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
@@ -16,9 +15,22 @@ android {
         applicationId = "com.personalfinance.tracker"
         minSdk = 26
         targetSdk = 37
-        versionCode = 4
-        versionName = "1.17"
+        versionCode = 5
+        versionName = "1.20"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // Release credentials are supplied outside the repository; never fall back to the debug key.
+    signingConfigs {
+        create("release") {
+            storeFile = providers.environmentVariable("FINANCE_RELEASE_KEYSTORE").orNull?.let { file(it) }
+            storePassword = providers.environmentVariable("FINANCE_RELEASE_STORE_PASSWORD").orNull
+            keyAlias = providers.environmentVariable("FINANCE_RELEASE_KEY_ALIAS").orNull
+            keyPassword = providers.environmentVariable("FINANCE_RELEASE_KEY_PASSWORD").orNull
+        }
+    }
+    buildTypes {
+        getByName("release") { signingConfig = signingConfigs.getByName("release") }
     }
 
     buildFeatures {
@@ -41,6 +53,17 @@ kotlin {
         jvmTarget.set(JvmTarget.JVM_17)
     }
 }
+
+val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
+    doLast {
+        val variables = listOf("FINANCE_RELEASE_KEYSTORE", "FINANCE_RELEASE_STORE_PASSWORD", "FINANCE_RELEASE_KEY_ALIAS", "FINANCE_RELEASE_KEY_PASSWORD")
+        check(variables.all { !System.getenv(it).isNullOrBlank() }) {
+            "Release signing requires all FINANCE_RELEASE_* environment variables."
+        }
+        check(file(System.getenv("FINANCE_RELEASE_KEYSTORE")).isFile) { "Release keystore file is missing." }
+    }
+}
+tasks.matching { it.name == "preReleaseBuild" }.configureEach { dependsOn(verifyReleaseSigning) }
 
 dependencies {
     implementation(libs.androidx.biometric)

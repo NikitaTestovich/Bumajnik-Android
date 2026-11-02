@@ -27,7 +27,7 @@ class TransactionFormViewModelTest {
         assertEquals(TransactionSaveResult.InvalidComment, model.save(saved.id, TransactionType.INCOME, "Demo", "20-10-2026", "2", "USD", null, comment + "x"))
         assertEquals(comment, repository.observeTransactions(null).first().single().comment)
         assertEquals(TransactionSaveResult.Saved, model.save(null, TransactionType.EXPENSE, "Demo", "20-10-2026", "1", "USD", "food", "ignored"))
-        assertEquals("", repository.observeTransactions(TransactionType.EXPENSE).first().single().comment)
+        assertEquals("ignored", repository.observeTransactions(TransactionType.EXPENSE).first().single().comment)
     }
     @Test
     fun expenseCannotBeSavedWithoutCategory() = runBlocking {

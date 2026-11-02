@@ -1,8 +1,16 @@
 # Finance Tracker — user guide
 
+## Version 1.20 — work in progress
+
+The More tab has separate pages for themes, protection, backups, categories and updates. In Operations, select Search operations to search comments, amounts or dates; expenses also support category filtering. Expense comments are optional and limited to 150 Unicode characters. Tap an expense category in either report to show its transactions.
+
+A separate full-backup file contains personal and family data and settings. It is not encrypted and excludes the app code and biometrics. Restore replaces current data after confirmation. A synthetic personal-data transfer to the release signer has been tested on an emulator; recovery of an individual user's backup remains to be verified. **Do not uninstall before verifying recovery or rely on a single copy.** The personal CSV backup remains available separately.
+
+Updates checks public GitHub releases and shows available release notes. When a newer version is available, the check button becomes an Update button; Android asks you to confirm installation. Download and data retention are not yet fully verified; version 1.20 has not been released.
+
 ## Version 1.17: appearance, goals and everyday controls
 
-In Profile, open **Themes** and select Financial journal (2, default), Electric graphite (6), Color mosaic (8), or Night analytics (9). The choice applies immediately throughout the app, including protection, and survives restart and compatible updates. Unknown or retired choices use the available default. Night analytics uses labelled horizontal breakdown bars. Theme settings are local and excluded from CSV backups.
+Open **More → Themes** and select Financial journal (2, default), Electric graphite (6), Color mosaic (8), or Night analytics (9). The choice applies immediately throughout the app, including protection, and survives restart and compatible updates. Unknown or retired choices use the available default. The expense doughnut is available in all four themes. Theme settings are local and excluded from CSV backups.
 
 The goal screen shows four segments and 0/25/50/75/100% milestones, actual savings, target, remaining amount and the amount to the next milestone. Partial segments follow actual progress. Over-target savings remain visible; remaining amounts stop at zero. Factual same-currency progress remains available when forecast rates are missing. Forecasts still use completed months; no historical increases or dates are invented. After changing the main currency, the app automatically converts and saves the target and saved amount when all required rates match the forecast period and new currency. Missing rates are requested; the original goal remains until they are supplied. If conversion cannot be calculated (for example, no completed forecast period exists or the converted amount is invalid), re-enter both amounts in the new currency and save the goal.
 
@@ -18,24 +26,24 @@ Finance Tracker stores your data locally on your Android phone. It needs no acco
 
 Download the newer APK, open it on your phone and confirm **Update**. Keep the existing app installed and do not clear its storage. A compatible update retains your profile, transactions, categories, goal, exchange rates and saved family imports. The new APK must have the same application ID and signing certificate; the developer increases its version for each release. Version 1.15 upgrades the database without removing existing records.
 
-Export a personal CSV backup before an update as an extra precaution. It covers personal transactions, not all settings or family imports. If Android reports a signature conflict, ask for a compatible APK instead of uninstalling: an uninstall deletes local data. The current test builds use the same local debug signing key. Moving to a release signed with a different key requires a planned data transfer; it cannot be installed directly over this test build. GitHub does not automatically update the app on your phone.
+Export a personal CSV backup before an update as an extra precaution. It covers personal transactions, not all settings or family imports. If Android reports a signature conflict, ask for a compatible APK instead of uninstalling: an uninstall deletes local data. Moving from an older debug-signed build to a release with a different key requires a planned data transfer; the release cannot be installed directly over it. The app can check public GitHub releases; Android asks the user to confirm installation.
 
 ## First launch and navigation
 
 1. Enter **Your name**, choose a **Main currency** (USD, EUR, RUB, or BYN), and tap **Continue**. A name is required.
 2. The initial language follows the device: Russian or English, with English as the fallback for other languages.
-3. Use the four bottom tabs: **Home**, **Operations**, **Reports**, and **More**. **More** opens **Profile**, which also contains the family report, goal, backup actions, and categories. Scroll to see lower controls.
+3. Use the four bottom tabs: **Home**, **Operations**, **Reports**, and **More**. **More** contains profile settings and buttons for the family report, goal, backup and categories. Scroll to see lower controls.
 
-**Home** shows the current calendar month's income, expenses, and balance (income minus expenses), quick entry buttons, saved goal progress, and the latest transaction. Tap **Customize home** to show or hide blocks and change their order. Drag a block by its handle, use the accessible up/down buttons, or reset to defaults. The settings button remains visible when every block is hidden. **Monthly expenses** is visible by default and shows a category doughnut in themes 2, 6 and 8, or a horizontal breakdown in Night analytics (9), with category cards in every theme. You can hide it in **Customize home**. Saved visibility and order are retained, including a previously hidden widget; the widget is shown for new installations, missing entries and **Restore defaults**. Tap a category card (or a doughnut segment where shown) to focus on one category; tap it again to restore the total. **All operations** opens the personal transaction list. Open **Savings goal planner** for the forecast.
+**Home** shows the current calendar month's income, expenses, and balance (income minus expenses), quick entry buttons, saved goal progress, and the latest transaction. Tap **Customize home** to show or hide blocks and change their order. Drag a block by its handle, use the accessible up/down buttons, or reset to defaults. The settings button remains visible when every block is hidden. **Monthly expenses** is visible by default and shows a category doughnut in all four themes, with category cards in every theme. You can hide it in **Customize home**. Saved visibility and order are retained, including a previously hidden widget; the widget is shown for new installations, missing entries and **Restore defaults**. Tap a category card (or a doughnut segment where shown) to focus on one category; tap it again to restore the total. **All operations** opens the personal transaction list. Open **Savings goal planner** for the forecast.
 
-Changing only a standard category icon preserves its translated names when you switch languages. In themes 2, 6 and 8, the expense doughnut shortens long selected names in its centre to keep the amount visible; the category card retains the full name. Expenses that convert to 0.00 still have cards with 0% share; when all amounts convert to zero, no segments are drawn.
+Changing only a standard category icon preserves its translated names when you switch languages. In all themes, the expense doughnut shortens long selected names in its centre to keep the amount visible; the category card retains the full name. Expenses that convert to 0.00 still have cards with 0% share; when all amounts convert to zero, no segments are drawn.
 
 ## Add, edit, and delete transactions
 
 1. On **Home**, tap **Add income** or **Add expense**. Alternatively, in **Operations**, select **Expenses** or **Income**, then **Add transaction**.
 2. Enter **Date** as `DD-MM-YYYY`, for example `21-10-2026`. Tap the calendar icon to pick a date, or type it manually. Enter a positive **Amount** with at most two decimal places; a decimal point or comma works.
 3. The entry currency comes from the profile and cannot be changed in this form. Change **Main currency** in the profile to use another currency for new entries. Existing entries keep their original currencies and amounts, including when you edit an entry after changing the profile currency.
-4. For an expense, select an **Expense category** from the full-width list. If a category is missing, add it in **More → Profile → Expense categories**. Income has no category; you may add an optional **Comment** of up to 150 Unicode characters (for example, salary or dividends). Tap **Save**; **Cancel** leaves the form without saving.
+4. For an expense, select an **Expense category** from the full-width list. If a category is missing, add it in **More → Expense categories**. Income has no category; you may add an optional **Comment** of up to 150 Unicode characters (for example, salary or dividends). Tap **Save**; **Cancel** leaves the form without saving.
 
 In **Operations**, the list contains all saved personal entries of the selected type, newest transaction dates first and newest creation first within a date. Editing an old entry does not move it above a newer entry on the same date. The full-width add button stays below the list instead of covering it. **Total this month** covers only the current month. Each row shows its original amount and currency code; income comments also appear on the row and the Home latest-entry card.
 
@@ -96,7 +104,7 @@ After changing the main currency, the app automatically converts and saves the t
 
 ## App protection
 
-Open **More → Profile → App protection**. Protection is optional and starts disabled for a new or unprotected installation. An update preserves the existing protection setting. First configure a PIN, password or pattern in your phone settings so you can recover access if you forget the app code.
+Open **More → App protection**. Protection is optional and starts disabled for a new or unprotected installation. An update preserves the existing protection setting. First configure a PIN, password or pattern in your phone settings so you can recover access if you forget the app code.
 
 1. Enter and repeat a code of **4–10 characters**. Letters, digits and symbols are allowed; case and spaces matter.
 2. Optionally enable **Biometric unlock** if your phone has an available, enrolled fingerprint or face method. Android performs biometric authentication; the app does not receive biometric data.
@@ -111,7 +119,7 @@ When protection is enabled, screenshots and recent-app previews hide app content
 
 ## Personal backup and restore
 
-In **More → Profile**, scroll to **Personal CSV backup**.
+Open **More → Backups** for full and personal CSV backup actions.
 
 - **Export personal backup**: choose a writable destination in Android's file picker. Wait for **Personal backup saved.** This exports all personal transactions, their original amounts/currencies, and category names, regardless of report dates.
 - **Restore personal backup**: select the CSV. A successful restore shows added and skipped counts. It merges records into the existing personal list, skips IDs already present (including repeats within the file), and never deletes or replaces local records. A changed row with an existing ID is skipped. Categories are matched by name or created as needed; a blank expense category is restored as uncategorized.

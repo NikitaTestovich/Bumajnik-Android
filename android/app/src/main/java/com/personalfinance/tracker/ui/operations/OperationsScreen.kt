@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,6 +21,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -78,6 +81,13 @@ fun OperationsScreen(
     var summary by remember(baseCurrency) { mutableStateOf<PeriodSummary?>(null) }
     var missingCurrencies by remember(baseCurrency) { mutableStateOf<Set<String>>(emptySet()) }
     var showRateDialog by remember { mutableStateOf(false) }
+    var search by remember { mutableStateOf("") }
+    var categoryFilter by remember { mutableStateOf<String?>(null) }
+    var categoryMenu by remember { mutableStateOf(false) }
+    var searchOpen by remember { mutableStateOf(false) }
+    val filtered = remember(transactions, search, categoryFilter, selectedType) {
+        filterOperations(transactions, search, if (selectedType == TransactionType.EXPENSE) categoryFilter else null)
+    }
 
     LaunchedEffect(profile, allTransactions, savedRates) {
         val currentProfile = profile ?: return@LaunchedEffect
@@ -100,7 +110,7 @@ fun OperationsScreen(
             bottomBar = {
                 Button(
                     onClick = { onAdd(selectedType) },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp).navigationBarsPadding(),
+                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 4.dp).testTag("operation_add_button"),
                 ) {
                     Text("＋  ${stringResource(R.string.operation_add)}", style = MaterialTheme.typography.titleMedium)
                 }
@@ -134,6 +144,31 @@ fun OperationsScreen(
                         }
                     }
                 }
+                TextButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) { search = ""; categoryFilter = null } }, modifier = Modifier.testTag("operation_search_toggle")) {
+                    Text(stringResource(if (searchOpen) R.string.operation_search_close else R.string.operation_search_open))
+                }
+                if (searchOpen) {
+                OutlinedTextField(
+                    value = search, onValueChange = { search = it }, modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.operation_search)) }, singleLine = true,
+                )
+                if (selectedType == TransactionType.EXPENSE) {
+                    Column {
+                        TextButton(onClick = { categoryMenu = true }) {
+                            Text(categories.firstOrNull { it.id == categoryFilter }?.let {
+                                if (languageTag == "ru") it.nameRu ?: it.nameEn.orEmpty() else it.nameEn ?: it.nameRu.orEmpty()
+                            } ?: stringResource(R.string.operation_all_categories))
+                        }
+                        DropdownMenu(expanded = categoryMenu, onDismissRequest = { categoryMenu = false }) {
+                            DropdownMenuItem(text = { Text(stringResource(R.string.operation_all_categories)) }, onClick = { categoryFilter = null; categoryMenu = false })
+                            categories.filter { category -> !category.isArchived || transactions.any { it.categoryId == category.id } }.forEach { category ->
+                                val label = if (languageTag == "ru") category.nameRu ?: category.nameEn.orEmpty() else category.nameEn ?: category.nameRu.orEmpty()
+                                DropdownMenuItem(text = { Text(label) }, onClick = { categoryFilter = category.id; categoryMenu = false })
+                            }
+                        }
+                    }
+                }
+                }
                 Text(stringResource(R.string.operation_month_total), style = MaterialTheme.typography.titleMedium)
                 val currentSummary = summary
                 val missing = missingCurrencies
@@ -152,15 +187,15 @@ fun OperationsScreen(
                     else currentSummary.expense
                     Text("${formatAmount(total.minorUnits)} $baseCurrency", style = MaterialTheme.typography.headlineSmall)
                 }
-                if (transactions.isEmpty()) {
-                    Text(stringResource(R.string.operation_empty), modifier = Modifier.padding(top = 16.dp))
+                if (filtered.isEmpty()) {
+                    Text(stringResource(if (transactions.isEmpty()) R.string.operation_empty else R.string.operation_search_empty), modifier = Modifier.padding(top = 16.dp))
                 } else {
                     LazyColumn(
                         modifier = Modifier.weight(1f).fillMaxWidth(),
                         contentPadding = PaddingValues(bottom = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        items(transactions, key = { it.id }) { transaction ->
+                        items(filtered, key = { it.id }) { transaction ->
                             TransactionRow(
                                 transaction = transaction,
                                 categoryLabel = categories.firstOrNull { it.id == transaction.categoryId }
@@ -224,7 +259,7 @@ private fun TransactionRow(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(FinanceDateFormat.format(transaction.date))
-                if (transaction.type == TransactionType.INCOME && transaction.comment.isNotBlank()) Text(transaction.comment)
+                if (transaction.comment.isNotBlank()) Text(transaction.comment)
                 if (!categoryLabel.isNullOrBlank()) Text(categoryLabel, style = MaterialTheme.typography.bodyMedium)
             }
             Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {

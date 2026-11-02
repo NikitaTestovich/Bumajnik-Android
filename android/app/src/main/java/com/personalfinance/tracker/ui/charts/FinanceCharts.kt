@@ -1,6 +1,7 @@
 package com.personalfinance.tracker.ui.charts
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -115,7 +116,8 @@ object FinanceCharts {
     }
 
     @Composable
-    fun CategoryBreakdownBars(items: List<CategoryBreakdownItem>, modifier: Modifier = Modifier) {
+    fun CategoryBreakdownBars(items: List<CategoryBreakdownItem>, modifier: Modifier = Modifier,
+        onCategoryClick: ((Int) -> Unit)? = null, details: @Composable (Int) -> Unit = {}) {
         val maximum = items.maxOfOrNull { it.valueMinorUnits } ?: 0L
         val chartDescription = stringResource(R.string.chart_category_breakdown)
         val locale = LocalConfiguration.current.locales[0]
@@ -127,13 +129,15 @@ object FinanceCharts {
             },
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            items.forEach { item ->
+            items.forEachIndexed { index, item ->
                 val amount = formatChartAmount(item.valueMinorUnits)
                 val share = percentFormat.format(if (item.share.isFinite()) item.share.coerceIn(0f, 1f) else 0f)
                 val shareLabel = stringResource(R.string.chart_category_share, share)
                 val description = stringResource(R.string.chart_category_description, item.label, amount, shareLabel)
+                Column {
                 Column(
-                    modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description },
+                    modifier = Modifier.fillMaxWidth().then(if (onCategoryClick != null) Modifier.clickable { onCategoryClick(index) } else Modifier)
+                        .clearAndSetSemantics { contentDescription = description },
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -148,6 +152,8 @@ object FinanceCharts {
                         trackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
                     )
                     Text(shareLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                details(index)
                 }
             }
         }

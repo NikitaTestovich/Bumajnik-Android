@@ -15,6 +15,11 @@ class HomeLayoutStore(context: Context) {
     })
     private val mutableLayout = MutableStateFlow(read())
     val layout = mutableLayout.asStateFlow()
+    private val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "blocks") mutableLayout.value = read()
+    }
+    init { preferences.registerOnSharedPreferenceChangeListener(listener) }
+    fun close() { preferences.unregisterOnSharedPreferenceChangeListener(listener) }
     fun save(items: List<HomeBlockSetting>) {
         val normalized = normalizeHomeLayout(items)
         val unknown = tokens().filter { token -> HomeBlock.entries.none { it.key == token.substringBefore(':') } }

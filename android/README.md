@@ -1,5 +1,7 @@
 # Finance Tracker for Android
 
+> **1.20 development:** This checkout builds versionName 1.20 and versionCode 5. The debug APK is a test/bridge build, not the owner-signed release APK. Synthetic personal data have been restored into the release-signed app on an emulator; GitHub update and actual user-data recovery remain unverified. See [test status](../docs/testing-1.20.md) before using it with personal data.
+
 ## Version 1.17
 
 Version 1.17 (code 4) adds four app-wide themes, segmented savings progress, remembered Operations tabs and optional icon labels. It preserves enabled biometric preference during temporary unavailability when settings are saved. Package, schema 3 and debug signer remain compatible. Install the matching APK with `adb -s <disposable-emulator-serial> install -r` to retain data. `:app:archiveDebugApk` builds the ignored root ZIP. Full verification, upgrade evidence and remaining device limitations: [release report](../docs/testing-1.17.md).
@@ -29,7 +31,7 @@ Data stays on the device; account setup and a network connection are not needed 
 
 Prerequisites:
 
-- JDK 21. The project's Gradle 8.13 wrapper and Android Gradle Plugin 8.13.2 were built with JDK 21 on this workstation. Its Android Studio Java 25 runtime cannot run this Gradle Kotlin DSL build; select JDK 21 explicitly.
+- JDK 21. Version 1.20 uses the Gradle 9.6.0 wrapper, Android Gradle Plugin 9.4.0 and KSP 2.3.6. Select JDK 21 explicitly for a reproducible build; Android Studio may use a separate runtime.
 - Android SDK with API 37 platform, compatible Android SDK Build-Tools, and Platform-Tools (`adb`). Install them with Android Studio's SDK Manager and accept SDK licenses. `compileSdk` and `targetSdk` are 37; Java/Kotlin bytecode targets 17.
 - Internet access for the first Gradle/dependency download, or a populated local cache.
 

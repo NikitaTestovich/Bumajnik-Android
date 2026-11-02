@@ -7,14 +7,18 @@ import com.personalfinance.tracker.data.repository.DefaultCategories
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Locale
+import java.time.LocalDate
+import com.personalfinance.tracker.domain.money.Money
 
 data class FamilyOwnerTotals(val incomeMinorUnits: Long = 0, val expensesMinorUnits: Long = 0)
+data class FamilyExpenseDetail(val owner: String, val date: LocalDate, val comment: String, val original: Money, val convertedMinorUnits: Long)
 data class FamilyReportTotals(
     val incomeMinorUnits: Long,
     val expensesMinorUnits: Long,
     val byOwner: Map<String, FamilyOwnerTotals>,
     val expensesByOwnerAndCategory: Map<String, Map<String, Long>>,
     val expensesByCategory: Map<String, Long>,
+    val expenseDetailsByCategory: Map<String, List<FamilyExpenseDetail>> = emptyMap(),
 )
 
 object FamilyReportCalculator {
@@ -57,6 +61,7 @@ object FamilyReportCalculator {
         val totals = mutableMapOf<String, FamilyOwnerTotals>()
         val categoryTotals = mutableMapOf<String, MutableMap<String, Long>>()
         val combinedCategories = mutableMapOf<String, Long>()
+        val details = mutableMapOf<String, MutableList<FamilyExpenseDetail>>()
         val categoryLabels = mutableMapOf<String, String>()
         fun normalized(label: String) = label.trim().replace(Regex("\\s+"), " ").lowercase(Locale.ROOT)
         val standardNames = DefaultCategories.forLanguage("en").flatMap { seed ->
@@ -74,7 +79,7 @@ object FamilyReportCalculator {
             return categoryLabels.getOrPut(key) { preferredLabels[normalized(display)] ?: display }
         }
 
-        fun add(owner: String, type: TransactionType, converted: Long, category: String?, personal: Boolean = false) {
+        fun add(owner: String, type: TransactionType, converted: Long, category: String?, detail: FamilyExpenseDetail, personal: Boolean = false) {
             val previous = totals[owner] ?: FamilyOwnerTotals()
             totals[owner] = when (type) {
                 TransactionType.INCOME -> previous.copy(incomeMinorUnits = Math.addExact(previous.incomeMinorUnits, converted))
@@ -84,6 +89,7 @@ object FamilyReportCalculator {
                     ownerCategories[label] = Math.addExact(ownerCategories[label] ?: 0L, converted)
                     val combined = combinedLabel(label, personal)
                     combinedCategories[combined] = Math.addExact(combinedCategories[combined] ?: 0L, converted)
+                    details.getOrPut(combined) { mutableListOf() }.add(detail)
                     previous.copy(expensesMinorUnits = Math.addExact(previous.expensesMinorUnits, converted))
                 }
             }
@@ -98,7 +104,7 @@ object FamilyReportCalculator {
                 .multiply(rebaseRate)
                 .setScale(0, RoundingMode.HALF_UP)
                 .longValueExact()
-            add(row.owner, row.type, converted, row.categoryName)
+            add(row.owner, row.type, converted, row.categoryName, FamilyExpenseDetail(row.owner, row.date, row.comment, row.sourceMoney, converted))
         }
         personalTransactions.forEach { transaction ->
             val conversionRate = if (transaction.money.currencyCode == currentBase) BigDecimal.ONE
@@ -112,6 +118,7 @@ object FamilyReportCalculator {
                 transaction.type,
                 converted,
                 transaction.categoryId?.let(categoryNamesById::get) ?: uncategorizedLabel,
+                FamilyExpenseDetail(transaction.owner, transaction.date, transaction.comment, transaction.money, converted),
                 personal = true,
             )
         }
@@ -121,6 +128,7 @@ object FamilyReportCalculator {
             byOwner = totals.toSortedMap(),
             expensesByOwnerAndCategory = categoryTotals.toSortedMap().mapValues { (_, categories) -> categories.toSortedMap() },
             expensesByCategory = combinedCategories.toSortedMap(),
+            expenseDetailsByCategory = details.mapValues { (_, entries) -> entries.sortedByDescending { it.date } },
         )
     }
 

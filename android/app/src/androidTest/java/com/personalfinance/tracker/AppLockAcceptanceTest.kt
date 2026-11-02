@@ -28,8 +28,13 @@ class AppLockAcceptanceTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val app get() = instrumentation.targetContext.applicationContext as FinanceApplication
     private var scenario: ActivityScenario<MainActivity>? = null
+    private var prepared = false
 
     @Before fun prepare() {
+        val emulated = android.os.ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("getprop ro.kernel.qemu"))
+            .use { it.readBytes().toString(Charsets.UTF_8).trim() }
+        Assume.assumeTrue("This suite resets security and requires a disposable emulator", isDisposableEmulator(emulated, android.os.Build.HARDWARE))
+        prepared = true
         runBlocking { app.appLock.recoverAfterDeviceCredential(app.appLock.generation) }
         app.container.database.clearAllTables()
         runBlocking {
@@ -41,6 +46,7 @@ class AppLockAcceptanceTest {
     }
 
     @After fun cleanup() {
+        if (!prepared) return
         scenario?.close()
         runBlocking { app.appLock.recoverAfterDeviceCredential(app.appLock.generation) }
         app.container.database.clearAllTables()
@@ -88,6 +94,7 @@ class AppLockAcceptanceTest {
         scenario!!.onActivity { secure = it.isDeviceSecure() }
         Assume.assumeTrue("Configure emulator PIN for settings tests", secure)
         ui.onNode(hasText(app.getString(R.string.navigation_more)) and hasClickAction()).performClick()
+        ui.onNodeWithTag("open_SECURITY").performScrollTo().performClick()
         ui.onNodeWithTag("new_code").performScrollTo().performTextInput("Ab12")
         ui.onNodeWithTag("confirm_code").performScrollTo().performTextInput("Ab12")
         ui.onNodeWithTag("save_security").performScrollTo().performClick()
@@ -105,6 +112,7 @@ class AppLockAcceptanceTest {
         ui.onNodeWithTag("unlock_button").performClick()
         ui.waitUntil(10_000) { !app.appLock.state.value.locked }
         ui.onNode(hasText(app.getString(R.string.navigation_more)) and hasClickAction()).performClick()
+        ui.onNodeWithTag("open_SECURITY").performScrollTo().performClick()
         ui.onNodeWithTag("current_code").performScrollTo().performTextInput("Cd34")
         ui.onNodeWithTag("disable_security").performScrollTo().performClick()
         ui.waitUntil(10_000) { !app.appLock.state.value.enabled }
@@ -164,8 +172,14 @@ class AppLockAcceptanceTest {
         }
         val deadline = SystemClock.elapsedRealtime() + 10_000
         var systemWindow = false
+        var requestedPin = false
         while (SystemClock.elapsedRealtime() < deadline) {
             val root = instrumentation.uiAutomation.rootInActiveWindow
+            val usePin = findNode(root) { it.viewIdResourceName == "com.android.systemui:id/button_use_credential" }
+            if (!requestedPin && usePin != null) {
+                assertTrue("System PIN alternative must be clickable", usePin.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+                requestedPin = true
+            }
             if (root != null && root.packageName?.toString() != app.packageName &&
                 root.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT) != null) {
                 systemWindow = true
@@ -173,7 +187,12 @@ class AppLockAcceptanceTest {
             }
             SystemClock.sleep(100)
         }
-        assertTrue("Android credential input must be visible before entering the emulator PIN", systemWindow)
+        fun describe(node: android.view.accessibility.AccessibilityNodeInfo?, depth: Int = 0): String {
+            if (node == null || depth > 20) return ""
+            return "[${node.text}|${node.contentDescription}|${node.viewIdResourceName}]" +
+                (0 until node.childCount).joinToString("") { describe(node.getChild(it), depth + 1) }
+        }
+        assertTrue("Android credential input must be visible before entering the emulator PIN: ${describe(instrumentation.uiAutomation.rootInActiveWindow)}", systemWindow)
         assertTrue(app.appLock.state.value.locked)
         // API 37's confirmation UI uses a Compose PIN pad, not an editable text field.
         // Click its real system keys so this exercises Android credential verification.

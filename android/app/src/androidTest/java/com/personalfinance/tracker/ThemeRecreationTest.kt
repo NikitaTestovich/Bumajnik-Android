@@ -39,12 +39,16 @@ class ThemeRecreationTest {
    ui.onNodeWithText(more).performClick()
   }
   openProfile()
+  ui.onNodeWithTag("open_THEMES").performScrollTo().performClick()
   ui.onNodeWithTag("theme_9").performScrollTo().performClick().assertIsSelected()
   assertEquals(9, app.themeStore.theme.value.id)
   scenario!!.recreate()
   ui.waitForIdle()
   // Navigation state can itself be restored on recreation.
-  if (ui.onAllNodesWithTag("theme_9").fetchSemanticsNodes().isEmpty()) openProfile()
+  if (ui.onAllNodesWithTag("theme_9").fetchSemanticsNodes().isEmpty()) {
+   openProfile()
+   ui.onNodeWithTag("open_THEMES").performScrollTo().performClick()
+  }
   ui.onNodeWithTag("theme_9").performScrollTo().assertIsSelected()
   runBlocking { app.appLock.enable("Ab12", false, true) }
   scenario!!.onActivity { app.appLock.lockNow() }

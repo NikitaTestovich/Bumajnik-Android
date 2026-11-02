@@ -20,6 +20,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,6 +32,10 @@ class BiometricEntryScreenTest {
     private lateinit var lock: AppLockController
 
     @Before fun prepare() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val emulated = android.os.ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("getprop ro.kernel.qemu"))
+            .use { it.readBytes().toString(Charsets.UTF_8).trim() }
+        Assume.assumeTrue("This suite resets security and requires a disposable emulator", isDisposableEmulator(emulated, android.os.Build.HARDWARE))
         runBlocking { app.appLock.recoverAfterDeviceCredential(app.appLock.generation) }
         // A screen fixture owns its request lifecycle; do not leak an unterminated fake
         // framework request into the next test through the Application singleton.
@@ -38,7 +43,7 @@ class BiometricEntryScreenTest {
     }
 
     @After fun cleanup() {
-        runBlocking { lock.recoverAfterDeviceCredential(lock.generation) }
+        if (::lock.isInitialized) runBlocking { lock.recoverAfterDeviceCredential(lock.generation) }
     }
 
     private fun launchLock(biometrics: Boolean, onRetry: () -> Unit = {}) : AppLockController {

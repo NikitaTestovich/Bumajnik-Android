@@ -1,5 +1,18 @@
 # Finance Tracker — current product specification
 
+> **1.20 development draft:** The working implementation adds expense comments and CSV compatibility, operations search and category filter, category detail in personal and family reports, distinct settings pages, chart palette allocation, full-backup and GitHub update flows. The monthly expense doughnut is shown in all four themes; available GitHub release notes are shown on the update screen. These changes are not released and require the verification listed in [testing-1.20.md](testing-1.20.md), notably full-backup migration, device UI, update signing and remaining emulator checks. The 1.17 release specification below describes the last released baseline until those checks are complete.
+
+## Version 1.20 changes under verification
+
+- Personal income and expense comments are optional and limited to 150 Unicode code points; eight-column CSV export includes both. Seven-column legacy and eight-column CSV imports remain supported.
+- Operations search covers comments, amounts and displayed dates for the selected transaction type; expense search additionally filters by category. The add-operation control stays below the scrollable history.
+- Personal and family expense categories expand to show contributing dated transactions and comments; family details identify the owner and show conversion where applicable. Totals and details use the same report period and conversion rules.
+- More retains profile editing and opens themes, protection, backups, categories and updates as separate screens. Existing category icons remain visible. The expense doughnut is available in every active theme and adjacent segments receive distinguishable colors where possible.
+- A personal CSV backup restores transactions by identifier without duplicates; it excludes profile, settings, goals, rates and family imports. A separate unencrypted full backup includes those data but excludes app-lock secrets; full restoration replaces current data after confirmation.
+- Updates check the configured public GitHub release endpoint, display release notes and require a newer versionCode. Before Android's installer opens, the APK must match the expected SHA-256, package and signing certificate. Installation requires the user's confirmation. Actual GitHub end-to-end verification remains outstanding.
+
+## Released 1.17 baseline
+
 **Current version:** 1.17 (29 October 2026). This document describes the release behavior; the [English](user-guide-en.md) and [Russian](user-guide-ru.md) guides explain how to use it. Update this specification with each app version.
 
 ## Profile and navigation

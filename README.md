@@ -1,5 +1,7 @@
 # Finance Tracker for Android
 
+> **Development branch 1.20:** Search, expense comments, expandable reports, settings pages, charts, full backup and update checking are implemented. A release-key APK has been built and tested; the GitHub download/update flow and transfer of a user's actual data remain unverified. See [verification](docs/testing-1.20.md) and [release signing](docs/release-signing.md); do not uninstall an existing app to migrate data.
+
 ## Version 1.17
 
 Version 1.17 (code 4) adds four app-wide themes, segmented savings progress, remembered Operations tabs and optional icon labels. It preserves enabled biometric preference during temporary unavailability when settings are saved. Package, schema 3 and debug signer remain compatible. Install the matching APK with `adb -s <disposable-emulator-serial> install -r` to retain data. `:app:archiveDebugApk` builds the ignored root ZIP. Full verification, upgrade evidence and remaining device limitations: [release report](docs/testing-1.17.md).
@@ -30,11 +32,11 @@ Version 1.15 optional monthly expense widget, captured from the emulator with fi
 
 ## What it does
 
-- Add, edit, and delete income and expense entries. Choose dates with a calendar or type them as `DD-MM-YYYY`. Add optional income comments of up to 150 Unicode characters.
+- Add, edit, delete and search income and expense entries. Choose dates with a calendar or type them as `DD-MM-YYYY`. Add optional comments of up to 150 Unicode characters.
 - Start with standard expense categories, create your own, rename or archive them, and choose from 20 bundled icons. Archived categories remain on older expenses; icon-only edits preserve standard translations.
-- Customize Home with hide/show controls and drag or arrow ordering. The monthly expense breakdown (a doughnut in themes 2, 6 and 8; horizontal bars in theme 9) is visible for fresh, missing and reset settings; previously saved visibility and order, including a hidden widget, remain. Hide it in Home settings or explore category amounts, including cards rounded to zero after conversion. Selected long names are bounded so the amount remains visible.
-- Review monthly totals, category breakdowns, and comparisons with a previous period.
-- Export current eight-column CSV reports/backups with income comments. The version 1.1 export checkbox is removed; version 1.1 cannot read current exports. Import either seven-column or eight-column files. A family member's report shows a signed balance, income/expense comparisons by member and combined expense categories; repeated records are skipped.
+- Customize Home with hide/show controls and drag or arrow ordering. The monthly expense doughnut is available in all four themes and visible for fresh, missing and reset settings; previously saved visibility and order, including a hidden widget, remain. Hide it in Home settings or explore category amounts.
+- Review monthly totals, category breakdowns, expandable expense details, and comparisons with a previous period.
+- Export eight-column CSV reports/backups with income and expense comments. Import seven-column or eight-column files. Older app versions may not accept expense comments. Family reports combine categories and skip repeated records.
 - Optionally protect access with a 4–10-character app code and available biometrics. When enabled, the biometric prompt opens automatically; the code appears after failure or cancellation. Recover a forgotten code through the phone screen lock without deleting records.
 - Enter exchange rates manually when a report contains multiple currencies. Supported currencies: USD, EUR, RUB, and BYN.
 - Plan one savings goal using your saved amount and the average surplus from up to three completed months.
@@ -42,7 +44,7 @@ Version 1.15 optional monthly expense widget, captured from the emulator with fi
 
 ## Privacy and backups
 
-The app has no account or live synchronization. Financial records are stored locally. CSV export and import use Android's file picker; the app does not fetch exchange rates. A personal CSV backup contains your transaction history, so store and share it carefully. Export a backup before uninstalling the app or clearing its storage. The backup does not include every setting or saved family import; see the guide for details.
+The app has no account or live synchronization. Financial records are stored locally. CSV export and import use Android's file picker; the app does not fetch exchange rates. A personal CSV backup contains transactions but not all settings or saved family imports. The separate full backup includes these items but is not encrypted and does not include app-lock credentials. Store backups securely and verify restoration before uninstalling or clearing storage; see the guide for details.
 
 No real financial data, local SDK paths, signing keys, APKs, or backup files belong in this repository. The screenshots above show demo screens.
 

@@ -71,10 +71,11 @@ class ReportExportRecreationTest {
         }))
         assertTrue(awaitNode { it.isClickable && it.text?.toString()?.equals("Save", ignoreCase = true) == true }.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
         ui.waitUntil(10000) { ui.onAllNodesWithText(app.getString(R.string.reports_export_success)).fetchSemanticsNodes(atLeastOneRootRequired=false).isNotEmpty() }
-        val csv = android.os.ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("cat /sdcard/Download/$filename")).use { it.readBytes().toString(Charsets.UTF_8) }
+        // DocumentsUI remembers the last folder, which can be nested under Downloads.
+        val csv = android.os.ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("find /sdcard/Download -type f -name $filename -exec cat {} +")).use { it.readBytes().toString(Charsets.UTF_8) }
         assertTrue(csv.startsWith("owner,record_id,date,category,income,expense,currency,comment"))
         assertTrue(csv.contains("Salary"))
-        android.os.ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("rm /sdcard/Download/$filename")).close()
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("find /sdcard/Download -type f -name $filename -delete")).close()
     }
 
     @Test fun pickerResultAfterSavedStateRestoreKeepsCommentsAndEightColumns() {

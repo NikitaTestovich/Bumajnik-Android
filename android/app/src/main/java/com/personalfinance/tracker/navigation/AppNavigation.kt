@@ -46,6 +46,7 @@ import com.personalfinance.tracker.ui.home.HomeScreen
 import com.personalfinance.tracker.ui.onboarding.WelcomeScreen
 import com.personalfinance.tracker.ui.onboarding.WelcomeViewModel
 import com.personalfinance.tracker.ui.profile.ProfileScreen
+import com.personalfinance.tracker.ui.profile.ProfileSection
 import com.personalfinance.tracker.ui.profile.ProfileViewModel
 import com.personalfinance.tracker.ui.family.FamilyScreen
 import com.personalfinance.tracker.ui.goals.GoalScreen
@@ -96,6 +97,28 @@ fun AppNavigation() {
     var backupBusy by remember { mutableStateOf(false) }
     var backupStatusRes by remember { mutableStateOf<Int?>(null) }
     var restoredCounts by remember { mutableStateOf(0 to 0) }
+    var pendingFullBackup by remember { mutableStateOf<Pair<com.personalfinance.tracker.data.backup.FullBackupSnapshot, com.personalfinance.tracker.data.backup.BackupPreferences>?>(null) }
+    val fullBackupImport = rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) scope.launch {
+            backupBusy = true
+            try {
+                pendingFullBackup = com.personalfinance.tracker.data.backup.readFullBackup(context, uri)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { backupStatusRes = R.string.full_backup_invalid }
+            finally { backupBusy = false }
+        }
+    }
+    val fullBackupExport = rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
+        if (uri != null) scope.launch {
+            backupBusy = true
+            try {
+                com.personalfinance.tracker.data.backup.exportFullBackup(context, uri)
+                backupStatusRes = R.string.full_backup_export_done
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { backupStatusRes = R.string.backup_export_failed }
+            finally { backupBusy = false }
+        }
+    }
     val backupExport = rememberLauncherForActivityResult(CreateCsvDocument()) { uri ->
         if (uri != null) scope.launch {
             backupBusy = true
@@ -208,6 +231,7 @@ fun AppNavigation() {
                     )
                 }
                 composable(ReportsRoute) { ReportsScreen() }
+                composable("more_updates") { com.personalfinance.tracker.update.UpdatesScreen { navController.popBackStack() } }
                 composable(
                     route = TransactionFormRoute,
                     arguments = listOf(
@@ -232,7 +256,9 @@ fun AppNavigation() {
                         onCancel = { navController.popBackStack() },
                     )
                 }
-                composable(MoreRoute) {
+                listOf(MoreRoute to ProfileSection.MORE, "more_themes" to ProfileSection.THEMES,
+                    "more_security" to ProfileSection.SECURITY, "more_backup" to ProfileSection.BACKUP,
+                    "more_categories" to ProfileSection.CATEGORIES).forEach { (route, section) -> composable(route) {
                     val currentProfile = profile
                     if (currentProfile != null) {
                         ProfileScreen(
@@ -258,14 +284,39 @@ fun AppNavigation() {
                             },
                             backupBusy = backupBusy,
                             backupStatus = backupStatus,
+                            section = section,
+                            onOpenSection = { target -> navController.navigate("more_${target.name.lowercase()}") },
+                            onBack = { navController.popBackStack() },
+                            onExportFullBackup = { backupStatusRes = null; fullBackupExport.launch("finance-tracker-backup.ftb") },
+                            onRestoreFullBackup = { backupStatusRes = null; fullBackupImport.launch(arrayOf("application/octet-stream", "*/*")) },
                         )
                     } else {
                         LoadingScreen()
                     }
-                }
+                } }
                 composable(FamilyRoute) { FamilyScreen(onBack = { navController.popBackStack() }) }
                 composable(GoalRoute) { GoalScreen(onBack = { navController.popBackStack() }) }
             }
+        }
+        pendingFullBackup?.let { pending ->
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { pendingFullBackup = null },
+                title = { Text(stringResource(R.string.full_backup_confirm_title)) },
+                text = { Text(stringResource(R.string.full_backup_confirm_body, pending.first.transactions.size, pending.first.familyTransactions.size)) },
+                dismissButton = { androidx.compose.material3.TextButton(onClick = { pendingFullBackup = null }) { Text(stringResource(R.string.operation_cancel)) } },
+                confirmButton = { androidx.compose.material3.TextButton(onClick = {
+                    pendingFullBackup = null
+                    scope.launch {
+                        backupBusy = true
+                        try {
+                            val complete = com.personalfinance.tracker.data.backup.applyFullBackup(context, pending.first, pending.second)
+                            backupStatusRes = if (complete) R.string.full_backup_restore_done else R.string.full_backup_settings_failed
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                        catch (_: Exception) { backupStatusRes = R.string.backup_restore_failed }
+                        finally { backupBusy = false }
+                    }
+                }) { Text(stringResource(R.string.full_backup_restore)) } },
+            )
         }
     }
 }

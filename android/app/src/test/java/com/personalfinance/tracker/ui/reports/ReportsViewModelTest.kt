@@ -30,6 +30,8 @@ class ReportsViewModelTest {
         assertEquals(listOf("new-food", "old-food"), state.categories.map { it.categoryId })
         assertEquals(listOf("groceries", "dining"), state.categories.map { it.iconKey })
         assertEquals(listOf("Food", "Food"), state.categories.map { it.name })
+        assertEquals(listOf(2000L, 1000L), state.categories.map { category -> category.details.sumOf { it.convertedMinorUnits } })
+        assertEquals(listOf("new", "old"), state.categories.map { it.details.single().transaction.id })
     }
     @Test
     fun loadIncludesImmediatelyPrecedingEqualLengthPeriodForComparison() = runBlocking {

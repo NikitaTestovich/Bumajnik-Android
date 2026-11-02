@@ -8,6 +8,18 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FinanceDao {
+    @Query("DELETE FROM finance_transactions") suspend fun backupClearTransactions()
+    @Query("DELETE FROM categories") suspend fun backupClearCategories()
+    @Query("DELETE FROM user_profile") suspend fun backupClearProfile()
+    @Query("DELETE FROM savings_goal") suspend fun backupClearGoal()
+    @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun backupInsertTransactions(rows: List<FinanceTransactionEntity>)
+    @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun backupInsertCategories(rows: List<CategoryEntity>)
+    @Query("SELECT * FROM user_profile WHERE id = 1 LIMIT 1")
+    suspend fun backupProfile(): UserProfileEntity?
+    @Query("SELECT * FROM finance_transactions ORDER BY id")
+    suspend fun backupTransactions(): List<FinanceTransactionEntity>
+    @Query("SELECT * FROM savings_goal WHERE id = 1 LIMIT 1")
+    suspend fun backupGoal(): SavingsGoalEntity?
     @Query("SELECT * FROM finance_transactions WHERE id = :id LIMIT 1")
     suspend fun transactionById(id: String): FinanceTransactionEntity?
 
@@ -59,6 +71,14 @@ interface FinanceDao {
 
 @Dao
 interface FamilyDao {
+    @Query("DELETE FROM family_transactions") suspend fun backupClearFamilyTransactions()
+    @Query("DELETE FROM family_import_batches") suspend fun backupClearBatches()
+    @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun backupInsertFamily(rows: List<FamilyTransactionEntity>)
+    @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun backupInsertBatches(rows: List<FamilyImportBatchEntity>)
+    @Query("SELECT * FROM family_transactions ORDER BY id")
+    suspend fun backupFamilyTransactions(): List<FamilyTransactionEntity>
+    @Query("SELECT * FROM family_import_batches ORDER BY id")
+    suspend fun backupBatches(): List<FamilyImportBatchEntity>
     @Query("SELECT * FROM family_transactions WHERE date >= :start AND date < :endExclusive ORDER BY date DESC, id ASC")
     fun observeFamilyTransactions(start: String, endExclusive: String): Flow<List<FamilyTransactionEntity>>
 
@@ -80,6 +100,9 @@ interface FamilyDao {
 
 @Dao
 interface ExchangeRateDao {
+    @Query("DELETE FROM period_exchange_rates") suspend fun backupClearRates()
+    @Query("SELECT * FROM period_exchange_rates ORDER BY rangeStart, rangeEndExclusive, baseCurrency, sourceCurrency")
+    suspend fun backupRates(): List<ExchangeRateEntity>
     @Query("SELECT * FROM period_exchange_rates WHERE rangeStart = :start AND rangeEndExclusive = :endExclusive AND baseCurrency = :baseCurrency")
     fun observeRates(start: String, endExclusive: String, baseCurrency: String): Flow<List<ExchangeRateEntity>>
 
