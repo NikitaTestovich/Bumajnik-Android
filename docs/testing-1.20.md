@@ -1,8 +1,24 @@
-# Version 1.20 testing — work in progress
+# Version 1.20 testing and release verification
 
 ## Status
 
-Not ready for public release: the GitHub update flow and migration on the intended physical phone remain unverified. Emulator migration, backup, screenshots and signing have been exercised as described below; no existing personal installation was modified.
+Published as [v1.20](https://github.com/NikitaTestovich/Bumajnik-Android/releases/tag/v1.20) on 2026-11-02. Publication does not close the remaining checks below. Earlier runs are historical evidence, not claims of a new complete rerun.
+
+## Post-publication verification, 2026-11-02
+
+- Anonymous GitHub `releases/latest` returned `v1.20`, `draft=false`, `prerelease=false`, with `finance-tracker-vc5.apk` (9,105,449 bytes). Public main remained at `75bcaec15c26be2ac4135d8362273c5fb4f4eb6b` during this check.
+- Downloaded the actual public asset over HTTPS, following GitHub's redirect. SHA-256 matched the API digest and staged artifact: `94795273ed57c76b90caeb1558059f3358cc5d5631f3083998d4aa4848e5954b`.
+- Android build tools verified the downloaded APK signature and identity: package `com.personalfinance.tracker`, versionName `1.20`, versionCode `5`; certificate SHA-256 `65f686e6930483501232d5bdc0d6cae8a2f62b5e1520e316b780a94ffb463d69`.
+- Physical Android 13 phone: installed version 1.20/code 5. With internet unavailable the real Updates screen displayed a connection error. After the owner enabled internet, retry displayed “Подходящее новое обновление не найдено.” This verifies network recovery and the live same-version check, not the newer-version download/install action. No phone records were cleared or changed.
+- Fresh full JVM rerun: `:app:testDebugUnitTest --rerun-tasks --offline --no-daemon --console=plain` passed: 37 suites, 158 tests, zero failures, errors or skips. Includes release selection, trusted URLs, payload validation, downloader failure/redirect handling and identity checks. Initial sandbox attempts could not connect to the Gradle daemon; the unsandboxed rerun succeeded.
+- The application code and APK were not changed by this documentation update. The previously completed Android/integration results below remain historical; the entire instrumented suite was not repeated for documentation-only changes.
+
+## Remaining checks and next-release gate
+
+1. **Higher-version in-app update:** on the next real release, use versionCode greater than 5 and the same owner certificate. On disposable data, verify live discovery, download, Android permission/installation confirmation, cancellation/retry and retained personal records. The current phone already has code 5, so v1.20 must not offer itself as an update. Do not publish a dummy version solely for this test.
+2. **Personal data:** synthetic personal CSV export, duplicate handling and restore have passed as recorded below. Recovery of an individual user's actual backup is not established by those fixtures. The owner explicitly deprioritized family-data migration; it is not a release acceptance blocker and is not claimed as verified for real user data.
+3. **Additional robustness:** full-backup interruption between database and preferences, more document providers and device/Android versions remain follow-up checks. A backup is not an atomic transaction across both stores.
+4. **Documentation delivery:** publish the reviewed documentation changes to GitHub so the repository landing page reflects the public release. No APK rebuild is required for these text changes.
 
 ## Latest complete run, 2026-11-02
 
@@ -58,7 +74,9 @@ Not ready for public release: the GitHub update flow and migration on the intend
 - The previous build used Android Gradle Plugin 8.13.2, which warned about API 37. [Android's compatibility table](https://developer.android.com/build/releases/about-agp) specifies at least AGP 9.1.1 for API 37. A separate copy was migrated to AGP 9.4.0, Gradle 9.6.0, built-in Kotlin and KSP 2.3.6: debug and test-key release builds, JVM tests and Android test compilation passed. Its full Android run exposed one outdated security-navigation test; after correcting it, that test passed separately on both toolchains. The migrated working branch subsequently passed the complete suite described above. `targetSdk` remains 37.
 - The first combined build with the new toolchain exhausted Gradle's default 512 MiB heap while merging DEX files. Project Gradle JVM limits were raised to 1536 MiB heap and 512 MiB metaspace; the repeated build passed the previously failing DEX merge and continued to test execution.
 
-## Required before release
+## Original pre-release checklist (historical)
+
+This was the original checklist. Completed evidence is recorded above; use “Remaining checks and next-release gate” for the current outstanding scope.
 
 - Execute Android UI and E2E tests on disposable data, including search, scrolling, category drilldown, four themes, both languages, large text and intermittent chart visibility.
 - Extend real-picker CSV coverage across providers and verify the complete cross-signature migration using user-operated files and disposable installations.
