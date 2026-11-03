@@ -1,6 +1,6 @@
 # Version 1.20 — requirements intake and review notes
 
-Date: 2026-11-01. This document preserves the initial requirements and review notes as a historical snapshot. The user subsequently approved implementation; work is in progress and release-transition verification remains incomplete. For current test status see [testing-1.20.md](../testing-1.20.md).
+Date: 2026-11-01. This document preserves the initial requirements and review notes as a historical snapshot. The user subsequently approved implementation; version 1.20 was published on 2026-11-02. Higher-version in-app update verification remains incomplete. For current test status see [testing-1.20.md](../testing-1.20.md).
 
 ## Requested scope
 

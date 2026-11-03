@@ -1,10 +1,14 @@
 # Finance Tracker for Android
 
-> **Development branch 1.20:** Search, expense comments, expandable reports, settings pages, charts, full backup and update checking are implemented. A release-key APK has been built and tested; the GitHub download/update flow and transfer of a user's actual data remain unverified. See [verification](docs/testing-1.20.md) and [release signing](docs/release-signing.md); do not uninstall an existing app to migrate data.
+## Version 1.21 — in preparation
 
-## Version 1.17
+Maintenance release with updated documentation and Android versionCode 6. App features and data formats are unchanged from 1.20. The download link below currently points to published 1.20; 1.21 is not yet published. See [1.21 verification](docs/testing-1.21.md).
 
-Version 1.17 (code 4) adds four app-wide themes, segmented savings progress, remembered Operations tabs and optional icon labels. It preserves enabled biometric preference during temporary unavailability when settings are saved. Package, schema 3 and debug signer remain compatible. Install the matching APK with `adb -s <disposable-emulator-serial> install -r` to retain data. `:app:archiveDebugApk` builds the ignored root ZIP. Full verification, upgrade evidence and remaining device limitations: [release report](docs/testing-1.17.md).
+[Download Android APK](https://github.com/NikitaTestovich/Bumajnik-Android/releases/latest) · [English guide](docs/user-guide-en.md) · [Руководство на русском](docs/user-guide-ru.md)
+
+## Version 1.20 — released November 2, 2026
+
+Search operations by comment, amount or date, filter expenses by category, and expand categories in personal and family reports. This release adds expense comments in CSV, separate settings pages, improved charts, full backups and GitHub update checking. The public APK uses an owner-managed release signing key.
 
 A private income and expense tracker for Android. Record everyday transactions, understand where money goes, and estimate how long a savings goal may take. Your records stay on your device; family reporting works through CSV files you choose to exchange.
 
@@ -17,6 +21,14 @@ Fictional-data Reports at 280dp with Russian text at 1.6 scale (the chart can sc
 | Financial journal | Electric graphite | Color mosaic | Night analytics |
 | :---: | :---: | :---: | :---: |
 | <img src="docs/screenshots/theme-2-ru.png" alt="Financial journal Russian report" width="180"> | <img src="docs/screenshots/theme-6-ru.png" alt="Electric graphite Russian report" width="180"> | <img src="docs/screenshots/theme-8-ru.png" alt="Color mosaic Russian report" width="180"> | <img src="docs/screenshots/theme-9-ru.png" alt="Night analytics Russian report" width="180"> |
+
+## Version 1.20 screenshots
+
+These examples use fictional data.
+
+| Operations | Personal report | Family report |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/1.20-test/operations-v3.png" alt="Search and operations" width="220"> | <img src="docs/screenshots/1.20-test/personal-expanded.png" alt="Expanded personal expense category" width="220"> | <img src="docs/screenshots/1.20-test/family-expanded.png" alt="Expanded family expense category" width="220"> |
 
 ## Earlier screenshots
 
@@ -48,13 +60,23 @@ The app has no account or live synchronization. Financial records are stored loc
 
 No real financial data, local SDK paths, signing keys, APKs, or backup files belong in this repository. The screenshots above show demo screens.
 
-## Install or build
+## Install and update
+
+1. Open [the latest release](https://github.com/NikitaTestovich/Bumajnik-Android/releases/latest) on your phone and download `finance-tracker-vc5.apk` for version 1.20.
+2. Open the APK, allow installation from that source if Android asks, and confirm installation.
+3. For future releases, open **More → Updates → Check for updates**. If a newer compatible release exists, tap **Update** and confirm in Android.
+
+Internet is needed for checking and downloading updates, not for everyday tracking. Do not uninstall a release-signed installation to update it: compatible updates retain its data. Older debug/test builds have a different signature and require backup-and-restore migration. Personal CSV preserves personal operations, not family imports or settings; verify restoration before removing an old installation.
+
+The public APK download, checksum and signing certificate have been verified. A live check on Android 13 correctly reports no newer update for installed 1.20. Installation of a higher-version release through the app remains pending. See [test evidence and remaining checks](docs/testing-1.20.md).
+
+## Build from source
 
 The project supports **Android 8.0 (API 26) and newer**. The generated debug APK is kept locally at `android/app/build/outputs/apk/debug/app-debug.apk`; it is not committed to Git. The root `AppAndroidBudjets.zip` archive is also a local build output.
 
 See [build and installation instructions](android/README.md) for JDK 21, Android SDK, and Gradle wrapper setup.
 
-To update, install a newer APK over the existing app without uninstalling it. Updates must use the same package ID and signing certificate to retain data. Current builds are for testing; a differently signed release requires a planned migration. See the [update guide](docs/user-guide-en.md#updating-without-losing-records).
+To update, install a newer APK over the existing app without uninstalling it. Updates must use the same package ID and signing certificate to retain data. Local debug builds are for testing; a differently signed release requires a planned migration. See the [update guide](docs/user-guide-en.md#updating-without-losing-records).
 
 ## Guides and development
 
@@ -62,6 +84,6 @@ To update, install a newer APK over the existing app without uninstalling it. Up
 - [Руководство пользователя на русском](docs/user-guide-ru.md)
 - [Development and bug reports](docs/CONTRIBUTING.md)
 - [Current product specification](docs/specification.md)
-- [Version 1.15 verification and device-test limits](docs/testing-1.15.md)
+- [Version 1.20 verification and remaining checks](docs/testing-1.20.md)
 
 The project remains open for iterative testing and fixes. When reporting a bug, use sample data and remove names, amounts, and files that reveal real finances.

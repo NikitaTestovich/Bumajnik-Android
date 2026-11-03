@@ -1,6 +1,10 @@
 # Finance Tracker for Android
 
-> **1.20 development:** This checkout builds versionName 1.20 and versionCode 5. The debug APK is a test/bridge build, not the owner-signed release APK. Synthetic personal data have been restored into the release-signed app on an emulator; GitHub update and actual user-data recovery remain unverified. See [test status](../docs/testing-1.20.md) before using it with personal data.
+## Version 1.21 — build preparation
+
+This checkout builds versionName 1.21 / versionCode 6. Use the existing owner release key for production and name the verified release asset `finance-tracker-vc6.apk`. Debug output has a different signature and must not be installed over the release on a personal phone. See [verification](../docs/testing-1.21.md).
+
+> **1.20 released (2026-11-02):** The 1.20 release used versionName 1.20 and versionCode 5. Download the owner-signed APK from [GitHub Releases](https://github.com/NikitaTestovich/Bumajnik-Android/releases/latest). Local debug APKs are test/bridge builds with a different signature. Public download and the phone's live no-newer-version check passed; a higher-version in-app installation remains pending. See [test status](../docs/testing-1.20.md).
 
 ## Version 1.17
 

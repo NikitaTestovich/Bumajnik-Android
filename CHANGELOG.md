@@ -1,10 +1,16 @@
 # Changelog
 
-## 1.20 — unreleased
+## 1.21 — unreleased
+
+- Refresh README, both user guides, product specification and published-release verification notes.
+- Increase Android versionName to 1.21 and versionCode to 6; application features and data formats are unchanged.
+- Prepare a same-certificate update from public 1.20. The owner-signed APK has been verified; real in-app upgrade verification is pending.
+
+## 1.20 — 2026-11-02
 
 - Add operations search and expense comments, expandable report categories, distinct settings pages and chart palette improvements; display the expense doughnut in all four themes.
-- Add full backup and GitHub update flows. Personal-data restoration to the owner-signed release was verified with synthetic data on an emulator; a complete GitHub download/update and a user's actual data transfer remain unverified.
-- Add fictional three-month CSV fixtures and a work-in-progress test report.
+- Add full backup and GitHub update flows. Personal-data restoration to the owner-signed release was verified with synthetic data on an emulator; the public APK download and same-version phone check passed. A higher-version in-app installation and a user's actual data transfer remain unverified.
+- Add fictional three-month CSV fixtures and a test report with remaining limitations.
 - Update the Android build toolchain to Gradle 9.6.0, Android Gradle Plugin 9.4.0 and KSP 2.3.6 for API 37 support.
 
 ## 1.17 — 2026-10-29

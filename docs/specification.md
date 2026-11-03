@@ -1,8 +1,12 @@
 # Finance Tracker — current product specification
 
-> **1.20 development draft:** The working implementation adds expense comments and CSV compatibility, operations search and category filter, category detail in personal and family reports, distinct settings pages, chart palette allocation, full-backup and GitHub update flows. The monthly expense doughnut is shown in all four themes; available GitHub release notes are shown on the update screen. These changes are not released and require the verification listed in [testing-1.20.md](testing-1.20.md), notably full-backup migration, device UI, update signing and remaining emulator checks. The 1.17 release specification below describes the last released baseline until those checks are complete.
+## Version 1.21 — maintenance release in preparation
 
-## Version 1.20 changes under verification
+VersionName 1.21 / versionCode 6; unchanged package, storage and app behavior from 1.20. Release documentation is refreshed. Same-certificate in-place updating is required. See [1.21 specification](specs/version-1.21.md) and [verification](testing-1.21.md).
+
+> **1.20 released (2026-11-02):** Expense comments and CSV compatibility, operations search and category filtering, expandable personal/family reports, separate settings pages, improved charts, full backups and GitHub updates are shipped. The monthly expense doughnut appears in all four themes. Public download and the current-version live check are verified; higher-version in-app installation remains pending. See [testing-1.20.md](testing-1.20.md). The 1.17 sections below document the inherited baseline.
+
+## Version 1.20 shipped changes
 
 - Personal income and expense comments are optional and limited to 150 Unicode code points; eight-column CSV export includes both. Seven-column legacy and eight-column CSV imports remain supported.
 - Operations search covers comments, amounts and displayed dates for the selected transaction type; expense search additionally filters by category. The add-operation control stays below the scrollable history.
@@ -13,7 +17,7 @@
 
 ## Released 1.17 baseline
 
-**Current version:** 1.17 (29 October 2026). This document describes the release behavior; the [English](user-guide-en.md) and [Russian](user-guide-ru.md) guides explain how to use it. Update this specification with each app version.
+**Historical baseline:** 1.17 (29 October 2026), with the 1.20 changes above taking precedence. The [English](user-guide-en.md) and [Russian](user-guide-ru.md) guides explain current usage. Update this specification with each app version.
 
 ## Profile and navigation
 

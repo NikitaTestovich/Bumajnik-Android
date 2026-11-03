@@ -1,12 +1,16 @@
 # Finance Tracker — user guide
 
-## Version 1.20 — work in progress
+## Version 1.21 — in preparation
+
+This maintenance version updates release documentation and the version number; everyday features and data formats remain the same as 1.20. Once published, open More → Updates with internet enabled and confirm the compatible update in Android. Keep the existing app installed to preserve its data. The signed upgrade check is still pending; see [verification](testing-1.21.md).
+
+## Version 1.20 — released November 2, 2026
 
 The More tab has separate pages for themes, protection, backups, categories and updates. In Operations, select Search operations to search comments, amounts or dates; expenses also support category filtering. Expense comments are optional and limited to 150 Unicode characters. Tap an expense category in either report to show its transactions.
 
 A separate full-backup file contains personal and family data and settings. It is not encrypted and excludes the app code and biometrics. Restore replaces current data after confirmation. A synthetic personal-data transfer to the release signer has been tested on an emulator; recovery of an individual user's backup remains to be verified. **Do not uninstall before verifying recovery or rely on a single copy.** The personal CSV backup remains available separately.
 
-Updates checks public GitHub releases and shows available release notes. When a newer version is available, the check button becomes an Update button; Android asks you to confirm installation. Download and data retention are not yet fully verified; version 1.20 has not been released.
+Updates checks public GitHub releases and shows available release notes. When a newer version is available, the check button becomes an Update button; Android asks you to confirm installation. Version 1.20 is available from [GitHub Releases](https://github.com/NikitaTestovich/Bumajnik-Android/releases/latest). Checking and downloading require internet. The public APK and live check on a phone with 1.20 have been verified; installing a newer release through the app remains unverified.
 
 ## Version 1.17: appearance, goals and everyday controls
 

@@ -1,6 +1,6 @@
-# Release signing and updates (work in progress)
+# Release signing and updates
 
-Do not publish a release until the migration and update checks in [testing-1.20.md](testing-1.20.md) pass. Existing installations use a different debug certificate; a new release certificate cannot update them directly. Do not uninstall an existing installation until a full-data transfer and recovery have been independently verified.
+Version 1.20 was published on 2026-11-02 with the owner-managed release certificate. Before subsequent releases, complete the applicable checks in [testing-1.20.md](testing-1.20.md). Older debug installations use a different certificate; the release certificate cannot update them directly. Do not uninstall an existing installation until a full-data transfer and recovery have been independently verified.
 
 For a new owner-managed key, see the [Russian setup guide](release-key-setup-ru.md). Keep the keystore and password outside Git and out of chat.
 
