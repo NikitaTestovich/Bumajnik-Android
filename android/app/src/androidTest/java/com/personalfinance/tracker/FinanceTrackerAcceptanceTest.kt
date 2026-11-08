@@ -351,6 +351,8 @@ class FinanceTrackerAcceptanceTest {
         awaitText(R.string.operation_amount)
         ui.onNodeWithContentDescription(text(R.string.calculator_open)).performClick()
         listOf("8", "0", "+", "4", "5").forEach { ui.onNodeWithText(it).performClick() }
+        ui.onNodeWithText("=").performClick()
+        ui.onNodeWithText("125.00").assertIsDisplayed()
         ui.onNodeWithText(text(R.string.calculator_apply)).performClick()
         ui.onNodeWithText("125.00").assertIsDisplayed()
         click(R.string.operation_cancel)
