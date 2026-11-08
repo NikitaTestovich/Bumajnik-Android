@@ -230,6 +230,7 @@
     <string name="category_none_active">Add a category in your profile before saving a new expense.</string>
     <string-array name="category_icon_names">
         <item>Groceries</item><item>Home</item><item>Transport</item><item>Phone</item><item>Health</item><item>Education</item><item>Clothing</item><item>Dining</item><item>Entertainment</item><item>Household goods</item><item>Travel</item><item>Gifts</item><item>Pets</item><item>Sport</item><item>Beauty</item><item>Children</item><item>Insurance</item><item>Taxes</item><item>Tools</item><item>Other</item>
+    <item>Bank card</item><item>Airplane</item><item>Headphones</item><item>Bicycle</item><item>Coffee</item><item>Plant</item><item>Computer</item><item>Clock</item><item>Scissors</item><item>Umbrella</item>
     </string-array>
     <string name="home_customize">Customize home</string>
     <string name="home_customize_hint">Hold the handle to drag. Use arrows to move blocks.</string>

@@ -230,6 +230,7 @@
     <string name="category_none_active">Перед добавлением нового расхода создайте категорию в профиле.</string>
     <string-array name="category_icon_names">
         <item>Продукты</item><item>Дом</item><item>Транспорт</item><item>Связь</item><item>Здоровье</item><item>Образование</item><item>Одежда</item><item>Кафе</item><item>Развлечения</item><item>Бытовые товары</item><item>Путешествия</item><item>Подарки</item><item>Питомцы</item><item>Спорт</item><item>Красота</item><item>Дети</item><item>Страхование</item><item>Налоги</item><item>Инструменты</item><item>Другое</item>
+    <item>Банковская карта</item><item>Самолёт</item><item>Наушники</item><item>Велосипед</item><item>Чашка</item><item>Растение</item><item>Компьютер</item><item>Часы</item><item>Ножницы</item><item>Зонт</item>
     </string-array>
     <string name="home_customize">Моя главная</string>
     <string name="home_customize_hint">Удерживайте ручку для перетаскивания или используйте стрелки.</string>
