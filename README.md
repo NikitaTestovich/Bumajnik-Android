@@ -76,7 +76,7 @@ The public APK download, checksum and signing certificate have been verified. A 
 
 ## Build from source
 
-The project supports **Android 8.0 (API 26) and newer**. The generated debug APK is kept locally at `android/app/build/outputs/apk/debug/app-debug.apk`; it is not committed to Git. The root `AppAndroidBudjets.zip` archive is also a local build output.
+The project supports **Android 8.0 (API 26) and newer**. The generated debug APK is kept locally at `android/app/build/outputs/apk/debug/app-debug.apk`; it is not committed to Git. The local root `AppAndroidBudjets.zip` contains the signed 1.22 release APK; running `:app:archiveDebugApk` replaces that archive with a debug build.
 
 See [build and installation instructions](android/README.md) for JDK 21, Android SDK, and Gradle wrapper setup.
 
