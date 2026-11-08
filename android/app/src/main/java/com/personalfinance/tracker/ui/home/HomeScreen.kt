@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -105,10 +108,11 @@ fun HomeScreen(
         .filter { it.toSet() == setOf(HomeBlock.GOAL, HomeBlock.LATEST) }
         .flatten().toSet() else emptySet()
     val financialVisible = layout.any { it.visible && it.id in setOf(HomeBlock.SUMMARY, HomeBlock.EXPENSES) }
+    val summaryVisible = layout.any { it.visible && it.id == HomeBlock.SUMMARY }
     LaunchedEffect(profile, transactions, categories, goal, savedRates, range, resumeVersion, financialVisible) {
         val currentProfile = profile ?: return@LaunchedEffect
         state = viewModel.load(currentProfile.baseCurrency, currentProfile.languageTag)
-        showRateDialog = financialVisible && state?.missingCurrencies?.isNotEmpty() == true
+        showRateDialog = financialVisible && ((state?.missingCurrencies?.isNotEmpty() == true) || (summaryVisible && state?.allTimeMissingCurrencies?.isNotEmpty() == true))
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -138,27 +142,28 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = if(theme.id in listOf(2,9)) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
                     border = if(theme.id == 6) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null,
-                    colors = CardDefaults.cardColors(containerColor = when(theme.id) { 8 -> MaterialTheme.colorScheme.primary; 2,9 -> MaterialTheme.colorScheme.background; else -> MaterialTheme.colorScheme.surface }, contentColor = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface),
+                    colors = CardDefaults.cardColors(containerColor = when(theme.id) { 8,10,11 -> MaterialTheme.colorScheme.primary; 2,9 -> MaterialTheme.colorScheme.background; else -> MaterialTheme.colorScheme.surface }, contentColor = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.onSurface),
                 ) {
                     Column(modifier = Modifier.padding(horizontal = if(theme.id in listOf(2,9)) 0.dp else 24.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(if(theme.id == 2) 12.dp else 20.dp)) {
                         Text(
                             stringResource(R.string.home_balance),
                             style = MaterialTheme.typography.titleMedium,
-                            color = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.primary,
+                            color = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.primary,
                         )
                         Text(
                             formatSignedBalance(summary.balance.minorUnits, summary.balance.currencyCode),
+                            modifier = Modifier.testTag("home_month_balance"),
                             style = MaterialTheme.typography.displaySmall,
                             color = when {
-                                summary.balance.minorUnits > 0 -> if(theme.id == 8) Color(0xFFD4F9BA) else financeColors.income
-                                summary.balance.minorUnits < 0 -> if(theme.id == 8) Color(0xFFFFDAD6) else financeColors.expense
-                                else -> if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface
+                                summary.balance.minorUnits > 0 -> if(theme.id in listOf(8,10,11)) Color(0xFFD4F9BA) else financeColors.income
+                                summary.balance.minorUnits < 0 -> if(theme.id in listOf(8,10,11)) Color(0xFFFFDAD6) else financeColors.expense
+                                else -> if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.onSurface
                             },
                         )
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Surface(
-                                color = if(theme.id == 8) MaterialTheme.colorScheme.primary else if(theme.id == 2) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface,
+                                color = if(theme.id in listOf(8,10,11)) MaterialTheme.colorScheme.primary else if(theme.id == 2) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                contentColor = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.onSurface,
                                 shape = RoundedCornerShape(12.dp),
                             ) {
                                 Text(
@@ -168,8 +173,8 @@ fun HomeScreen(
                                 )
                             }
                             Surface(
-                                color = if(theme.id == 8) MaterialTheme.colorScheme.primary else if(theme.id == 2) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface,
+                                color = if(theme.id in listOf(8,10,11)) MaterialTheme.colorScheme.primary else if(theme.id == 2) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                contentColor = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.onSurface,
                                 shape = RoundedCornerShape(12.dp),
                             ) {
                                 Text(
@@ -179,18 +184,35 @@ fun HomeScreen(
                                 )
                             }
                         }
+                        Text(stringResource(R.string.home_total_balance), style = MaterialTheme.typography.titleMedium,
+                            color = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.primary)
+                        val total = current.allTimeBalance
+                        if (total == null) {
+                            Text(stringResource(R.string.home_total_needs_rates), color = if(theme.id in listOf(8,10,11)) Color(0xFFFFDAD6) else MaterialTheme.colorScheme.error)
+                            OutlinedButton(onClick = { showRateDialog = true }, colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.primary)) { Text(stringResource(R.string.exchange_rate_open)) }
+                        } else {
+                            Text(formatSignedBalance(total.minorUnits, total.currencyCode), modifier = Modifier.testTag("home_total_balance"), style = MaterialTheme.typography.displaySmall,
+                                color = when {
+                                    total.minorUnits > 0 -> if(theme.id in listOf(8,10,11)) Color(0xFFD4F9BA) else financeColors.income
+                                    total.minorUnits < 0 -> if(theme.id in listOf(8,10,11)) Color(0xFFFFDAD6) else financeColors.expense
+                                    else -> if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.onSurface
+                                })
+                            if (current.allTimeUsesConversion) Text(stringResource(R.string.home_total_rate_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.onSurface)
+                        }
                     }
                 }
             }
 
             }
             HomeBlock.QUICK_ACTIONS -> {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(onClick = onAddIncome, modifier = Modifier.weight(1f), colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = if(theme.id == 8) financeColors.latest else MaterialTheme.colorScheme.primary, contentColor = if(theme.id == 8) financeColors.latestInk else MaterialTheme.colorScheme.onPrimary)) {
-                    Text(stringResource(R.string.home_add_income))
-                }
-                OutlinedButton(onClick = onAddExpense, modifier = Modifier.weight(1f), colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(containerColor = if(theme.id == 8) financeColors.goal else Color.Transparent, contentColor = if(theme.id == 8) financeColors.goalInk else MaterialTheme.colorScheme.primary)) {
+            Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(onClick = onAddExpense, modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 64.dp), colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = if(theme.id == 8) financeColors.latest else MaterialTheme.colorScheme.primary, contentColor = if(theme.id == 8) financeColors.latestInk else MaterialTheme.colorScheme.onPrimary)) {
                     Text(stringResource(R.string.home_add_expense))
+                }
+                Button(onClick = onAddIncome, modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 64.dp), colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = if(theme.id == 8) financeColors.latest else MaterialTheme.colorScheme.primary, contentColor = if(theme.id == 8) financeColors.latestInk else MaterialTheme.colorScheme.onPrimary)) {
+                    Text(stringResource(R.string.home_add_income))
                 }
             }
 
@@ -262,7 +284,7 @@ fun HomeScreen(
 
     if (customizing) HomeCustomizationSheet(layout, layoutStore::save, layoutStore::reset, { customizing = false })
 
-    val missingCurrencies = state?.missingCurrencies.orEmpty()
+    val missingCurrencies = state?.missingCurrencies.orEmpty() + if (summaryVisible) state?.allTimeMissingCurrencies.orEmpty() else emptySet()
     if (showRateDialog && missingCurrencies.isNotEmpty()) {
         ExchangeRatePromptDialog(
             baseCurrency = baseCurrency,
@@ -271,7 +293,7 @@ fun HomeScreen(
                 scope.launch {
                     viewModel.saveRates(baseCurrency, entered)
                     state = viewModel.load(baseCurrency, profile?.languageTag ?: "en")
-                    showRateDialog = state?.missingCurrencies?.isNotEmpty() == true
+                    showRateDialog = (state?.missingCurrencies?.isNotEmpty() == true) || (summaryVisible && state?.allTimeMissingCurrencies?.isNotEmpty() == true)
                 }
             },
             onDismiss = { showRateDialog = false },

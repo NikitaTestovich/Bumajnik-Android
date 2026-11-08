@@ -4,7 +4,7 @@ import org.junit.Assert.*
 import org.junit.Test
 class AppThemeRegistryTest {
  @Test fun stableIdsAndDefault() {
-  assertEquals(listOf(2,6,8,9), AppThemeRegistry.available.map { it.id })
+  assertEquals(listOf(2,6,8,9,10,11,12), AppThemeRegistry.available.map { it.id })
   assertEquals(2, AppThemeRegistry.resolve(null).id)
   AppThemeRegistry.available.forEach { assertEquals(it, AppThemeRegistry.resolve(it.id)) }
  }

@@ -14,12 +14,12 @@ fun themeColorScheme(theme: AppTheme): ColorScheme {
     val dark = theme.dark
     val ink = if (dark) Color(0xFFF3F4F5) else if (theme.id == 8) Color(0xFF352453) else Color(0xFF253346)
     val muted = if (dark) Color(0xFFBCC4C9) else if (theme.id == 8) Color(0xFF655A78) else Color(0xFF5C6268)
-    val background = when(theme.id) { 8 -> Color(0xFFF2EDFF); 6,9 -> Color(0xFF181818); else -> Color(0xFFF5F3EE) }
-    val surface = if (dark) Color(0xFF272727) else if(theme.id == 8) Color(0xFFFFFCFF) else Color(0xFFFFFEFA)
-    val primary = when(theme.id) { 6 -> Color(0xFF9AAEFF); 8 -> Color(0xFF6744CB); 9 -> Color(0xFF68DCCD); else -> Color(0xFF445C77) }
-    val secondary = when(theme.id) { 6 -> Color(0xFFA7EFB5); 8 -> Color(0xFF705516); 9 -> Color(0xFFFFC078); else -> Color(0xFF946536) }
-    val container = when(theme.id) { 6 -> Color(0xFF313131); 8 -> Color(0xFFE5DCFF); 9 -> Color(0xFF313131); else -> surface }
-    val secondaryContainer = if(dark) Color(0xFF353C43) else if(theme.id == 8) Color(0xFFEADF7E) else Color(0xFFEAE3D6)
+    val background = when(theme.id) { 8 -> Color(0xFFF2EDFF); 6,9 -> Color(0xFF181818); 10 -> Color(0xFFFFF5EB); 11 -> Color(0xFFF0F6E9); 12 -> Color(0xFFFFF6F3); else -> Color(0xFFF5F3EE) }
+    val surface = if (dark) Color(0xFF272727) else when(theme.id) { 8 -> Color(0xFFFFFCFF); 10 -> Color(0xFFFFFBF7); 11 -> Color(0xFFFCFFF8); 12 -> Color(0xFFFFFFFF); else -> Color(0xFFFFFEFA) }
+    val primary = when(theme.id) { 6 -> Color(0xFF9AAEFF); 8 -> Color(0xFF6744CB); 9 -> Color(0xFF68DCCD); 10 -> Color(0xFF703B59); 11 -> Color(0xFF315B42); 12 -> Color(0xFFAE4036); else -> Color(0xFF445C77) }
+    val secondary = when(theme.id) { 6 -> Color(0xFFA7EFB5); 8 -> Color(0xFF705516); 9 -> Color(0xFFFFC078); 10 -> Color(0xFF8A4C20); 11 -> Color(0xFF586D24); 12 -> Color(0xFF2F668F); else -> Color(0xFF946536) }
+    val container = when(theme.id) { 6,9 -> Color(0xFF313131); 8 -> Color(0xFFE5DCFF); 10 -> Color(0xFFFFE7DC); 11 -> Color(0xFFE3EFD8); 12 -> Color(0xFFFFE4DD); else -> surface }
+    val secondaryContainer = if(dark) Color(0xFF353C43) else when(theme.id) { 8 -> Color(0xFFEADF7E); 10 -> Color(0xFFFFD4B4); 11 -> Color(0xFFD8E8B9); 12 -> Color(0xFFFFD5C8); else -> Color(0xFFEAE3D6) }
     val scheme = if(dark) darkColorScheme() else lightColorScheme()
     return scheme.copy(primary = primary, onPrimary = if(dark) Color(0xFF181818) else Color.White,
         primaryContainer = container, onPrimaryContainer = ink,

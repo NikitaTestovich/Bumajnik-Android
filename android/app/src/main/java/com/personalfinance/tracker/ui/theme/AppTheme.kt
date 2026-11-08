@@ -12,4 +12,7 @@ val AppThemeRegistry = ThemeRegistry(listOf(
     AppTheme(6, com.personalfinance.tracker.R.string.theme_graphite, true),
     AppTheme(8, com.personalfinance.tracker.R.string.theme_mosaic, false),
     AppTheme(9, com.personalfinance.tracker.R.string.theme_analytics, true),
+    AppTheme(10, com.personalfinance.tracker.R.string.theme_amber, false),
+    AppTheme(11, com.personalfinance.tracker.R.string.theme_forest, false),
+    AppTheme(12, com.personalfinance.tracker.R.string.theme_coral, false),
 ), 2)

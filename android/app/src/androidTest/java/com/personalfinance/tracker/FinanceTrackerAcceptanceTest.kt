@@ -16,12 +16,14 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertRangeInfoEquals
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -173,7 +175,7 @@ class FinanceTrackerAcceptanceTest {
             repository.saveGoal(SavingsGoal(target = Money(100_000, "USD"), saved = Money(25_000, "USD")))
         }
         awaitLiteral("+800.00 USD")
-        ui.onNodeWithText("+800.00 USD").performScrollTo().assertIsDisplayed()
+        ui.onNodeWithTag("home_month_balance").performScrollTo().assertIsDisplayed().assertTextEquals("+800.00 USD")
         ui.onNodeWithText("${text(R.string.home_income)}: 1000.00 USD").performScrollTo().assertIsDisplayed()
         ui.onNodeWithText("${text(R.string.home_expenses)}: 200.00 USD").performScrollTo().assertIsDisplayed()
         ui.onNodeWithText(text(R.string.home_latest)).performScrollTo().assertIsDisplayed()
@@ -308,6 +310,76 @@ class FinanceTrackerAcceptanceTest {
         val reached = text(R.string.goal_progress, "1250.00 USD", "1000.00 USD")
         ui.onNodeWithContentDescription(reached, substring = true).performScrollTo().assertIsDisplayed()
         ui.onNodeWithText(text(R.string.goal_estimate, 0)).assertDoesNotExist()
+    }
+
+    @Test fun homeRequestsRateForHistoricalCurrencyAndRecalculatesOverallBalance() {
+        onboard()
+        val profile = runBlocking { repository.observeProfile().first() }!!
+        runBlocking {
+            repository.saveTransaction(FinanceTransaction(UUID.randomUUID().toString(), profile.name,
+                TransactionType.INCOME, LocalDate.now().minusMonths(2), Money(10000L, "EUR"), null))
+            repository.saveTransaction(FinanceTransaction(UUID.randomUUID().toString(), profile.name,
+                TransactionType.EXPENSE, LocalDate.now(), Money(2500L, "USD"), "groceries"))
+        }
+        awaitText(R.string.exchange_rate_title)
+        ui.onNode(hasText(text(R.string.exchange_rate_label, "EUR", "USD")) and hasSetTextAction()).performTextReplacement("2")
+        ui.onNodeWithText(text(R.string.exchange_rate_save)).performClick()
+        awaitLiteral("+175.00 USD")
+        awaitLiteral("−25.00 USD")
+        awaitText(R.string.home_total_rate_hint)
+    }
+
+    @Test fun homeShowsMonthlyAndOverallBalanceForPersonalHistory() {
+        onboard()
+        val profile = runBlocking { repository.observeProfile().first() }!!
+        runBlocking {
+            repository.saveTransaction(FinanceTransaction(UUID.randomUUID().toString(), profile.name,
+                TransactionType.INCOME, LocalDate.now().minusMonths(2), Money(10000L, "USD"), null))
+            repository.saveTransaction(FinanceTransaction(UUID.randomUUID().toString(), profile.name,
+                TransactionType.EXPENSE, LocalDate.now(), Money(2500L, "USD"), "groceries"))
+        }
+        awaitText(R.string.home_total_balance)
+        awaitLiteral("+75.00 USD")
+        awaitLiteral("−25.00 USD")
+        ui.onNodeWithText(text(R.string.home_add_expense)).assertIsDisplayed()
+        ui.onNodeWithText(text(R.string.home_add_income)).assertIsDisplayed()
+    }
+
+    @Test fun calculatorAppliesToIncomeAndCancellationPreservesExpenseAmount() {
+        onboard()
+        click(R.string.home_add_income)
+        awaitText(R.string.operation_amount)
+        ui.onNodeWithContentDescription(text(R.string.calculator_open)).performClick()
+        listOf("8", "0", "+", "4", "5").forEach { ui.onNodeWithText(it).performClick() }
+        ui.onNodeWithText("=").performClick()
+        ui.onNodeWithText("125.00").assertIsDisplayed()
+        ui.onNodeWithText(text(R.string.calculator_apply)).performClick()
+        ui.onNodeWithText("125.00").assertIsDisplayed()
+        click(R.string.operation_cancel)
+        click(R.string.home_add_expense)
+        fill(R.string.operation_amount, "10")
+        ui.onNodeWithContentDescription(text(R.string.calculator_open)).performClick()
+        ui.onNodeWithText("C").performClick()
+        ui.onNode(hasText(text(R.string.operation_cancel)) and hasAnyAncestor(isDialog())).performClick()
+        ui.onNodeWithText("10").assertIsDisplayed()
+    }
+
+    @Test fun reportScreenShowsFirstDateInHintAndInvalidRangeMessage() {
+        onboard()
+        val profile = runBlocking { repository.observeProfile().first() }!!
+        val first = LocalDate.now().minusMonths(2).withDayOfMonth(15)
+        val format = java.time.format.DateTimeFormatter.ofPattern("dd-MM-uuuu")
+        runBlocking {
+            repository.saveTransaction(FinanceTransaction(UUID.randomUUID().toString(), profile.name,
+                TransactionType.INCOME, first, Money(10000L, "USD"), null))
+        }
+        navigate(R.string.navigation_reports)
+        val available = text(R.string.reports_first_transaction, first.format(format))
+        awaitLiteral(available)
+        fill(R.string.reports_from, first.minusDays(1).format(format))
+        click(R.string.reports_apply)
+        val error = text(R.string.reports_error_before_first, first.format(format))
+        awaitLiteral(error)
     }
 
     @Test fun reportScreenShowsPairedPeriodColumnsAndCategoryShares() {

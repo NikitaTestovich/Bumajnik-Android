@@ -42,7 +42,7 @@ class MonthlyExpensesWidgetTest {
                 }
             }
         }
-        listOf(2, 6, 8, 9).forEach { id ->
+        listOf(2, 6, 8, 9, 10, 11, 12).forEach { id ->
             ui.runOnIdle { themeId = id }
             ui.onNodeWithTag("expense_ring").performScrollTo().assertIsDisplayed()
         }

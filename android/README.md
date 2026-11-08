@@ -1,10 +1,14 @@
 # Finance Tracker for Android
 
-## Version 1.21 — build preparation
+## Version 1.22 — development build
 
-This checkout builds versionName 1.21 / versionCode 6. Use the existing owner release key for production and name the verified release asset `finance-tracker-vc6.apk`. Debug output has a different signature and must not be installed over the release on a personal phone. See [verification](../docs/testing-1.21.md).
+This checkout builds versionName 1.22 / versionCode 7. Debug builds use a local test key; only an owner-signed release is suitable for updating the published release. See [verification](../docs/testing-1.22.md).
 
-> **1.20 released (2026-11-02):** The 1.20 release used versionName 1.20 and versionCode 5. Download the owner-signed APK from [GitHub Releases](https://github.com/NikitaTestovich/Bumajnik-Android/releases/latest). Local debug APKs are test/bridge builds with a different signature. Public download and the phone's live no-newer-version check passed; a higher-version in-app installation remains pending. See [test status](../docs/testing-1.20.md).
+## Version 1.21 — released
+
+The 1.21 release used versionName 1.21 / versionCode 6. Use the existing owner release key for production and name the verified release asset `finance-tracker-vc6.apk`. Debug output has a different signature and must not be installed over the release on a personal phone. See [verification](../docs/testing-1.21.md).
+
+> **1.20 released (2026-11-02):** The 1.20 release used versionName 1.20 and versionCode 5. Download the owner-signed APK from [GitHub Releases](https://github.com/NikitaTestovich/Bumajnik-Android/releases/latest). Local debug APKs are test/bridge builds with a different signature. Public download and the phone's live no-newer-version check passed; the subsequent 1.20-to-1.21 phone upgrade passed with fictional personal records. See [test status](../docs/testing-1.20.md).
 
 ## Version 1.17
 

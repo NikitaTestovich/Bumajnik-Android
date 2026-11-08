@@ -124,6 +124,10 @@ fun ReportsScreen() {
         ) {
             Text(stringResource(R.string.reports_title), style = MaterialTheme.typography.headlineMedium)
             Text(stringResource(R.string.reports_period), style = MaterialTheme.typography.titleMedium)
+            state?.let { report ->
+                Text(report.firstTransactionDate?.let { stringResource(R.string.reports_first_transaction, FinanceDateFormat.format(it)) }
+                    ?: stringResource(R.string.reports_no_transactions))
+            }
             BoxWithConstraints {
                 val minimumRowWidth = 360.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale
                 FlowRow(
@@ -152,16 +156,15 @@ fun ReportsScreen() {
                     val start = FinanceDateFormat.parse(startText)
                     val endInclusive = FinanceDateFormat.parse(endText)
                     val firstDate = state?.firstTransactionDate
-                    if (start == null || endInclusive == null) {
-                        dateError = R.string.reports_error_invalid_dates
-                    } else if (firstDate != null && start < firstDate) {
-                        dateError = R.string.reports_error_before_first
-                    } else if (start > endInclusive) {
-                        dateError = R.string.reports_error_range
-                    } else {
-                        dateError = null
-                        selectedRange = PeriodRange(start, endInclusive.plusDays(1))
-                        exportResult = null
+                    when (validateReportDates(startText, endText, firstDate)) {
+                        ReportDateValidation.InvalidDates -> dateError = R.string.reports_error_invalid_dates
+                        is ReportDateValidation.BeforeFirst -> dateError = R.string.reports_error_before_first
+                        ReportDateValidation.InvalidRange -> dateError = R.string.reports_error_range
+                        ReportDateValidation.Valid -> {
+                            dateError = null
+                            selectedRange = PeriodRange(requireNotNull(start), requireNotNull(endInclusive).plusDays(1))
+                            exportResult = null
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -170,7 +173,12 @@ fun ReportsScreen() {
             }
 
             val current = state
-            dateError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+            dateError?.let {
+                val message = if (it == R.string.reports_error_before_first)
+                    stringResource(it, current?.firstTransactionDate?.let(FinanceDateFormat::format).orEmpty())
+                else stringResource(it)
+                Text(message, color = MaterialTheme.colorScheme.error)
+            }
             current?.error?.let { error ->
                 val message = when (error) {
                     ReportError.BeforeFirstTransaction -> stringResource(
@@ -294,9 +302,6 @@ fun ReportsScreen() {
                     else stringResource(R.string.reports_export_error, result.message.orEmpty()),
                     color = if (result.success) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                 )
-            }
-            if (current?.firstTransactionDate != null) {
-                Text(stringResource(R.string.reports_first_transaction, FinanceDateFormat.format(current.firstTransactionDate)))
             }
         }
     }

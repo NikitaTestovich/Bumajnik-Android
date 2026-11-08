@@ -30,7 +30,7 @@ import java.util.Locale
 class OperationsTabAccessibilityTest(private val themeId: Int, private val language: String) {
  companion object {
   @JvmStatic @Parameterized.Parameters(name = "theme={0}, language={1}, font=200%")
-  fun cases(): List<Array<Any>> = listOf(2, 6, 8, 9).flatMap { theme -> listOf("en", "ru").map { language -> arrayOf<Any>(theme, language) } }
+  fun cases(): List<Array<Any>> = listOf(2, 6, 8, 9, 10, 11, 12).flatMap { theme -> listOf("en", "ru").map { language -> arrayOf<Any>(theme, language) } }
  }
  @get:Rule val ui = createComposeRule()
  @After fun resetSelection() {

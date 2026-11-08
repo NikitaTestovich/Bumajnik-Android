@@ -121,6 +121,13 @@
     <string name="reports_export_success">CSV report saved.</string>
     <string name="reports_export_error">Could not save CSV: %1$s</string>
     <string name="reports_first_transaction">Available from %1$s</string>
+    <string name="reports_no_transactions">No transactions yet</string>
+    <string name="home_total_balance">Overall balance</string>
+    <string name="home_total_needs_rates">Enter exchange rates for the overall balance.</string>
+    <string name="home_total_rate_hint">Calculated using the rates entered for this month.</string>
+    <string name="theme_amber">Amber sunset</string>
+    <string name="theme_forest">Forest after rain</string>
+    <string name="theme_coral">Urban coral</string>
     <string name="family_title">Family</string>
     <string name="family_open">Family report</string>
     <string name="goal_open">Savings goal planner</string>
@@ -230,6 +237,7 @@
     <string name="category_none_active">Add a category in your profile before saving a new expense.</string>
     <string-array name="category_icon_names">
         <item>Groceries</item><item>Home</item><item>Transport</item><item>Phone</item><item>Health</item><item>Education</item><item>Clothing</item><item>Dining</item><item>Entertainment</item><item>Household goods</item><item>Travel</item><item>Gifts</item><item>Pets</item><item>Sport</item><item>Beauty</item><item>Children</item><item>Insurance</item><item>Taxes</item><item>Tools</item><item>Other</item>
+    <item>Bank card</item><item>Airplane</item><item>Headphones</item><item>Bicycle</item><item>Coffee</item><item>Plant</item><item>Computer</item><item>Clock</item><item>Scissors</item><item>Umbrella</item>
     </string-array>
     <string name="home_customize">Customize home</string>
     <string name="home_customize_hint">Hold the handle to drag. Use arrows to move blocks.</string>
@@ -254,4 +262,8 @@
     <string name="goal_percent">%1$s%%</string>
     <string name="goal_remaining">Remaining: %1$s %2$s</string>
     <string name="goal_next_milestone">To %1$d%%: %2$s %3$s</string>
+    <string name="calculator_title">Calculator</string>
+    <string name="calculator_open">Open calculator</string>
+    <string name="calculator_apply">Apply</string>
+    <string name="calculator_error">Enter a valid calculation with a positive result</string>
 </resources>

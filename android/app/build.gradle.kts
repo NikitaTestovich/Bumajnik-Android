@@ -15,8 +15,8 @@ android {
         applicationId = "com.personalfinance.tracker"
         minSdk = 26
         targetSdk = 37
-        versionCode = 6
-        versionName = "1.21"
+        versionCode = 7
+        versionName = "1.22"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

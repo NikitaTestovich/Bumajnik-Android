@@ -31,6 +31,12 @@ class ThemeRecreationTest {
   app.themeStore.select(2)
   app.container.database.clearAllTables()
  }
+ @Test fun newThemesSurvivePreferenceStoreRecreation() {
+  listOf(10, 11, 12).forEach { id ->
+   app.themeStore.select(id)
+   assertEquals(id, com.personalfinance.tracker.data.preferences.ThemeStore(app).theme.value.id)
+  }
+ }
  @Test fun profileChoiceSurvivesActivityRecreationAndAppliesToLock() {
   scenario = ActivityScenario.launch(MainActivity::class.java)
   fun openProfile() {

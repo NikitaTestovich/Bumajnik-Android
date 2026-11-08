@@ -1,10 +1,17 @@
 # Changelog
 
-## 1.21 — unreleased
+## 1.22 — unreleased
+
+- Add overall personal balance and align/reorder Home actions.
+- Show first personal transaction date and date-aware validation in reports.
+- Add an amount calculator for income and expenses, ten icons and three appearance themes.
+- Update Russian and English guides, specifications and verification report. Release checks remain in progress.
+
+## 1.21 — 2026-11-03
 
 - Refresh README, both user guides, product specification and published-release verification notes.
 - Increase Android versionName to 1.21 and versionCode to 6; application features and data formats are unchanged.
-- Prepare a same-certificate update from public 1.20. The owner-signed APK has been verified; real in-app upgrade verification is pending.
+- Prepare a same-certificate update from public 1.20. The owner-signed APK and in-app upgrade from 1.20 were verified with fictional personal records.
 
 ## 1.20 — 2026-11-02
 

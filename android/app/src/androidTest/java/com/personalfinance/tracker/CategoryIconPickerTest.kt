@@ -25,7 +25,7 @@ import java.util.Locale
 class CategoryIconPickerTest(private val themeId: Int, private val language: String) {
     companion object {
         @JvmStatic @Parameterized.Parameters(name = "theme={0}, language={1}")
-        fun cases() = listOf(2, 6, 8, 9).flatMap { id -> listOf("en", "ru").map { arrayOf<Any>(id, it) } }
+        fun cases() = listOf(2, 6, 8, 9, 10, 11, 12).flatMap { id -> listOf("en", "ru").map { arrayOf<Any>(id, it) } }
     }
     @get:Rule val ui = createComposeRule()
     private val context = InstrumentationRegistry.getInstrumentation().targetContext

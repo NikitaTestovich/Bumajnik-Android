@@ -1,10 +1,14 @@
 # Finance Tracker — current product specification
 
-## Version 1.21 — maintenance release in preparation
+## Version 1.22 — under implementation
+
+See [approved specification](specs/version-1.22-proposal-ru.md) and [verification](testing-1.22.md). The new overall personal balance uses exchange rates entered for the current month and includes dated personal history. Calculator, report first-date guidance, expanded icon registry and three themes are under test. Release 1.21 remains the published baseline.
+
+## Version 1.21 — published maintenance release
 
 VersionName 1.21 / versionCode 6; unchanged package, storage and app behavior from 1.20. Release documentation is refreshed. Same-certificate in-place updating is required. See [1.21 specification](specs/version-1.21.md) and [verification](testing-1.21.md).
 
-> **1.20 released (2026-11-02):** Expense comments and CSV compatibility, operations search and category filtering, expandable personal/family reports, separate settings pages, improved charts, full backups and GitHub updates are shipped. The monthly expense doughnut appears in all four themes. Public download and the current-version live check are verified; higher-version in-app installation remains pending. See [testing-1.20.md](testing-1.20.md). The 1.17 sections below document the inherited baseline.
+> **1.20 released (2026-11-02):** Expense comments and CSV compatibility, operations search and category filtering, expandable personal/family reports, separate settings pages, improved charts, full backups and GitHub updates are shipped. The monthly expense doughnut appears in all four themes. Public download and the current-version live check are verified; the 1.20-to-1.21 in-app update was subsequently verified on a phone with fictional data. See [testing-1.20.md](testing-1.20.md). The 1.17 sections below document the inherited baseline.
 
 ## Version 1.20 shipped changes
 
@@ -28,7 +32,7 @@ VersionName 1.21 / versionCode 6; unchanged package, storage and app behavior fr
 ## Transactions and personal reporting
 
 - Add, edit, and delete dated income or expenses. Require a positive amount and an expense category for expenses. An income may have an optional comment of at most 150 Unicode code points. Accept manually entered `DD-MM-YYYY` dates and a date picker.
-- Rename or archive any standard or custom expense category and choose from 20 bundled icons. Archived categories stay in historical records and reports but cannot be selected for a new expense; renaming updates the name in personal history. Standard categories are not recreated after archival. Icon-only edits and unchanged saves preserve their translations.
+- Rename or archive any standard or custom expense category and choose from 30 bundled icons. Archived categories stay in historical records and reports but cannot be selected for a new expense; renaming updates the name in personal history. Standard categories are not recreated after archival. Icon-only edits and unchanged saves preserve their translations.
 - Take the currency for a new transaction from Profile. Keep each saved transaction's original currency and amount after later profile changes.
 - Show current-month income, expenses, signed balance, goal progress, and latest transaction on Home. The labelled Customize home / Моя главная control can hide or reorder blocks by drag handle or accessible arrows; settings remain reachable when all blocks are hidden. The monthly expense breakdown is visible for new installations, missing preference entries and reset defaults; saved visibility and order, including an explicitly hidden widget, are retained. Users can hide it. Themes 2, 6 and 8 show a broad doughnut with selectable segments; theme 9 shows a horizontal breakdown. All themes provide selectable category cards. It uses the same current-month currency rates and rounding as the summary. Cards include expenses rounded to zero, with zero shares and no invented segments. In the doughnut, selected long names are bounded in the centre with the amount fitted on one line; full names remain on cards and in accessibility descriptions.
 - Operations separates income and expenses and shows their current-month totals. Entries sort by transaction date descending and newest local creation order within a day; editing retains creation order.
