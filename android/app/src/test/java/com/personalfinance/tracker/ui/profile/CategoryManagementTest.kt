@@ -64,8 +64,8 @@ class CategoryManagementTest {
         assertEquals("dining", row.iconKey)
     }
 
-    @Test fun iconRegistryHasTwentyStableKeysAndFallback() {
-        assertEquals(20, CategoryIcons.keys.toSet().size)
+    @Test fun iconRegistryHasThirtyStableKeysAndFallback() {
+        assertEquals(30, CategoryIcons.keys.toSet().size)
         assertEquals("other", CategoryIcons.resolve("unknown"))
         assertEquals("home", CategoryIcons.forStandard("housing_utilities"))
     }

@@ -142,27 +142,28 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = if(theme.id in listOf(2,9)) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
                     border = if(theme.id == 6) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null,
-                    colors = CardDefaults.cardColors(containerColor = when(theme.id) { 8 -> MaterialTheme.colorScheme.primary; 2,9 -> MaterialTheme.colorScheme.background; else -> MaterialTheme.colorScheme.surface }, contentColor = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface),
+                    colors = CardDefaults.cardColors(containerColor = when(theme.id) { 8,10,11 -> MaterialTheme.colorScheme.primary; 2,9 -> MaterialTheme.colorScheme.background; else -> MaterialTheme.colorScheme.surface }, contentColor = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.onSurface),
                 ) {
                     Column(modifier = Modifier.padding(horizontal = if(theme.id in listOf(2,9)) 0.dp else 24.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(if(theme.id == 2) 12.dp else 20.dp)) {
                         Text(
                             stringResource(R.string.home_balance),
                             style = MaterialTheme.typography.titleMedium,
-                            color = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.primary,
+                            color = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.primary,
                         )
                         Text(
                             formatSignedBalance(summary.balance.minorUnits, summary.balance.currencyCode),
+                            modifier = Modifier.testTag("home_month_balance"),
                             style = MaterialTheme.typography.displaySmall,
                             color = when {
-                                summary.balance.minorUnits > 0 -> if(theme.id == 8) Color(0xFFD4F9BA) else financeColors.income
-                                summary.balance.minorUnits < 0 -> if(theme.id == 8) Color(0xFFFFDAD6) else financeColors.expense
-                                else -> if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface
+                                summary.balance.minorUnits > 0 -> if(theme.id in listOf(8,10,11)) Color(0xFFD4F9BA) else financeColors.income
+                                summary.balance.minorUnits < 0 -> if(theme.id in listOf(8,10,11)) Color(0xFFFFDAD6) else financeColors.expense
+                                else -> if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.onSurface
                             },
                         )
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Surface(
-                                color = if(theme.id == 8) MaterialTheme.colorScheme.primary else if(theme.id == 2) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface,
+                                color = if(theme.id in listOf(8,10,11)) MaterialTheme.colorScheme.primary else if(theme.id == 2) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                contentColor = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.onSurface,
                                 shape = RoundedCornerShape(12.dp),
                             ) {
                                 Text(
@@ -172,8 +173,8 @@ fun HomeScreen(
                                 )
                             }
                             Surface(
-                                color = if(theme.id == 8) MaterialTheme.colorScheme.primary else if(theme.id == 2) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface,
+                                color = if(theme.id in listOf(8,10,11)) MaterialTheme.colorScheme.primary else if(theme.id == 2) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                contentColor = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.onSurface,
                                 shape = RoundedCornerShape(12.dp),
                             ) {
                                 Text(
@@ -184,21 +185,21 @@ fun HomeScreen(
                             }
                         }
                         Text(stringResource(R.string.home_total_balance), style = MaterialTheme.typography.titleMedium,
-                            color = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.primary)
+                            color = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.primary)
                         val total = current.allTimeBalance
                         if (total == null) {
-                            Text(stringResource(R.string.home_total_needs_rates), color = MaterialTheme.colorScheme.error)
-                            OutlinedButton(onClick = { showRateDialog = true }) { Text(stringResource(R.string.exchange_rate_open)) }
+                            Text(stringResource(R.string.home_total_needs_rates), color = if(theme.id in listOf(8,10,11)) Color(0xFFFFDAD6) else MaterialTheme.colorScheme.error)
+                            OutlinedButton(onClick = { showRateDialog = true }, colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.primary)) { Text(stringResource(R.string.exchange_rate_open)) }
                         } else {
-                            Text(formatSignedBalance(total.minorUnits, total.currencyCode), style = MaterialTheme.typography.displaySmall,
+                            Text(formatSignedBalance(total.minorUnits, total.currencyCode), modifier = Modifier.testTag("home_total_balance"), style = MaterialTheme.typography.displaySmall,
                                 color = when {
-                                    total.minorUnits > 0 -> if(theme.id == 8) Color(0xFFD4F9BA) else financeColors.income
-                                    total.minorUnits < 0 -> if(theme.id == 8) Color(0xFFFFDAD6) else financeColors.expense
-                                    else -> if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface
+                                    total.minorUnits > 0 -> if(theme.id in listOf(8,10,11)) Color(0xFFD4F9BA) else financeColors.income
+                                    total.minorUnits < 0 -> if(theme.id in listOf(8,10,11)) Color(0xFFFFDAD6) else financeColors.expense
+                                    else -> if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.onSurface
                                 })
                             if (current.allTimeUsesConversion) Text(stringResource(R.string.home_total_rate_hint),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface)
+                                color = if(theme.id in listOf(8,10,11)) Color.White else MaterialTheme.colorScheme.onSurface)
                         }
                     }
                 }

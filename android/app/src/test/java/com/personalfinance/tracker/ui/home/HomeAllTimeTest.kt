@@ -13,6 +13,13 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class HomeAllTimeTest {
+ @Test fun futureDatedEntriesAreIncludedOnlyInOverallBalance() = runBlocking {
+  val repo=FakeFinanceRepository(); val rates=TestRates(); val vm=HomeViewModel(repo,ExchangeRateService(rates),SummaryService(repo)){ LocalDate.of(2026,10,10) }
+  repo.saveTransaction(FinanceTransaction("future","Demo",TransactionType.INCOME,LocalDate.of(2027,1,1),Money(5000,"USD"),null))
+  val state=vm.load("USD")
+  assertEquals(5000L,state.allTimeBalance?.minorUnits)
+  assertEquals(0L,state.summary?.balance?.minorUnits)
+ }
  @Test fun computesAllPersonalRecordsAndReflectsEditsAndDeletion() = runBlocking {
   val repo=FakeFinanceRepository(); val rates=TestRates(); val vm=HomeViewModel(repo,ExchangeRateService(rates),SummaryService(repo)){ LocalDate.of(2026,10,10) }
   assertEquals(0L,vm.load("USD").allTimeBalance?.minorUnits)

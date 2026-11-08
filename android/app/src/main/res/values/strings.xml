@@ -125,6 +125,9 @@
     <string name="home_total_balance">Overall balance</string>
     <string name="home_total_needs_rates">Enter exchange rates for the overall balance.</string>
     <string name="home_total_rate_hint">Calculated using the rates entered for this month.</string>
+    <string name="theme_amber">Amber sunset</string>
+    <string name="theme_forest">Forest after rain</string>
+    <string name="theme_coral">Urban coral</string>
     <string name="family_title">Family</string>
     <string name="family_open">Family report</string>
     <string name="goal_open">Savings goal planner</string>

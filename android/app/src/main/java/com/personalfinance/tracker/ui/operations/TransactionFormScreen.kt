@@ -18,6 +18,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,6 +33,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
@@ -77,6 +82,11 @@ fun TransactionFormScreen(
     }
     var categoryMenuExpanded by remember { mutableStateOf(false) }
     var showCalculator by remember { mutableStateOf(false) }
+    val calculatorIcon = remember {
+        ImageVector.Builder("calculator", 24.dp, 24.dp, 24f, 24f)
+            .addPath(PathParser().parsePathString("M5,2 L19,2 L19,22 L5,22 Z M7,4 L7,10 L17,10 L17,4 Z M7,12 L9,12 L9,14 L7,14 Z M11,12 L13,12 L13,14 L11,14 Z M15,12 L17,12 L17,14 L15,14 Z M7,16 L9,16 L9,18 L7,18 Z M11,16 L13,16 L13,18 L11,18 Z M15,16 L17,16 L17,18 L15,18 Z").toNodes(), fill = SolidColor(Color.Black), pathFillType = androidx.compose.ui.graphics.PathFillType.EvenOdd)
+            .build()
+    }
     var errorResult by remember { mutableStateOf<TransactionSaveResult?>(null) }
     var isReady by remember { mutableStateOf(false) }
 
@@ -113,7 +123,7 @@ fun TransactionFormScreen(
                 trailingIcon = {
                     val label = stringResource(R.string.calculator_open)
                     IconButton(onClick = { showCalculator = true }, modifier = Modifier.semantics { contentDescription = label }) {
-                        Text("🖩", style = MaterialTheme.typography.headlineSmall)
+                        Icon(calculatorIcon, contentDescription = null)
                     }
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

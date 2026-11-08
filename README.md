@@ -1,8 +1,12 @@
 # Finance Tracker for Android
 
-## Version 1.21 — in preparation
+## Version 1.22 — in development
 
-Maintenance release with updated documentation and Android versionCode 6. App features and data formats are unchanged from 1.20. The download link below currently points to published 1.20; 1.21 is not yet published. See [1.21 verification](docs/testing-1.21.md).
+Overall personal balance, first-date report guidance, an amount calculator, ten category icons and three new themes are under test. The latest published release remains 1.21. See [1.22 specification](docs/specs/version-1.22-proposal-ru.md) and [verification](docs/testing-1.22.md).
+
+## Version 1.21 — released November 3, 2026
+
+Maintenance release with updated documentation and Android versionCode 6. App features and data formats are unchanged from 1.20. The download link below points to the latest published release. See [1.21 verification](docs/testing-1.21.md).
 
 [Download Android APK](https://github.com/NikitaTestovich/Bumajnik-Android/releases/latest) · [English guide](docs/user-guide-en.md) · [Руководство на русском](docs/user-guide-ru.md)
 
@@ -45,8 +49,8 @@ Version 1.15 optional monthly expense widget, captured from the emulator with fi
 ## What it does
 
 - Add, edit, delete and search income and expense entries. Choose dates with a calendar or type them as `DD-MM-YYYY`. Add optional comments of up to 150 Unicode characters.
-- Start with standard expense categories, create your own, rename or archive them, and choose from 20 bundled icons. Archived categories remain on older expenses; icon-only edits preserve standard translations.
-- Customize Home with hide/show controls and drag or arrow ordering. The monthly expense doughnut is available in all four themes and visible for fresh, missing and reset settings; previously saved visibility and order, including a hidden widget, remain. Hide it in Home settings or explore category amounts.
+- Start with standard expense categories, create your own, rename or archive them, and choose from 30 bundled icons. Archived categories remain on older expenses; icon-only edits preserve standard translations.
+- Customize Home with hide/show controls and drag or arrow ordering. The monthly expense doughnut is available in all seven themes and visible for fresh, missing and reset settings; previously saved visibility and order, including a hidden widget, remain. Hide it in Home settings or explore category amounts.
 - Review monthly totals, category breakdowns, expandable expense details, and comparisons with a previous period.
 - Export eight-column CSV reports/backups with income and expense comments. Import seven-column or eight-column files. Older app versions may not accept expense comments. Family reports combine categories and skip repeated records.
 - Optionally protect access with a 4–10-character app code and available biometrics. When enabled, the biometric prompt opens automatically; the code appears after failure or cancellation. Recover a forgotten code through the phone screen lock without deleting records.
@@ -62,13 +66,13 @@ No real financial data, local SDK paths, signing keys, APKs, or backup files bel
 
 ## Install and update
 
-1. Open [the latest release](https://github.com/NikitaTestovich/Bumajnik-Android/releases/latest) on your phone and download `finance-tracker-vc5.apk` for version 1.20.
+1. Open [the latest release](https://github.com/NikitaTestovich/Bumajnik-Android/releases/latest) on your phone and download the APK asset named `finance-tracker-vc<versionCode>.apk`.
 2. Open the APK, allow installation from that source if Android asks, and confirm installation.
 3. For future releases, open **More → Updates → Check for updates**. If a newer compatible release exists, tap **Update** and confirm in Android.
 
 Internet is needed for checking and downloading updates, not for everyday tracking. Do not uninstall a release-signed installation to update it: compatible updates retain its data. Older debug/test builds have a different signature and require backup-and-restore migration. Personal CSV preserves personal operations, not family imports or settings; verify restoration before removing an old installation.
 
-The public APK download, checksum and signing certificate have been verified. A live check on Android 13 correctly reports no newer update for installed 1.20. Installation of a higher-version release through the app remains pending. See [test evidence and remaining checks](docs/testing-1.20.md).
+The public APK download, checksum and signing certificate have been verified. A live check on Android 13 correctly reports no newer update for installed 1.20. An in-app update from 1.20 to 1.21 was verified with fictional personal records. See [test evidence and remaining checks](docs/testing-1.20.md).
 
 ## Build from source
 

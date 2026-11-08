@@ -20,17 +20,22 @@ internal fun AmountCalculatorDialog(initial: String, onDismiss: () -> Unit, onAp
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(expression.ifEmpty { "0" }, style = MaterialTheme.typography.headlineSmall)
                 listOf(listOf("7", "8", "9", "÷"), listOf("4", "5", "6", "×"),
-                    listOf("1", "2", "3", "−"), listOf("C", "0", ",", "+"), listOf("⌫")).forEach { row ->
+                    listOf("1", "2", "3", "−"), listOf("C", "0", ",", "+"), listOf("⌫", "=")).forEach { row ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                         row.forEach { key ->
                             TextButton(onClick = {
-                                expression = when (key) {
-                                    "C" -> ""
-                                    "⌫" -> expression.dropLast(1)
-                                    "−" -> (expression + "-").take(120)
-                                    else -> (expression + key).take(120)
+                                if (key == "=") {
+                                    val result = calculateAmount(expression)
+                                    if (result == null) showError = true else { expression = result; showError = false }
+                                } else {
+                                    expression = when (key) {
+                                        "C" -> ""
+                                        "⌫" -> expression.dropLast(1)
+                                        "−" -> (expression + "-").take(120)
+                                        else -> (expression + key).take(120)
+                                    }
+                                    showError = false
                                 }
-                                showError = false
                             }, modifier = Modifier.weight(1f), contentPadding = PaddingValues(2.dp)) { Text(key) }
                         }
                     }

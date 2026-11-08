@@ -1,6 +1,6 @@
 # Version 1.21 — maintenance release
 
-Status: preparation, not published. Version name 1.21, versionCode 6.
+Status: released 2026-11-03. Version name 1.21, versionCode 6.
 
 This release incorporates the current release documentation and increases the Android version metadata. Application features and storage formats remain those specified for 1.20. There are no new financial calculations, UI behavior changes or database migrations.
 
