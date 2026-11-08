@@ -122,6 +122,9 @@
     <string name="reports_export_error">Could not save CSV: %1$s</string>
     <string name="reports_first_transaction">Available from %1$s</string>
     <string name="reports_no_transactions">No transactions yet</string>
+    <string name="home_total_balance">Overall balance</string>
+    <string name="home_total_needs_rates">Enter exchange rates for the overall balance.</string>
+    <string name="home_total_rate_hint">Calculated using the rates entered for this month.</string>
     <string name="family_title">Family</string>
     <string name="family_open">Family report</string>
     <string name="goal_open">Savings goal planner</string>

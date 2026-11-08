@@ -310,6 +310,22 @@ class FinanceTrackerAcceptanceTest {
         ui.onNodeWithText(text(R.string.goal_estimate, 0)).assertDoesNotExist()
     }
 
+    @Test fun homeShowsMonthlyAndOverallBalanceForPersonalHistory() {
+        onboard()
+        val profile = runBlocking { repository.observeProfile().first() }!!
+        runBlocking {
+            repository.saveTransaction(FinanceTransaction(UUID.randomUUID().toString(), profile.name,
+                TransactionType.INCOME, LocalDate.now().minusMonths(2), Money(10000L, "USD"), null))
+            repository.saveTransaction(FinanceTransaction(UUID.randomUUID().toString(), profile.name,
+                TransactionType.EXPENSE, LocalDate.now(), Money(2500L, "USD"), "groceries"))
+        }
+        awaitText(R.string.home_total_balance)
+        awaitLiteral("+75.00 USD")
+        awaitLiteral("−25.00 USD")
+        ui.onNodeWithText(text(R.string.home_add_expense)).assertIsDisplayed()
+        ui.onNodeWithText(text(R.string.home_add_income)).assertIsDisplayed()
+    }
+
     @Test fun calculatorAppliesToIncomeAndCancellationPreservesExpenseAmount() {
         onboard()
         click(R.string.home_add_income)

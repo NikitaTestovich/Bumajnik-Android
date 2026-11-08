@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -105,10 +108,11 @@ fun HomeScreen(
         .filter { it.toSet() == setOf(HomeBlock.GOAL, HomeBlock.LATEST) }
         .flatten().toSet() else emptySet()
     val financialVisible = layout.any { it.visible && it.id in setOf(HomeBlock.SUMMARY, HomeBlock.EXPENSES) }
+    val summaryVisible = layout.any { it.visible && it.id == HomeBlock.SUMMARY }
     LaunchedEffect(profile, transactions, categories, goal, savedRates, range, resumeVersion, financialVisible) {
         val currentProfile = profile ?: return@LaunchedEffect
         state = viewModel.load(currentProfile.baseCurrency, currentProfile.languageTag)
-        showRateDialog = financialVisible && state?.missingCurrencies?.isNotEmpty() == true
+        showRateDialog = financialVisible && ((state?.missingCurrencies?.isNotEmpty() == true) || (summaryVisible && state?.allTimeMissingCurrencies?.isNotEmpty() == true))
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -179,18 +183,35 @@ fun HomeScreen(
                                 )
                             }
                         }
+                        Text(stringResource(R.string.home_total_balance), style = MaterialTheme.typography.titleMedium,
+                            color = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.primary)
+                        val total = current.allTimeBalance
+                        if (total == null) {
+                            Text(stringResource(R.string.home_total_needs_rates), color = MaterialTheme.colorScheme.error)
+                            OutlinedButton(onClick = { showRateDialog = true }) { Text(stringResource(R.string.exchange_rate_open)) }
+                        } else {
+                            Text(formatSignedBalance(total.minorUnits, total.currencyCode), style = MaterialTheme.typography.displaySmall,
+                                color = when {
+                                    total.minorUnits > 0 -> if(theme.id == 8) Color(0xFFD4F9BA) else financeColors.income
+                                    total.minorUnits < 0 -> if(theme.id == 8) Color(0xFFFFDAD6) else financeColors.expense
+                                    else -> if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface
+                                })
+                            if (current.allTimeUsesConversion) Text(stringResource(R.string.home_total_rate_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if(theme.id == 8) Color.White else MaterialTheme.colorScheme.onSurface)
+                        }
                     }
                 }
             }
 
             }
             HomeBlock.QUICK_ACTIONS -> {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(onClick = onAddIncome, modifier = Modifier.weight(1f), colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = if(theme.id == 8) financeColors.latest else MaterialTheme.colorScheme.primary, contentColor = if(theme.id == 8) financeColors.latestInk else MaterialTheme.colorScheme.onPrimary)) {
-                    Text(stringResource(R.string.home_add_income))
-                }
-                OutlinedButton(onClick = onAddExpense, modifier = Modifier.weight(1f), colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(containerColor = if(theme.id == 8) financeColors.goal else Color.Transparent, contentColor = if(theme.id == 8) financeColors.goalInk else MaterialTheme.colorScheme.primary)) {
+            Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(onClick = onAddExpense, modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 64.dp), colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = if(theme.id == 8) financeColors.latest else MaterialTheme.colorScheme.primary, contentColor = if(theme.id == 8) financeColors.latestInk else MaterialTheme.colorScheme.onPrimary)) {
                     Text(stringResource(R.string.home_add_expense))
+                }
+                Button(onClick = onAddIncome, modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 64.dp), colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = if(theme.id == 8) financeColors.latest else MaterialTheme.colorScheme.primary, contentColor = if(theme.id == 8) financeColors.latestInk else MaterialTheme.colorScheme.onPrimary)) {
+                    Text(stringResource(R.string.home_add_income))
                 }
             }
 
@@ -262,7 +283,7 @@ fun HomeScreen(
 
     if (customizing) HomeCustomizationSheet(layout, layoutStore::save, layoutStore::reset, { customizing = false })
 
-    val missingCurrencies = state?.missingCurrencies.orEmpty()
+    val missingCurrencies = state?.missingCurrencies.orEmpty() + if (summaryVisible) state?.allTimeMissingCurrencies.orEmpty() else emptySet()
     if (showRateDialog && missingCurrencies.isNotEmpty()) {
         ExchangeRatePromptDialog(
             baseCurrency = baseCurrency,
@@ -271,7 +292,7 @@ fun HomeScreen(
                 scope.launch {
                     viewModel.saveRates(baseCurrency, entered)
                     state = viewModel.load(baseCurrency, profile?.languageTag ?: "en")
-                    showRateDialog = state?.missingCurrencies?.isNotEmpty() == true
+                    showRateDialog = (state?.missingCurrencies?.isNotEmpty() == true) || (summaryVisible && state?.allTimeMissingCurrencies?.isNotEmpty() == true)
                 }
             },
             onDismiss = { showRateDialog = false },
