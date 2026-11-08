@@ -310,6 +310,23 @@ class FinanceTrackerAcceptanceTest {
         ui.onNodeWithText(text(R.string.goal_estimate, 0)).assertDoesNotExist()
     }
 
+    @Test fun calculatorAppliesToIncomeAndCancellationPreservesExpenseAmount() {
+        onboard()
+        click(R.string.home_add_income)
+        awaitText(R.string.operation_amount)
+        ui.onNodeWithContentDescription(text(R.string.calculator_open)).performClick()
+        listOf("8", "0", "+", "4", "5").forEach { ui.onNodeWithText(it).performClick() }
+        ui.onNodeWithText(text(R.string.calculator_apply)).performClick()
+        ui.onNodeWithText("125.00").assertIsDisplayed()
+        click(R.string.operation_cancel)
+        click(R.string.home_add_expense)
+        fill(R.string.operation_amount, "10")
+        ui.onNodeWithContentDescription(text(R.string.calculator_open)).performClick()
+        ui.onNodeWithText("C").performClick()
+        ui.onNodeWithText(text(R.string.operation_cancel)).performClick()
+        ui.onNodeWithText("10").assertIsDisplayed()
+    }
+
     @Test fun reportScreenShowsFirstDateInHintAndInvalidRangeMessage() {
         onboard()
         val profile = runBlocking { repository.observeProfile().first() }!!

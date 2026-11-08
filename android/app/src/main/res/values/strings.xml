@@ -256,4 +256,8 @@
     <string name="goal_percent">%1$s%%</string>
     <string name="goal_remaining">Remaining: %1$s %2$s</string>
     <string name="goal_next_milestone">To %1$d%%: %2$s %3$s</string>
+    <string name="calculator_title">Calculator</string>
+    <string name="calculator_open">Open calculator</string>
+    <string name="calculator_apply">Apply</string>
+    <string name="calculator_error">Enter a valid calculation with a positive result</string>
 </resources>

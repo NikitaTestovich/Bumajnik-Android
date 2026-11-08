@@ -17,6 +17,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,6 +32,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -73,6 +76,7 @@ fun TransactionFormScreen(
         )
     }
     var categoryMenuExpanded by remember { mutableStateOf(false) }
+    var showCalculator by remember { mutableStateOf(false) }
     var errorResult by remember { mutableStateOf<TransactionSaveResult?>(null) }
     var isReady by remember { mutableStateOf(false) }
 
@@ -106,9 +110,22 @@ fun TransactionFormScreen(
                 onValueChange = { draft = draft.copy(amountText = it); errorResult = null },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(stringResource(R.string.operation_amount)) },
+                trailingIcon = {
+                    val label = stringResource(R.string.calculator_open)
+                    IconButton(onClick = { showCalculator = true }, modifier = Modifier.semantics { contentDescription = label }) {
+                        Text("🖩", style = MaterialTheme.typography.headlineSmall)
+                    }
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
             )
+            if (showCalculator) {
+                AmountCalculatorDialog(
+                    initial = draft.amountText,
+                    onDismiss = { showCalculator = false },
+                    onApply = { value -> draft = draft.copy(amountText = value); errorResult = null; showCalculator = false },
+                )
+            }
             OutlinedTextField(
                 value = draft.currencyCode,
                 onValueChange = {},
