@@ -121,6 +121,7 @@
     <string name="reports_export_success">Отчёт CSV сохранён.</string>
     <string name="reports_export_error">Не удалось сохранить CSV: %1$s</string>
     <string name="reports_first_transaction">Данные доступны с %1$s</string>
+    <string name="reports_no_transactions">Записей пока нет</string>
     <string name="family_title">Семья</string>
     <string name="family_open">Семейный отчёт</string>
     <string name="goal_open">Планировщик накоплений</string>

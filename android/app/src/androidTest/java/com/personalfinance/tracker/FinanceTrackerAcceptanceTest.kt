@@ -310,6 +310,24 @@ class FinanceTrackerAcceptanceTest {
         ui.onNodeWithText(text(R.string.goal_estimate, 0)).assertDoesNotExist()
     }
 
+    @Test fun reportScreenShowsFirstDateInHintAndInvalidRangeMessage() {
+        onboard()
+        val profile = runBlocking { repository.observeProfile().first() }!!
+        val first = LocalDate.now().minusMonths(2).withDayOfMonth(15)
+        val format = java.time.format.DateTimeFormatter.ofPattern("dd-MM-uuuu")
+        runBlocking {
+            repository.saveTransaction(FinanceTransaction(UUID.randomUUID().toString(), profile.name,
+                TransactionType.INCOME, first, Money(10000L, "USD"), null))
+        }
+        navigate(R.string.navigation_reports)
+        val available = text(R.string.reports_first_transaction, first.format(format))
+        awaitLiteral(available)
+        fill(R.string.reports_from, first.minusDays(1).format(format))
+        click(R.string.reports_apply)
+        val error = text(R.string.reports_error_before_first, first.format(format))
+        awaitLiteral(error)
+    }
+
     @Test fun reportScreenShowsPairedPeriodColumnsAndCategoryShares() {
         onboard()
         val profile = runBlocking { repository.observeProfile().first() }!!

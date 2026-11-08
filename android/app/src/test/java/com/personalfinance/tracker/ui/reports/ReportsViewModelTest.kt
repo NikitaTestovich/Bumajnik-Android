@@ -17,6 +17,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ReportsViewModelTest {
+    @Test fun validatesDateRangeAgainstFirstRecordButAllowsEmptyDays() {
+        val first = LocalDate.of(2026, 3, 15)
+        assertEquals(ReportDateValidation.BeforeFirst(first), validateReportDates("01-03-2026", "31-03-2026", first))
+        assertEquals(ReportDateValidation.Valid, validateReportDates("16-03-2026", "20-03-2026", first))
+        assertEquals(ReportDateValidation.InvalidDates, validateReportDates("31-02-2026", "20-03-2026", first))
+        assertEquals(ReportDateValidation.InvalidRange, validateReportDates("21-03-2026", "20-03-2026", first))
+        assertEquals(ReportDateValidation.Valid, validateReportDates("01-01-2026", "03-01-2026", null))
+    }
     @Test fun archivedAndActiveSameNameCategoriesRemainDistinct() = runBlocking {
         val repository = FakeFinanceRepository()
         repository.saveCategory(com.personalfinance.tracker.domain.model.Category("old-food", "Food", "Food", true, true, "dining"))

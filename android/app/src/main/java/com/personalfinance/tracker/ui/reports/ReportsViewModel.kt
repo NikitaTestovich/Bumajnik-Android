@@ -15,6 +15,23 @@ data class CategoryExpense(val name: String, val minorUnits: Long, val categoryI
 
 enum class ReportError { BeforeFirstTransaction, InvalidRange }
 
+sealed interface ReportDateValidation {
+    data object Valid : ReportDateValidation
+    data object InvalidDates : ReportDateValidation
+    data object InvalidRange : ReportDateValidation
+    data class BeforeFirst(val firstDate: LocalDate) : ReportDateValidation
+}
+
+fun validateReportDates(startText: String, endText: String, firstDate: LocalDate?): ReportDateValidation {
+    val start = com.personalfinance.tracker.domain.time.FinanceDateFormat.parse(startText)
+        ?: return ReportDateValidation.InvalidDates
+    val end = com.personalfinance.tracker.domain.time.FinanceDateFormat.parse(endText)
+        ?: return ReportDateValidation.InvalidDates
+    if (firstDate != null && start < firstDate) return ReportDateValidation.BeforeFirst(firstDate)
+    if (start > end || end == LocalDate.MAX) return ReportDateValidation.InvalidRange
+    return ReportDateValidation.Valid
+}
+
 data class ReportUiState(
     val range: PeriodRange,
     val firstTransactionDate: LocalDate?,
