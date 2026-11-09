@@ -41,6 +41,7 @@ class BiometricSettingsRegressionTest {
             Assume.assumeTrue("Requires disposable emulator with PIN and no enrolled biometrics", it.isDeviceSecure() && !it.canUseBiometrics())
         }
         ui.onNode(hasText(app.getString(R.string.navigation_more)) and hasClickAction()).performClick()
+        ui.onNodeWithTag("open_SECURITY").performScrollTo().performClick()
     }
     private fun saveAndReload(expected: Boolean) {
         ui.onNodeWithTag("current_code").performScrollTo().performTextInput("Ab12")
