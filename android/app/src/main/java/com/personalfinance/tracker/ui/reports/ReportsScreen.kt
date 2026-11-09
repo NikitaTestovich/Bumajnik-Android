@@ -36,6 +36,7 @@ import com.personalfinance.tracker.FinanceApplication
 import com.personalfinance.tracker.R
 import com.personalfinance.tracker.data.csv.ExportResult
 import com.personalfinance.tracker.data.csv.CreateCsvDocument
+import com.personalfinance.tracker.data.csv.CreateSpreadsheetDocument
 import com.personalfinance.tracker.data.csv.ReportExportManager
 import com.personalfinance.tracker.data.csv.CsvFormat
 import com.personalfinance.tracker.domain.model.PeriodRange
@@ -72,6 +73,7 @@ fun ReportsScreen() {
     var state by remember { mutableStateOf<ReportUiState?>(null) }
     var showRateDialog by remember { mutableStateOf(false) }
     var exportResult by remember { mutableStateOf<ExportResult?>(null) }
+    var spreadsheetResult by remember { mutableStateOf(false) }
     var dateError by remember { mutableStateOf<Int?>(null) }
     var expandedCategory by remember { mutableStateOf<String?>(null) }
     var pendingStart by rememberSaveable { mutableStateOf("") }
@@ -88,6 +90,19 @@ fun ReportsScreen() {
         ReportExportManager(context.contentResolver, repository)
     }
     val savedRates by rateRepository.ratesFor(selectedRange, baseCurrency).collectAsState(initial = emptyMap())
+    val createSpreadsheet = rememberLauncherForActivityResult(CreateSpreadsheetDocument()) { uri ->
+        if (uri != null) {
+            val requestRange = runCatching {
+                PeriodRange(LocalDate.parse(pendingStart), LocalDate.parse(pendingEndExclusive))
+            }.getOrNull()
+            scope.launch {
+                spreadsheetResult = true
+                exportResult = if (requestRange != null)
+                    exportManager.exportReport(requestRange, uri, spreadsheet = true)
+                else ExportResult(false, context.getString(R.string.reports_export_request_lost))
+            }
+        }
+    }
     val createDocument = rememberLauncherForActivityResult(CreateCsvDocument()) { uri ->
         if (uri != null) {
             // The external picker may recreate this screen. Export the request the
@@ -97,6 +112,7 @@ fun ReportsScreen() {
                 PeriodRange(LocalDate.parse(pendingStart), LocalDate.parse(pendingEndExclusive))
             }.getOrNull()
             scope.launch {
+                spreadsheetResult = false
                 exportResult = if (requestRange != null)
                     exportManager.exportReport(requestRange, uri, CsvFormat.CURRENT)
                 else ExportResult(false, context.getString(R.string.reports_export_request_lost))
@@ -296,10 +312,20 @@ fun ReportsScreen() {
             ) {
                 Text(stringResource(R.string.reports_export_csv))
             }
+            OutlinedButton(
+                onClick = {
+                    pendingStart = selectedRange.start.toString()
+                    pendingEndExclusive = selectedRange.endExclusive.toString()
+                    createSpreadsheet.launch("finance_report_${selectedRange.start}_${selectedRange.endExclusive.minusDays(1)}.xlsx")
+                },
+                enabled = current != null && current.error == null && current.missingCurrencies.isEmpty() && dateError == null,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(stringResource(R.string.reports_export_spreadsheet)) }
             exportResult?.let { result ->
                 Text(
-                    text = if (result.success) stringResource(R.string.reports_export_success)
-                    else stringResource(R.string.reports_export_error, result.message.orEmpty()),
+                    text = if (result.success) stringResource(if (spreadsheetResult) R.string.reports_spreadsheet_success else R.string.reports_export_success)
+                    else if (result.message == "csv_export_limit") stringResource(R.string.csv_export_limit)
+                    else stringResource(if (spreadsheetResult) R.string.reports_spreadsheet_error else R.string.reports_export_error, result.message.orEmpty()),
                     color = if (result.success) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                 )
             }

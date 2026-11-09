@@ -8,9 +8,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 
-suspend fun readFullBackup(context: Context, source: Uri): Pair<FullBackupSnapshot, BackupPreferences> = withContext(Dispatchers.IO) {
+suspend fun readFullBackupBytes(context: Context, source: Uri): ByteArray = withContext(Dispatchers.IO) {
     val stream = checkNotNull(context.contentResolver.openInputStream(source))
-    FullBackupFile.decode(stream.use { readBackupBytes(it) })
+    stream.use { readBackupBytes(it, 100 * 1024 * 1024 + 2048) }
+}
+
+suspend fun decodeFullBackup(bytes: ByteArray, password: CharArray? = null): Pair<FullBackupSnapshot, BackupPreferences> = withContext(Dispatchers.IO) {
+    FullBackupFile.decode(if (EncryptedBackup.isEncrypted(bytes)) EncryptedBackup.decrypt(bytes, requireNotNull(password)) else bytes)
 }
 
 /** Replaces financial data; settings and database use separate stores and cannot be committed atomically. */

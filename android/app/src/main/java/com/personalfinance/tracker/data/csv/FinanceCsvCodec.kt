@@ -25,6 +25,8 @@ enum class CsvFormat { CURRENT, LEGACY_1_1 }
 
 data class CsvImportResult(val records: List<CsvTransactionRow>, val errors: List<String>)
 
+class CsvExportLimitException : IllegalArgumentException("CSV exceeds import limits")
+
 object FinanceCsvCodec {
     val legacyHeader: List<String> = listOf("owner", "record_id", "date", "category", "income", "expense", "currency")
     val header: List<String> = legacyHeader + "comment"
@@ -36,7 +38,9 @@ object FinanceCsvCodec {
         categoryNamesById: Map<String, String> = emptyMap(),
         format: CsvFormat = CsvFormat.CURRENT,
     ): ByteArray {
+        if (records.size > 100_000) throw CsvExportLimitException()
         val builder = StringBuilder().append((if (format == CsvFormat.CURRENT) header else legacyHeader).joinToString(",")).append("\r\n")
+        var byteCount = builder.toString().toByteArray(StandardCharsets.UTF_8).size
         records.forEach { transaction ->
             require(IncomeComment.isValid(transaction.comment))
             val amount = BigDecimal.valueOf(transaction.money.minorUnits, 2).toPlainString()
@@ -54,15 +58,20 @@ object FinanceCsvCodec {
                 transaction.money.currencyCode,
             )
             val output = if (format == CsvFormat.CURRENT) fields + transaction.comment else fields
-            builder.append(output.joinToString(",", transform = ::quote)).append("\r\n")
+            if (output.any { it.length > 65_536 }) throw CsvExportLimitException()
+            val row = output.joinToString(",", transform = ::quote) + "\r\n"
+            byteCount += row.toByteArray(StandardCharsets.UTF_8).size
+            if (byteCount > CSV_MAX_BYTES) throw CsvExportLimitException()
+            builder.append(row)
         }
         return builder.toString().toByteArray(StandardCharsets.UTF_8)
     }
 
-    fun decode(bytes: ByteArray): CsvImportResult {
+    fun decode(bytes: ByteArray, checkCancellation: () -> Unit = {}): CsvImportResult {
+        if (bytes.size > CSV_MAX_BYTES) return CsvImportResult(emptyList(), listOf("CSV file is too large"))
         val text = bytes.toString(StandardCharsets.UTF_8).removePrefix("\uFEFF")
         val rows = try {
-            parseRows(text)
+            parseRows(text, checkCancellation)
         } catch (error: IllegalArgumentException) {
             return CsvImportResult(emptyList(), listOf(error.message ?: "Malformed CSV quoting"))
         }
@@ -74,9 +83,11 @@ object FinanceCsvCodec {
         val records = mutableListOf<CsvTransactionRow>()
         val errors = mutableListOf<String>()
         rows.drop(1).forEachIndexed { index, fields ->
+            if (index % 256 == 0) checkCancellation()
             val rowNumber = index + 2
             val parsed = parseRecord(fields, rowNumber, rows.first().size)
             if (parsed.isSuccess) records += parsed.getOrThrow() else errors += parsed.exceptionOrNull()?.message.orEmpty()
+            if (errors.size >= 100) return CsvImportResult(emptyList(), errors)
         }
         return CsvImportResult(records, errors)
     }
@@ -123,7 +134,7 @@ object FinanceCsvCodec {
             value
         }
 
-    private fun parseRows(input: String): List<List<String>> {
+    private fun parseRows(input: String, checkCancellation: () -> Unit): List<List<String>> {
         if (input.isEmpty()) return emptyList()
         val rows = mutableListOf<List<String>>()
         var row = mutableListOf<String>()
@@ -132,25 +143,33 @@ object FinanceCsvCodec {
         var atFieldStart = true
         var closedQuotedField = false
         var index = 0
+        var nextCancellationCheck = 0
         while (index < input.length) {
+            if (index >= nextCancellationCheck) { checkCancellation(); nextCancellationCheck = index + 4096 }
             val char = input[index]
             when {
                 inQuotes && char == '"' && input.getOrNull(index + 1) == '"' -> {
+                    require(field.length < 65_536) { "CSV field is too large" }
                     field.append('"')
                     index++
                 }
                 char == '"' && inQuotes -> { inQuotes = false; closedQuotedField = true }
                 char == '"' && atFieldStart && field.isEmpty() && !closedQuotedField -> inQuotes = true
                 char == ',' && !inQuotes -> {
+                    require(row.size < 8) { "CSV has too many columns" }
                     row += field.toString()
                     field.setLength(0)
                     atFieldStart = true
                     closedQuotedField = false
                 }
                 (char == '\r' || char == '\n') && !inQuotes -> {
+                    require(row.size < 8) { "CSV has too many columns" }
                     row += field.toString()
                     field.setLength(0)
-                    if (row.any(String::isNotEmpty)) rows += row
+                    if (row.any(String::isNotEmpty)) {
+                        require(rows.size < 100_001) { "CSV has too many rows" }
+                        rows += row
+                    }
                     row = mutableListOf()
                     atFieldStart = true
                     closedQuotedField = false
@@ -159,6 +178,7 @@ object FinanceCsvCodec {
                 else -> {
                     require(!closedQuotedField) { "Malformed CSV: characters after a closing quote" }
                     require(char != '"') { "Malformed CSV: quote inside an unquoted field" }
+                    require(field.length < 65_536) { "CSV field is too large" }
                     field.append(char)
                     if (!char.isWhitespace()) atFieldStart = false
                 }
@@ -167,6 +187,7 @@ object FinanceCsvCodec {
         }
         require(!inQuotes) { "Malformed CSV: unterminated quoted field" }
         if (field.isNotEmpty() || row.isNotEmpty()) {
+            require(row.size < 8 && rows.size < 100_001) { "CSV has too many rows or columns" }
             row += field.toString()
             if (row.any(String::isNotEmpty)) rows += row
         }

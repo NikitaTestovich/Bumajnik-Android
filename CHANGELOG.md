@@ -1,11 +1,17 @@
 # Changelog
 
-## 1.22 — unreleased
+## 1.23 — unreleased, in development
+
+- Develop encrypted full backups with a separate confirmed password and restore support for older unencrypted full backups. Losing the backup password prevents recovery.
+- Add XLSX spreadsheet reports separately from exact CSV exchange and personal restore; verification remains in progress.
+- Release, security, upgrade and recovery verification are still in progress; no completion is claimed.
+
+## 1.22 — released
 
 - Add overall personal balance and align/reorder Home actions.
 - Show first personal transaction date and date-aware validation in reports.
 - Add an amount calculator for income and expenses, ten icons and three appearance themes.
-- Update Russian and English guides, specifications and verification report. Release checks remain in progress.
+- Update Russian and English guides, specifications and verification report. See the 1.22 verification report for recorded checks.
 
 ## 1.21 — 2026-11-03
 

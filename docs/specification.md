@@ -1,8 +1,15 @@
 # Finance Tracker — current product specification
 
-## Version 1.22 — under implementation
+## Version 1.23 — in development, not released
 
-See [approved specification](specs/version-1.22-proposal-ru.md) and [verification](testing-1.22.md). The new overall personal balance uses exchange rates entered for the current month and includes dated personal history. Calculator, report first-date guidance, expanded icon registry and three themes are under test. Release 1.21 remains the published baseline.
+The 1.23 work introduces encrypted full backups protected by a separate backup password. When creating one, enter and confirm the password and keep it safe: the backup cannot be restored without it. This password is separate from the app access code. Older unencrypted full backups remain supported for restore; they remain readable files. Full restore replaces current data after confirmation and does not include app protection credentials. These changes and recovery scenarios still require release verification.
+
+The development build offers a separate XLSX report for spreadsheet viewing alongside exact CSV exchange and personal restore. Use CSV for family import or personal restore; spreadsheet editing can change its data. CSV and spreadsheet reports are not full backups. XLSX behavior and compatibility still require release verification.
+
+
+## Version 1.22 — released
+
+See [approved specification](specs/version-1.22-proposal-ru.md) and [verification](testing-1.22.md). The new overall personal balance uses exchange rates entered for the current month and includes dated personal history. The release includes the calculator, report first-date guidance, expanded icon registry and three themes. Version 1.22 is the published baseline for 1.23.
 
 ## Version 1.21 — published maintenance release
 
@@ -16,7 +23,7 @@ VersionName 1.21 / versionCode 6; unchanged package, storage and app behavior fr
 - Operations search covers comments, amounts and displayed dates for the selected transaction type; expense search additionally filters by category. The add-operation control stays below the scrollable history.
 - Personal and family expense categories expand to show contributing dated transactions and comments; family details identify the owner and show conversion where applicable. Totals and details use the same report period and conversion rules.
 - More retains profile editing and opens themes, protection, backups, categories and updates as separate screens. Existing category icons remain visible. The expense doughnut is available in every active theme and adjacent segments receive distinguishable colors where possible.
-- A personal CSV backup restores transactions by identifier without duplicates; it excludes profile, settings, goals, rates and family imports. A separate unencrypted full backup includes those data but excludes app-lock secrets; full restoration replaces current data after confirmation.
+- In the 1.20 baseline, a personal CSV backup restores transactions by identifier without duplicates; it excludes profile, settings, goals, rates and family imports. The separate full backup in that baseline is unencrypted, includes those data and excludes app-lock secrets; full restoration replaces current data after confirmation. See the 1.23 development note above for the new format.
 - Updates check the configured public GitHub release endpoint, display release notes and require a newer versionCode. Before Android's installer opens, the APK must match the expected SHA-256, package and signing certificate. Installation requires the user's confirmation. Actual GitHub end-to-end verification remains outstanding.
 
 ## Released 1.17 baseline

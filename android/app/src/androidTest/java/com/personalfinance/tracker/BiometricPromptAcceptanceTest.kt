@@ -54,9 +54,12 @@ class BiometricPromptAcceptanceTest {
 
     private fun await(condition: () -> Boolean) {
         val deadline = SystemClock.elapsedRealtime() + 15_000
-        while (!condition() && SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(100)
-        assertTrue("Timed out: phase=${policy.phase.value}, request=${policy.platformRequest}, " +
-            "window=${instrumentation.uiAutomation.rootInActiveWindow?.packageName}, locked=${app.appLock.state.value.locked}", condition())
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (condition()) return
+            SystemClock.sleep(100)
+        }
+        fail("Timed out: phase=${policy.phase.value}, request=${policy.platformRequest}, " +
+            "window=${instrumentation.uiAutomation.rootInActiveWindow?.packageName}, locked=${app.appLock.state.value.locked}")
     }
 
     private fun awaitPrompt() = await {
@@ -148,10 +151,15 @@ class BiometricPromptAcceptanceTest {
         await { app.appLock.generation > generation && policy.activeAttempt == null }
         assertTrue(app.appLock.state.value.locked)
         shell("input keyevent 224")
+        val power = app.getSystemService(android.os.PowerManager::class.java)
+        val keyguard = app.getSystemService(android.app.KeyguardManager::class.java)
+        await { power.isInteractive }
+        SystemClock.sleep(500) // Allow SystemUI to finish the wake animation before entering the PIN.
         shell("wm dismiss-keyguard")
         shell("input swipe 540 1900 540 500 300")
         shell("input text $pin")
         shell("input keyevent 66")
+        await { !keyguard.isDeviceLocked && !keyguard.isKeyguardLocked }
         shell("am start -f 0x20000000 -n com.personalfinance.tracker/.MainActivity")
         // Screen-off creates a new lock generation. It may offer a fresh automatic prompt
         // after the previous request drains; it must never retain the old authorization.

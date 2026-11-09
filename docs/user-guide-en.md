@@ -1,8 +1,17 @@
 # Finance Tracker — user guide
 
-## Version 1.22 — in development
+## Version 1.23 — in development, not released
 
-Home shows an overall personal balance after monthly income and expenses. Amounts in other currencies use the current month's manually entered rates; original entries keep their currencies. Reports show the first personal transaction date. Tap the calculator icon at the right of an income or expense amount field, enter an expression and choose Apply. Cancel preserves the original amount. Addition, subtraction, multiplication and division are supported; results are rounded to two decimal places. Division by zero and non-positive amounts are rejected. Ten new icons and three themes are being added. Behaviour remains under test; see [verification](testing-1.22.md).
+The 1.23 work introduces encrypted full backups protected by a separate backup password. When creating one, enter and confirm the password and keep it safe: the backup cannot be restored without it. This password is separate from the app access code. Older unencrypted full backups remain supported for restore; they remain readable files. Full restore replaces current data after confirmation and does not include app protection credentials. These changes and recovery scenarios still require release verification.
+
+The development build offers a separate XLSX report for spreadsheet viewing alongside exact CSV exchange and personal restore. Use CSV for family import or personal restore; spreadsheet editing can change its data. CSV and spreadsheet reports are not full backups. XLSX behavior and compatibility still require release verification.
+
+CSV import accepts at most 10 MiB and 100,000 records per file, with fields up to 65,536 UTF-16 code units. Older CSV files exceeding these limits are rejected. To recover one, keep the original and use a trusted CSV-aware tool to split it into files within all limits, repeating the original header and preserving complete records and field values. Quoted fields may contain line breaks, so splitting by physical lines can corrupt data; this may require technical assistance. A single field above the field limit cannot be fixed by splitting records; preserving it requires an import tool or app version that supports it. Import each part separately and verify the results. CSV export is also subject to these limits; a shorter report period may help.
+
+
+## Version 1.22 — released
+
+Home shows an overall personal balance after monthly income and expenses. Amounts in other currencies use the current month's manually entered rates; original entries keep their currencies. Reports show the first personal transaction date. Tap the calculator icon at the right of an income or expense amount field, enter an expression and choose Apply. Cancel preserves the original amount. Addition, subtraction, multiplication and division are supported; results are rounded to two decimal places. Division by zero and non-positive amounts are rejected. Ten new icons and three themes were added. See [verification](testing-1.22.md).
 
 ## Version 1.21 — released
 
@@ -12,7 +21,7 @@ This maintenance version updates release documentation and the version number; e
 
 The More tab has separate pages for themes, protection, backups, categories and updates. In Operations, select Search operations to search comments, amounts or dates; expenses also support category filtering. Expense comments are optional and limited to 150 Unicode characters. Tap an expense category in either report to show its transactions.
 
-A separate full-backup file contains personal and family data and settings. It is not encrypted and excludes the app code and biometrics. Restore replaces current data after confirmation. A synthetic personal-data transfer to the release signer has been tested on an emulator; recovery of an individual user's backup remains to be verified. **Do not uninstall before verifying recovery or rely on a single copy.** The personal CSV backup remains available separately.
+A separate full-backup file contains personal and family data and settings. New full backups are encrypted with a separate password; keep it safe, because the backup cannot be restored without it. Older unencrypted backups remain readable and can still be restored. The app code and biometrics are excluded. Restore replaces current data after confirmation. **Do not uninstall before verifying recovery or rely on a single copy.** The personal CSV backup remains available separately.
 
 Updates checks public GitHub releases and shows available release notes. When a newer version is available, the check button becomes an Update button; Android asks you to confirm installation. The latest published version is available from [GitHub Releases](https://github.com/NikitaTestovich/Bumajnik-Android/releases/latest). Checking and downloading require internet. The public APK and live check on a phone with 1.20 have been verified; a 1.20-to-1.21 in-app update was verified with fictional personal records.
 
@@ -128,6 +137,8 @@ When protection is enabled, screenshots and recent-app previews hide app content
 ## Personal backup and restore
 
 Open **More → Backups** for full and personal CSV backup actions.
+
+To create a full backup, choose **Export full backup**, enter and confirm a separate password, then select where to save the file. To restore it, choose **Restore full backup**, select the file and enter its password. Review the confirmation: restoring replaces current financial data and settings. The app code and biometric settings stay on the device. Older unencrypted backups can be restored after a warning.
 
 - **Export personal backup**: choose a writable destination in Android's file picker. Wait for **Personal backup saved.** This exports all personal transactions, their original amounts/currencies, and category names, regardless of report dates.
 - **Restore personal backup**: select the CSV. A successful restore shows added and skipped counts. It merges records into the existing personal list, skips IDs already present (including repeats within the file), and never deletes or replaces local records. A changed row with an existing ID is skipped. Categories are matched by name or created as needed; a blank expense category is restored as uncategorized.
