@@ -40,6 +40,7 @@ import com.personalfinance.tracker.data.csv.OpenCsvDocument
 import com.personalfinance.tracker.data.csv.FamilyImportManager
 import com.personalfinance.tracker.data.csv.FamilyImportPreview
 import com.personalfinance.tracker.data.csv.FamilyReportCalculator
+import com.personalfinance.tracker.data.csv.readCsvBytes
 import com.personalfinance.tracker.ui.common.DatePickerField
 import com.personalfinance.tracker.ui.charts.CategoryBreakdownItem
 import com.personalfinance.tracker.ui.charts.FinanceBar
@@ -52,6 +53,12 @@ import com.personalfinance.tracker.ui.summary.ExchangeRatePromptDialog
 import java.math.BigDecimal
 import java.time.LocalDate
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
+import kotlin.coroutines.coroutineContext
 
 @Composable
 fun FamilyScreen(onBack: () -> Unit) {
@@ -87,7 +94,7 @@ fun FamilyScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     val manager = remember(container.familyRepository, context) {
         FamilyImportManager(container.familyRepository) { uri ->
-            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            val jobContext = coroutineContext; context.contentResolver.openInputStream(uri)?.use { readCsvBytes(it) { jobContext.ensureActive() } }
                 ?: throw IllegalArgumentException("Cannot open selected CSV file")
         }
     }
@@ -99,25 +106,31 @@ fun FamilyScreen(onBack: () -> Unit) {
     var dateErrorRes by remember { mutableStateOf<Int?>(null) }
     var ownerToClear by remember { mutableStateOf<String?>(null) }
     var expandedCategory by remember { mutableStateOf<String?>(null) }
+    var previewJob by remember { mutableStateOf<Job?>(null) }
     val picker = rememberLauncherForActivityResult(OpenCsvDocument()) { uri ->
         if (uri != null) {
             importError = null
             importMessage = null
             preview = null
+            previewJob?.cancel()
+            previewJob = scope.launch {
             try {
-                val parsed = manager.preview(uri)
+                val parsed = withContext(Dispatchers.IO) { manager.preview(uri) }
                 preview = parsed
                 val missing = parsed.sourceCurrencies - baseCurrency
                 if (missing.isEmpty()) {
-                    scope.launch { finishImport(parsed, baseCurrency, emptyMap(), manager) { result ->
+                    finishImport(parsed, baseCurrency, emptyMap(), manager) { result ->
                         importMessage = context.getString(R.string.family_import_done, result.addedCount, result.duplicateCount)
                         importError = result.errors.takeIf { it.isNotEmpty() }?.joinToString()
-                    } }
+                    }
                 } else rateDialogMode = RateDialogMode.Import(missing)
+            } catch (error: CancellationException) {
+                throw error
             } catch (error: FamilyCsvValidationException) {
                 importError = error.validationErrors.joinToString("\n")
             } catch (error: Exception) {
-                importError = error.localizedMessage ?: "Invalid CSV file"
+                importError = context.getString(R.string.family_import_read_failed)
+            }
             }
         }
     }

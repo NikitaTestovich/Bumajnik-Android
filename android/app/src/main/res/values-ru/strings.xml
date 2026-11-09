@@ -8,7 +8,7 @@
     <string name="full_backup_confirm_body">В копии %1$d личных и %2$d семейных операций. Восстановление заменит текущие финансовые данные и настройки. Защита приложения останется на устройстве. Сначала сохраните актуальную копию.</string>
     <string name="full_backup_restore_done">Полная копия восстановлена. Проверьте защиту и настройки.</string>
     <string name="full_backup_settings_failed">Финансовые данные восстановлены, но часть настроек не сохранилась. Проверьте их в приложении.</string>
-    <string name="full_backup_unencrypted">Полная копия содержит личные и семейные финансовые данные и не зашифрована. Храните её в безопасном месте. Защита приложения в копию не входит.</string>
+    <string name="full_backup_unencrypted">Полная копия шифруется вашим паролем. Защита приложения в копию не входит.</string>
     <string name="updates_title">Обновления</string>
     <string name="updates_current">Установленная версия: %1$s</string>
     <string name="updates_check">Проверить наличие обновления</string>
@@ -117,6 +117,9 @@
     <string name="reports_categories">Расходы по категориям</string>
     <string name="reports_no_expenses">За этот период расходов нет.</string>
     <string name="reports_need_rates">Введите курсы валют %1$s, чтобы рассчитать отчёт.</string>
+    <string name="reports_export_spreadsheet">Экспорт таблицы (XLSX)</string>
+    <string name="reports_spreadsheet_success">Табличный отчёт сохранён.</string>
+    <string name="reports_spreadsheet_error">Не удалось сохранить таблицу: %1$s</string>
     <string name="reports_export_csv">Экспорт CSV</string>
     <string name="reports_export_success">Отчёт CSV сохранён.</string>
     <string name="reports_export_error">Не удалось сохранить CSV: %1$s</string>
@@ -141,6 +144,7 @@
     <string name="family_import_preview">Участники: %1$s. Валюты: %2$s. Записей: %3$d.</string>
     <string name="family_import_rates">Введите курсы конвертации для импортируемого файла.</string>
     <string name="family_import_done">Добавлено: %1$d. Пропущено повторов: %2$d.</string>
+    <string name="family_import_read_failed">Не удалось прочитать выбранный CSV-файл.</string>
     <string name="family_import_error">Ошибка импорта: %1$s</string>
     <string name="family_no_records">В этом периоде нет личных или семейных записей.</string>
     <string name="family_need_rates">Введите курсы %1$s, чтобы показать отчёт в валюте %2$s.</string>
@@ -156,6 +160,7 @@
     <string name="backup_working">Обработка резервной копии…</string>
     <string name="backup_filename">личные-записи.csv</string>
     <string name="backup_export_done">Резервная копия личных записей сохранена.</string>
+    <string name="csv_export_limit">CSV превышает ограничения импорта и не может быть сохранён. Может помочь выбор меньшего периода отчёта.</string>
     <string name="backup_export_failed">Не удалось сохранить копию. Выберите файл, доступный для записи, и повторите попытку.</string>
     <string name="backup_restore_done">Добавлено: %1$d. Пропущено повторов: %2$d.</string>
     <string name="backup_invalid_csv">CSV повреждён либо содержит ошибочные или неподдерживаемые записи. Записи не сохранены.</string>
@@ -266,4 +271,11 @@
     <string name="calculator_open">Открыть калькулятор</string>
     <string name="calculator_apply">Применить</string>
     <string name="calculator_error">Введите корректное выражение с положительным результатом</string>
+    <string name="full_backup_password_create">Создайте пароль копии</string>
+    <string name="full_backup_password_enter">Введите пароль копии</string>
+    <string name="full_backup_password_note">Сохраните пароль: без него восстановить копию невозможно.</string>
+    <string name="full_backup_password">Пароль</string>
+    <string name="full_backup_password_confirm">Повторите пароль</string>
+    <string name="full_backup_legacy_warning">Эта старая копия не зашифрована.</string>
+    <string name="full_backup_password_error">Неверный пароль или копия повреждена. Попробуйте ещё раз.</string>
 </resources>

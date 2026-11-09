@@ -12,7 +12,7 @@ class ReportExportManager(
     private val contentResolver: ContentResolver,
     private val repository: FinanceRepository,
 ) {
-    suspend fun exportReport(range: PeriodRange, destination: Uri, format: CsvFormat = CsvFormat.CURRENT): ExportResult {
+    suspend fun exportReport(range: PeriodRange, destination: Uri, format: CsvFormat = CsvFormat.CURRENT, spreadsheet: Boolean = false): ExportResult {
         val profile = repository.observeProfile().first()
             ?: return ExportResult(false, "Profile is not set")
         val records = repository.transactionsBetween(range, null)
@@ -24,12 +24,17 @@ class ReportExportManager(
             }
             category.id to name
         }
-        val csv = FinanceCsvCodec.encode(records, profile.name, categories, format)
+        val data = try {
+            if (spreadsheet) SpreadsheetReportCodec.encode(records, profile.name, categories)
+            else FinanceCsvCodec.encode(records, profile.name, categories, format)
+        } catch (_: CsvExportLimitException) {
+            return ExportResult(false, "csv_export_limit")
+        }
 
         return runCatching {
             val output = contentResolver.openOutputStream(destination)
                 ?: return ExportResult(false, "Unable to open the selected file")
-            output.use { it.write(csv) }
+            output.use { it.write(data) }
             ExportResult(success = true, message = null)
         }.getOrElse { error ->
             ExportResult(success = false, message = error.localizedMessage ?: "Unable to export the report")

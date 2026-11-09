@@ -1,8 +1,17 @@
 # Finance Tracker — user guide
 
-## Version 1.22 — in development
+## Version 1.23 — in development, not released
 
-Home shows an overall personal balance after monthly income and expenses. Amounts in other currencies use the current month's manually entered rates; original entries keep their currencies. Reports show the first personal transaction date. Tap the calculator icon at the right of an income or expense amount field, enter an expression and choose Apply. Cancel preserves the original amount. Addition, subtraction, multiplication and division are supported; results are rounded to two decimal places. Division by zero and non-positive amounts are rejected. Ten new icons and three themes are being added. Behaviour remains under test; see [verification](testing-1.22.md).
+The 1.23 work introduces encrypted full backups protected by a separate backup password. When creating one, enter and confirm the password and keep it safe: the backup cannot be restored without it. This password is separate from the app access code. Older unencrypted full backups remain supported for restore; they remain readable files. Full restore replaces current data after confirmation and does not include app protection credentials. These changes and recovery scenarios still require release verification.
+
+The development build offers a separate XLSX report for spreadsheet viewing alongside exact CSV exchange and personal restore. Use CSV for family import or personal restore; spreadsheet editing can change its data. CSV and spreadsheet reports are not full backups. XLSX behavior and compatibility still require release verification.
+
+CSV import accepts at most 10 MiB and 100,000 records per file, with fields up to 65,536 UTF-16 code units. Older CSV files exceeding these limits are rejected. To recover one, keep the original and use a trusted CSV-aware tool to split it into files within all limits, repeating the original header and preserving complete records and field values. Quoted fields may contain line breaks, so splitting by physical lines can corrupt data; this may require technical assistance. A single field above the field limit cannot be fixed by splitting records; preserving it requires an import tool or app version that supports it. Import each part separately and verify the results. CSV export is also subject to these limits; a shorter report period may help.
+
+
+## Version 1.22 — released
+
+Home shows an overall personal balance after monthly income and expenses. Amounts in other currencies use the current month's manually entered rates; original entries keep their currencies. Reports show the first personal transaction date. Tap the calculator icon at the right of an income or expense amount field, enter an expression and choose Apply. Cancel preserves the original amount. Addition, subtraction, multiplication and division are supported; results are rounded to two decimal places. Division by zero and non-positive amounts are rejected. Ten new icons and three themes were added. See [verification](testing-1.22.md).
 
 ## Version 1.21 — released
 

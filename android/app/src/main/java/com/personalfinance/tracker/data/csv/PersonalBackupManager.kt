@@ -12,17 +12,19 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
+import kotlin.coroutines.coroutineContext
 
 data class BackupRestoreResult(val addedCount: Int, val duplicateCount: Int, val errors: List<String>)
 
 class PersonalBackupManager(
     private val repository: FinanceRepository,
-    private val readBytes: (Uri) -> ByteArray,
+    private val readBytes: suspend (Uri) -> ByteArray,
     private val writeBytes: (Uri, ByteArray) -> Unit,
 ) {
     constructor(contentResolver: ContentResolver, repository: FinanceRepository) : this(
         repository,
-        { uri -> contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("No input stream") },
+        { uri -> val context = coroutineContext; contentResolver.openInputStream(uri)?.use { readCsvBytes(it) { context.ensureActive() } } ?: error("No input stream") },
         { uri, bytes ->
             val stream = contentResolver.openOutputStream(uri, "wt") ?: error("No output stream")
             stream.use { it.write(bytes) }
@@ -35,6 +37,8 @@ class PersonalBackupManager(
             ExportResult(true, null)
         } catch (error: CancellationException) {
             throw error
+        } catch (_: CsvExportLimitException) {
+            ExportResult(false, "csv_export_limit")
         } catch (_: Exception) {
             // The screen translates this code; never display provider exception text.
             ExportResult(false, "backup_export_failed")
@@ -59,7 +63,8 @@ class PersonalBackupManager(
         } catch (_: CharacterCodingException) {
             return BackupRestoreResult(0, 0, listOf("backup_invalid_csv"))
         }
-        val decoded = FinanceCsvCodec.decode(bytes)
+        val context = coroutineContext
+        val decoded = FinanceCsvCodec.decode(bytes) { context.ensureActive() }
         if (decoded.errors.isNotEmpty()) return BackupRestoreResult(0, 0, listOf("backup_invalid_csv"))
         // Canonical UUID strings prevent case variants from bypassing duplicate detection.
         val records = decoded.records.map { row ->

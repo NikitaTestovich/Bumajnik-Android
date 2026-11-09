@@ -13,6 +13,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -98,25 +99,50 @@ fun AppNavigation() {
     var backupStatusRes by remember { mutableStateOf<Int?>(null) }
     var restoredCounts by remember { mutableStateOf(0 to 0) }
     var pendingFullBackup by remember { mutableStateOf<Pair<com.personalfinance.tracker.data.backup.FullBackupSnapshot, com.personalfinance.tracker.data.backup.BackupPreferences>?>(null) }
+    var backupPasswordMode by remember { mutableStateOf<String?>(null) }
+    var backupPasswordError by remember { mutableStateOf(false) }
+    var backupPassword by remember { mutableStateOf("") }
+    var backupPasswordConfirm by remember { mutableStateOf("") }
+    var pendingExportPassword by remember { mutableStateOf<CharArray?>(null) }
+    DisposableEffect(Unit) {
+        onDispose { pendingExportPassword?.fill('\u0000') }
+    }
+    var backupInput by remember { mutableStateOf<ByteArray?>(null) }
+    var legacyBackup by remember { mutableStateOf(false) }
     val fullBackupImport = rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch {
             backupBusy = true
             try {
-                pendingFullBackup = com.personalfinance.tracker.data.backup.readFullBackup(context, uri)
+                val bytes = com.personalfinance.tracker.data.backup.readFullBackupBytes(context, uri)
+                if (com.personalfinance.tracker.data.backup.EncryptedBackup.isEncrypted(bytes)) {
+                    backupInput = bytes
+                    backupPasswordMode = "import"
+                } else {
+                    pendingFullBackup = com.personalfinance.tracker.data.backup.decodeFullBackup(bytes)
+                    legacyBackup = true
+                }
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) { backupStatusRes = R.string.full_backup_invalid }
             finally { backupBusy = false }
         }
     }
     val fullBackupExport = rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
-        if (uri != null) scope.launch {
-            backupBusy = true
-            try {
-                com.personalfinance.tracker.data.backup.exportFullBackup(context, uri)
-                backupStatusRes = R.string.full_backup_export_done
-            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-            catch (_: Exception) { backupStatusRes = R.string.backup_export_failed }
-            finally { backupBusy = false }
+        val password = pendingExportPassword
+        pendingExportPassword = null
+        if (uri == null) {
+            password?.fill('\u0000')
+        } else if (password == null) {
+            backupStatusRes = R.string.backup_export_failed
+        } else {
+            scope.launch {
+                backupBusy = true
+                try {
+                    com.personalfinance.tracker.data.backup.exportFullBackup(context, uri, password)
+                    backupStatusRes = R.string.full_backup_export_done
+                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { backupStatusRes = R.string.backup_export_failed }
+                finally { password.fill('\u0000'); backupBusy = false }
+            }
         }
     }
     val backupExport = rememberLauncherForActivityResult(CreateCsvDocument()) { uri ->
@@ -124,7 +150,7 @@ fun AppNavigation() {
             backupBusy = true
             try {
                 val result = backupManager.export(uri)
-                backupStatusRes = if (result.success) R.string.backup_export_done else R.string.backup_export_failed
+                backupStatusRes = if (result.success) R.string.backup_export_done else if (result.message == "csv_export_limit") R.string.csv_export_limit else R.string.backup_export_failed
             } finally { backupBusy = false }
         }
     }
@@ -287,7 +313,7 @@ fun AppNavigation() {
                             section = section,
                             onOpenSection = { target -> navController.navigate("more_${target.name.lowercase()}") },
                             onBack = { navController.popBackStack() },
-                            onExportFullBackup = { backupStatusRes = null; fullBackupExport.launch("finance-tracker-backup.ftb") },
+                            onExportFullBackup = { backupStatusRes = null; backupPasswordMode = "export" },
                             onRestoreFullBackup = { backupStatusRes = null; fullBackupImport.launch(arrayOf("application/octet-stream", "*/*")) },
                         )
                     } else {
@@ -298,11 +324,50 @@ fun AppNavigation() {
                 composable(GoalRoute) { GoalScreen(onBack = { navController.popBackStack() }) }
             }
         }
+        backupPasswordMode?.let { mode ->
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { backupPasswordMode = null; backupPasswordError = false; backupPassword = ""; backupPasswordConfirm = ""; backupInput = null },
+                title = { Text(stringResource(if (mode == "export") R.string.full_backup_password_create else R.string.full_backup_password_enter)) },
+                text = {
+                    Column {
+                        Text(stringResource(R.string.full_backup_password_note))
+                        if (backupPasswordError) Text(stringResource(R.string.full_backup_password_error), color = MaterialTheme.colorScheme.error)
+                        androidx.compose.material3.OutlinedTextField(value = backupPassword, onValueChange = { backupPassword = it }, label = { Text(stringResource(R.string.full_backup_password)) }, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password), singleLine = true)
+                        if (mode == "export") androidx.compose.material3.OutlinedTextField(value = backupPasswordConfirm, onValueChange = { backupPasswordConfirm = it }, label = { Text(stringResource(R.string.full_backup_password_confirm)) }, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password), singleLine = true)
+                    }
+                },
+                dismissButton = { androidx.compose.material3.TextButton(onClick = { backupPasswordMode = null; backupPasswordError = false; backupPassword = ""; backupPasswordConfirm = ""; backupInput = null }) { Text(stringResource(R.string.operation_cancel)) } },
+                confirmButton = { androidx.compose.material3.TextButton(enabled = backupPassword.isNotEmpty() && (mode != "export" || backupPassword == backupPasswordConfirm), onClick = {
+                    val password = backupPassword.toCharArray()
+                    backupPassword = ""; backupPasswordConfirm = ""; backupPasswordMode = null
+                    if (mode == "export") {
+                        pendingExportPassword?.fill('\u0000')
+                        pendingExportPassword = password
+                        try { fullBackupExport.launch("finance-tracker-backup.ftb") }
+                        catch (_: Exception) { pendingExportPassword = null; password.fill('\u0000'); backupStatusRes = R.string.backup_export_failed }
+                    } else {
+                      val input = backupInput
+                      scope.launch {
+                        backupBusy = true
+                        try {
+                            pendingFullBackup = com.personalfinance.tracker.data.backup.decodeFullBackup(checkNotNull(input), password)
+                            legacyBackup = false
+                            backupInput = null; backupPasswordError = false
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                        catch (_: Exception) {
+                            backupPasswordError = true; backupPasswordMode = "import"
+                        }
+                        finally { password.fill('\u0000'); backupBusy = false }
+                      }
+                    }
+                }) { Text(stringResource(android.R.string.ok)) } },
+            )
+        }
         pendingFullBackup?.let { pending ->
             androidx.compose.material3.AlertDialog(
                 onDismissRequest = { pendingFullBackup = null },
                 title = { Text(stringResource(R.string.full_backup_confirm_title)) },
-                text = { Text(stringResource(R.string.full_backup_confirm_body, pending.first.transactions.size, pending.first.familyTransactions.size)) },
+                text = { Text((if (legacyBackup) stringResource(R.string.full_backup_legacy_warning) + "\n\n" else "") + stringResource(R.string.full_backup_confirm_body, pending.first.transactions.size, pending.first.familyTransactions.size)) },
                 dismissButton = { androidx.compose.material3.TextButton(onClick = { pendingFullBackup = null }) { Text(stringResource(R.string.operation_cancel)) } },
                 confirmButton = { androidx.compose.material3.TextButton(onClick = {
                     pendingFullBackup = null

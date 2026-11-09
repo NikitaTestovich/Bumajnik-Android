@@ -8,7 +8,7 @@
     <string name="full_backup_confirm_body">The backup contains %1$d personal and %2$d family operations. Restoring replaces current financial data and settings. App protection remains on this device. Export a current backup first.</string>
     <string name="full_backup_restore_done">Full backup restored. Check app protection and settings.</string>
     <string name="full_backup_settings_failed">Financial data was restored, but some settings could not be saved. Check them in the app.</string>
-    <string name="full_backup_unencrypted">The full backup contains personal and family financial data and is not encrypted. Store it securely. App protection is not included.</string>
+    <string name="full_backup_unencrypted">The full backup is encrypted with your password. App protection is not included.</string>
     <string name="updates_title">Updates</string>
     <string name="updates_current">Installed version: %1$s</string>
     <string name="updates_check">Check for updates</string>
@@ -117,6 +117,9 @@
     <string name="reports_categories">Expenses by category</string>
     <string name="reports_no_expenses">No expenses in this period.</string>
     <string name="reports_need_rates">Enter exchange rates for %1$s to calculate this report.</string>
+    <string name="reports_export_spreadsheet">Export spreadsheet (XLSX)</string>
+    <string name="reports_spreadsheet_success">Spreadsheet report saved.</string>
+    <string name="reports_spreadsheet_error">Could not save spreadsheet: %1$s</string>
     <string name="reports_export_csv">Export CSV</string>
     <string name="reports_export_success">CSV report saved.</string>
     <string name="reports_export_error">Could not save CSV: %1$s</string>
@@ -141,6 +144,7 @@
     <string name="family_import_preview">File members: %1$s. Currencies: %2$s. Records: %3$d.</string>
     <string name="family_import_rates">Enter the conversion rates for the imported file.</string>
     <string name="family_import_done">Added: %1$d. Skipped duplicates: %2$d.</string>
+    <string name="family_import_read_failed">Could not read the selected CSV file.</string>
     <string name="family_import_error">Import failed: %1$s</string>
     <string name="family_no_records">No personal or family records in this period.</string>
     <string name="family_need_rates">Enter rates for %1$s to show this report in %2$s.</string>
@@ -156,6 +160,7 @@
     <string name="backup_working">Processing backup…</string>
     <string name="backup_filename">personal-backup.csv</string>
     <string name="backup_export_done">Personal backup saved.</string>
+    <string name="csv_export_limit">CSV exceeds the import limits and cannot be saved. A shorter report period may help.</string>
     <string name="backup_export_failed">Could not save the backup. Choose a writable file and try again.</string>
     <string name="backup_restore_done">Added: %1$d. Skipped duplicates: %2$d.</string>
     <string name="backup_invalid_csv">The CSV is damaged or contains invalid or unsupported records. No records were saved.</string>
@@ -266,4 +271,11 @@
     <string name="calculator_open">Open calculator</string>
     <string name="calculator_apply">Apply</string>
     <string name="calculator_error">Enter a valid calculation with a positive result</string>
+    <string name="full_backup_password_create">Create backup password</string>
+    <string name="full_backup_password_enter">Enter backup password</string>
+    <string name="full_backup_password_note">Keep this password safe. Without it, the backup cannot be restored.</string>
+    <string name="full_backup_password">Password</string>
+    <string name="full_backup_password_confirm">Confirm password</string>
+    <string name="full_backup_legacy_warning">This older backup is not encrypted.</string>
+    <string name="full_backup_password_error">Incorrect password or damaged backup. Try again.</string>
 </resources>

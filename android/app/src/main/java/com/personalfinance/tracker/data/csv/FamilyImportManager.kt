@@ -7,6 +7,8 @@ import com.personalfinance.tracker.domain.model.FamilyImportSummary
 import com.personalfinance.tracker.domain.money.SupportedCurrencies
 import java.math.BigDecimal
 import java.time.LocalDate
+import kotlinx.coroutines.ensureActive
+import kotlin.coroutines.coroutineContext
 
 data class FamilyImportPreview(
     val ownerNames: Set<String>,
@@ -26,12 +28,15 @@ class FamilyCsvValidationException(val validationErrors: List<String>) :
 
 class FamilyImportManager(
     private val repository: FamilyRepository,
-    private val readBytes: (Uri) -> ByteArray,
+    private val readBytes: suspend (Uri) -> ByteArray,
 ) {
-    fun preview(uri: Uri): FamilyImportPreview = previewBytes(readBytes(uri))
+    suspend fun preview(uri: Uri): FamilyImportPreview {
+        val context = coroutineContext
+        return previewBytes(readBytes(uri)) { context.ensureActive() }
+    }
 
-    fun previewBytes(bytes: ByteArray): FamilyImportPreview {
-        val decoded = FinanceCsvCodec.decode(bytes)
+    fun previewBytes(bytes: ByteArray, checkCancellation: () -> Unit = {}): FamilyImportPreview {
+        val decoded = FinanceCsvCodec.decode(bytes, checkCancellation)
         if (decoded.errors.isNotEmpty()) throw FamilyCsvValidationException(decoded.errors)
         if (decoded.records.isEmpty()) throw FamilyCsvValidationException(listOf("CSV has no transactions"))
         return FamilyImportPreview(

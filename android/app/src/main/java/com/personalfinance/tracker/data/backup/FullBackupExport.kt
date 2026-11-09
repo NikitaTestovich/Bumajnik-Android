@@ -6,8 +6,8 @@ import com.personalfinance.tracker.FinanceApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Includes personal and family financial data; output is not encrypted. */
-suspend fun exportFullBackup(context: Context, destination: Uri) = withContext(Dispatchers.IO) {
+/** Encrypts the portable snapshot with a user-supplied password. */
+suspend fun exportFullBackup(context: Context, destination: Uri, password: CharArray) = withContext(Dispatchers.IO) {
     val app = context.applicationContext as FinanceApplication
     val appearance = app.getSharedPreferences("appearance", Context.MODE_PRIVATE)
     val operations = app.getSharedPreferences("operations", Context.MODE_PRIVATE)
@@ -18,7 +18,7 @@ suspend fun exportFullBackup(context: Context, destination: Uri) = withContext(D
         home.getString("blocks", "") ?: "",
         appearance.getBoolean("category_icon_labels", true),
     )
-    val bytes = FullBackupFile.encode(captureFullBackup(app.container.database), preferences)
+    val bytes = EncryptedBackup.encrypt(FullBackupFile.encode(captureFullBackup(app.container.database), preferences), password)
     val stream = checkNotNull(context.contentResolver.openOutputStream(destination, "wt"))
     stream.use { it.write(bytes) }
 }

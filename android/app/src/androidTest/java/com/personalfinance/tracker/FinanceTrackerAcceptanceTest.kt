@@ -26,6 +26,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -53,6 +54,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -573,6 +575,57 @@ class FinanceTrackerAcceptanceTest {
         assertEquals(420, runBlocking { app.container.familyRepository.observeFamilyTransactions(range).first() }.size)
     }
 
+    @Test fun cancelBackupPasswordDoesNotLaunchCreateDocument() {
+        onboard()
+        navigate(R.string.navigation_more)
+        ui.onNodeWithTag("open_BACKUP").performScrollTo().performClick()
+        val launched = java.util.concurrent.atomic.AtomicBoolean(false)
+        val monitor = object : Instrumentation.ActivityMonitor() {
+            override fun onStartActivity(intent: Intent): Instrumentation.ActivityResult? {
+                if (intent.action == Intent.ACTION_CREATE_DOCUMENT) {
+                    launched.set(true)
+                    return Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null)
+                }
+                return null
+            }
+        }
+        instrumentation.addMonitor(monitor)
+        try {
+            click(R.string.full_backup_export)
+            awaitText(R.string.full_backup_password_create)
+            assertFalse(launched.get())
+            ui.onNode(hasText(text(R.string.operation_cancel)) and hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
+            ui.waitForIdle()
+            assertFalse(launched.get())
+        } finally { instrumentation.removeMonitor(monitor) }
+    }
+
+    @Test fun cancelBackupFilePickerClearsPasswordBeforeRetry() {
+        onboard()
+        navigate(R.string.navigation_more)
+        ui.onNodeWithTag("open_BACKUP").performScrollTo().performClick()
+        val launched = java.util.concurrent.atomic.AtomicBoolean(false)
+        val monitor = object : Instrumentation.ActivityMonitor() {
+            override fun onStartActivity(intent: Intent): Instrumentation.ActivityResult? {
+                if (intent.action == Intent.ACTION_CREATE_DOCUMENT) {
+                    launched.set(true)
+                    return Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null)
+                }
+                return null
+            }
+        }
+        instrumentation.addMonitor(monitor)
+        try {
+            click(R.string.full_backup_export)
+            enterBackupPassword(export = true)
+            ui.waitUntil(10_000) { launched.get() }
+            click(R.string.full_backup_export)
+            awaitText(R.string.full_backup_password_create)
+            ui.onNode(hasText(text(android.R.string.ok)) and hasAnyAncestor(androidx.compose.ui.test.isDialog())).assertIsNotEnabled()
+            ui.onNode(hasText(text(R.string.operation_cancel)) and hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
+        } finally { instrumentation.removeMonitor(monitor) }
+    }
+
     @Test fun fullBackupUsesRealSystemDocumentPicker() {
         assumeTrue(android.os.Build.HARDWARE in listOf("ranchu", "goldfish"))
         onboard()
@@ -591,16 +644,27 @@ class FinanceTrackerAcceptanceTest {
             }
         }
         instrumentation.addMonitor(monitor)
-        try { click(R.string.full_backup_export) } finally { instrumentation.removeMonitor(monitor) }
-        clickSystemDocumentNode(listOf("Save", "SAVE", "Сохранить", "СОХРАНИТЬ"))
+        try {
+            click(R.string.full_backup_export)
+            enterBackupPassword(export = true)
+            clickSystemDocumentNode(listOf("Save", "SAVE", "Сохранить", "СОХРАНИТЬ"))
+        } finally { instrumentation.removeMonitor(monitor) }
         awaitText(R.string.full_backup_export_done)
         runBlocking { repository.saveTransaction(original.copy(id = UUID.randomUUID().toString())) }
         click(R.string.full_backup_restore)
         clickSystemDocumentNode(listOf(backupName))
+        enterBackupPassword(export = false)
         awaitText(R.string.full_backup_confirm_title)
         ui.onNode(hasText(text(R.string.full_backup_restore)) and hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
         awaitText(R.string.full_backup_restore_done)
         assertEquals(listOf(original.id), runBlocking { repository.observeTransactions(null).first() }.map { it.id })
+    }
+
+    private fun enterBackupPassword(export: Boolean, password: String = "test backup password") {
+        awaitText(if (export) R.string.full_backup_password_create else R.string.full_backup_password_enter)
+        ui.onNodeWithText(text(R.string.full_backup_password)).performTextInput(password)
+        if (export) ui.onNodeWithText(text(R.string.full_backup_password_confirm)).performTextInput(password)
+        ui.onNode(hasText(text(android.R.string.ok)) and hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
     }
 
     private fun clickSystemDocumentNode(labels: List<String>): String {
@@ -655,12 +719,19 @@ class FinanceTrackerAcceptanceTest {
         navigate(R.string.navigation_more)
         ui.onNodeWithTag("open_BACKUP").performScrollTo().performClick()
         val destination = createTemporaryCsv("full-backup", ByteArray(0))
-        launchPickerAndReturnUri(R.string.full_backup_export, Intent.ACTION_CREATE_DOCUMENT, destination) { intent ->
+        launchPickerAndReturnUri(R.string.full_backup_export, Intent.ACTION_CREATE_DOCUMENT, destination,
+            trigger = { click(R.string.full_backup_export); enterBackupPassword(export = true) }) { intent ->
             assertEquals("application/octet-stream", intent.type)
             assertTrue(intent.getStringExtra(Intent.EXTRA_TITLE)!!.endsWith(".ftb"))
         }
         awaitText(R.string.full_backup_export_done)
         assertTrue(app.contentResolver.openInputStream(destination)!!.use { it.readBytes().isNotEmpty() })
+
+        val encryptedBytes = app.contentResolver.openInputStream(destination)!!.use { it.readBytes() }
+        val legacyBytes = com.personalfinance.tracker.data.backup.EncryptedBackup.decrypt(encryptedBytes, "test backup password".toCharArray())
+        val legacy = createTemporaryCsv("legacy-backup", legacyBytes)
+        val damagedBytes = encryptedBytes.copyOf().also { it[it.lastIndex] = (it.last().toInt() xor 1).toByte() }
+        val damagedEncrypted = createTemporaryCsv("damaged-encrypted", damagedBytes)
 
         val addedLater = original.copy(id = UUID.randomUUID().toString(), money = Money(500, "USD"))
         runBlocking { repository.saveTransaction(addedLater) }
@@ -672,11 +743,27 @@ class FinanceTrackerAcceptanceTest {
         awaitText(R.string.full_backup_invalid)
         assertEquals(2, runBlocking { repository.observeTransactions(null).first() }.size)
 
+        launchPickerAndReturnUri(R.string.full_backup_restore, Intent.ACTION_OPEN_DOCUMENT, legacy) { }
+        awaitText(R.string.full_backup_confirm_title)
+        ui.onNode(hasText(text(R.string.full_backup_restore)) and hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
+        awaitText(R.string.full_backup_restore_done)
+        assertEquals(listOf(original.id), runBlocking { repository.observeTransactions(null).first() }.map { it.id })
+        runBlocking { repository.saveTransaction(addedLater) }
+        launchPickerAndReturnUri(R.string.full_backup_restore, Intent.ACTION_OPEN_DOCUMENT, damagedEncrypted) { }
+        enterBackupPassword(export = false)
+        awaitText(R.string.full_backup_password_error)
+        assertEquals(2, runBlocking { repository.observeTransactions(null).first() }.size)
+        ui.onNode(hasText(text(R.string.operation_cancel)) and hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
         launchPickerAndReturnUri(R.string.full_backup_restore, Intent.ACTION_OPEN_DOCUMENT, destination) { }
+        enterBackupPassword(export = false, password = "wrong password")
+        awaitText(R.string.full_backup_password_error)
+        assertEquals(2, runBlocking { repository.observeTransactions(null).first() }.size)
+        enterBackupPassword(export = false)
         awaitText(R.string.full_backup_confirm_title)
         ui.onNode(hasText(text(R.string.operation_cancel)) and hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
         assertEquals(2, runBlocking { repository.observeTransactions(null).first() }.size)
         launchPickerAndReturnUri(R.string.full_backup_restore, Intent.ACTION_OPEN_DOCUMENT, destination) { }
+        enterBackupPassword(export = false)
         awaitText(R.string.full_backup_confirm_title)
         ui.onNode(hasText(text(R.string.full_backup_restore)) and hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
         awaitText(R.string.full_backup_restore_done)
@@ -941,6 +1028,7 @@ class FinanceTrackerAcceptanceTest {
         @StringRes action: Int,
         expectedAction: String,
         selectedUri: Uri,
+        trigger: (() -> Unit)? = null,
         assertContract: (Intent) -> Unit,
     ) {
         val captured = AtomicReference<Intent>()
@@ -955,7 +1043,7 @@ class FinanceTrackerAcceptanceTest {
         }
         instrumentation.addMonitor(monitor)
         try {
-            click(action)
+            if (trigger != null) trigger() else click(action)
             ui.waitUntil(10_000) { captured.get() != null }
             val intent = captured.get()
             assertContract(intent)
