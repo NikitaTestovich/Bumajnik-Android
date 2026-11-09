@@ -22,6 +22,6 @@ jobs:
           distribution: temurin
           java-version: '21'
       - name: Install Android SDK platform
-        run: sdkmanager 'platforms;android-37.0'
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0"'
       - name: Build debug APK and run unit tests
         run: bash ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
