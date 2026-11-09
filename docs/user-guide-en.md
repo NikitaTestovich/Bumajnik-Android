@@ -21,7 +21,7 @@ This maintenance version updates release documentation and the version number; e
 
 The More tab has separate pages for themes, protection, backups, categories and updates. In Operations, select Search operations to search comments, amounts or dates; expenses also support category filtering. Expense comments are optional and limited to 150 Unicode characters. Tap an expense category in either report to show its transactions.
 
-A separate full-backup file contains personal and family data and settings. It is not encrypted and excludes the app code and biometrics. Restore replaces current data after confirmation. A synthetic personal-data transfer to the release signer has been tested on an emulator; recovery of an individual user's backup remains to be verified. **Do not uninstall before verifying recovery or rely on a single copy.** The personal CSV backup remains available separately.
+A separate full-backup file contains personal and family data and settings. New full backups are encrypted with a separate password; keep it safe, because the backup cannot be restored without it. Older unencrypted backups remain readable and can still be restored. The app code and biometrics are excluded. Restore replaces current data after confirmation. **Do not uninstall before verifying recovery or rely on a single copy.** The personal CSV backup remains available separately.
 
 Updates checks public GitHub releases and shows available release notes. When a newer version is available, the check button becomes an Update button; Android asks you to confirm installation. The latest published version is available from [GitHub Releases](https://github.com/NikitaTestovich/Bumajnik-Android/releases/latest). Checking and downloading require internet. The public APK and live check on a phone with 1.20 have been verified; a 1.20-to-1.21 in-app update was verified with fictional personal records.
 
@@ -137,6 +137,8 @@ When protection is enabled, screenshots and recent-app previews hide app content
 ## Personal backup and restore
 
 Open **More → Backups** for full and personal CSV backup actions.
+
+To create a full backup, choose **Export full backup**, enter and confirm a separate password, then select where to save the file. To restore it, choose **Restore full backup**, select the file and enter its password. Review the confirmation: restoring replaces current financial data and settings. The app code and biometric settings stay on the device. Older unencrypted backups can be restored after a warning.
 
 - **Export personal backup**: choose a writable destination in Android's file picker. Wait for **Personal backup saved.** This exports all personal transactions, their original amounts/currencies, and category names, regardless of report dates.
 - **Restore personal backup**: select the CSV. A successful restore shows added and skipped counts. It merges records into the existing personal list, skips IDs already present (including repeats within the file), and never deletes or replaces local records. A changed row with an existing ID is skipped. Categories are matched by name or created as needed; a blank expense category is restored as uncategorized.
