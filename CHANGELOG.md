@@ -1,10 +1,16 @@
 # Changelog
 
-## 1.23 — unreleased, in development
+## 1.24 — in development
 
-- Develop encrypted full backups with a separate confirmed password and restore support for older unencrypted full backups. Losing the backup password prevents recovery.
-- Add XLSX spreadsheet reports separately from exact CSV exchange and personal restore; verification remains in progress.
-- Release, security, upgrade and recovery verification are still in progress; no completion is claimed.
+- Align date and amount in personal report expense details, with comments and separators.
+- Fit personal and family income/expense comparisons to the screen using labelled horizontal bars.
+- Refresh the Forest after rain theme and expand CI checks; release verification remains in progress.
+
+## 1.23 — released
+
+- Added encrypted full backups with a separate confirmed password and restore support for older unencrypted full backups. Losing the backup password prevents recovery.
+- Added XLSX spreadsheet reports separately from exact CSV exchange and personal restore.
+- See the 1.23 verification report for completed checks and remaining limitations.
 
 ## 1.22 — released
 

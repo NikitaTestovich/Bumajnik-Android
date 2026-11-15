@@ -1,10 +1,14 @@
 # Finance Tracker — user guide
 
-## Version 1.23 — in development, not released
+## Version 1.24 — in development
 
-The 1.23 work introduces encrypted full backups protected by a separate backup password. When creating one, enter and confirm the password and keep it safe: the backup cannot be restored without it. This password is separate from the app access code. Older unencrypted full backups remain supported for restore; they remain readable files. Full restore replaces current data after confirmation and does not include app protection credentials. These changes and recovery scenarios still require release verification.
+In personal reports, expand an expense category to see each date and converted amount on one line, with any comment below. If an expense was recorded in another currency, its original amount is also shown. Income and expense comparisons in personal and family reports use horizontal bars sized to the available width. The Forest after rain theme has a refreshed palette. These changes are being verified.
 
-The development build offers a separate XLSX report for spreadsheet viewing alongside exact CSV exchange and personal restore. Use CSV for family import or personal restore; spreadsheet editing can change its data. CSV and spreadsheet reports are not full backups. XLSX behavior and compatibility still require release verification.
+## Version 1.23 — released
+
+Version 1.23 introduced encrypted full backups protected by a separate backup password. When creating one, enter and confirm the password and keep it safe: the backup cannot be restored without it. This password is separate from the app access code. Older unencrypted full backups remain supported for restore; they remain readable files. Full restore replaces current data after confirmation and does not include app protection credentials.
+
+The app offers a separate XLSX report for spreadsheet viewing alongside exact CSV exchange and personal restore. Use CSV for family import or personal restore; spreadsheet editing can change its data. CSV and spreadsheet reports are not full backups.
 
 CSV import accepts at most 10 MiB and 100,000 records per file, with fields up to 65,536 UTF-16 code units. Older CSV files exceeding these limits are rejected. To recover one, keep the original and use a trusted CSV-aware tool to split it into files within all limits, repeating the original header and preserving complete records and field values. Quoted fields may contain line breaks, so splitting by physical lines can corrupt data; this may require technical assistance. A single field above the field limit cannot be fixed by splitting records; preserving it requires an import tool or app version that supports it. Import each part separately and verify the results. CSV export is also subject to these limits; a shorter report period may help.
 

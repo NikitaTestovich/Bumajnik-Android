@@ -1,12 +1,16 @@
 # Finance Tracker for Android
 
-## Version 1.23 — in development, not released
+## Version 1.24 — in development
 
-The 1.23 work includes password-protected full backups, legacy full-backup restore, and an XLSX spreadsheet report separate from exact CSV exchange. Release verification, including upgrade and recovery checks, remains outstanding. The version metadata below describes the current checkout until it is updated.
+This checkout uses versionName 1.24 / versionCode 9. Release signing and in-place upgrade verification are outstanding; see [verification](../docs/testing-1.24.md).
 
-## Version 1.22 — published baseline
+## Version 1.23 — released
 
-The published 1.22 baseline uses versionName 1.22 / versionCode 7. Debug builds use a local test key; only an owner-signed release is suitable for updating the published release. See [verification](../docs/testing-1.22.md).
+Version 1.23 includes password-protected full backups, legacy full-backup restore, and an XLSX spreadsheet report separate from exact CSV exchange. See [verification](../docs/testing-1.23.md) for checks and limitations.
+
+## Version 1.22 — earlier release
+
+Version 1.22 uses versionName 1.22 / versionCode 7. Debug builds use a local test key; only an owner-signed release is suitable for updating the published release. See [verification](../docs/testing-1.22.md).
 
 ## Version 1.21 — released
 
