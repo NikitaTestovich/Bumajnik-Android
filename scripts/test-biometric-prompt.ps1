@@ -41,6 +41,6 @@ $output = Get-Content -LiteralPath $log -Raw
 Write-Output $output
 Get-Content -LiteralPath $err
 Write-Output "Raw instrumentation log: $log"
-if ($output -notmatch 'OK \(\d+ tests?\)' -or $output -match 'FAILURES!!!|INSTRUMENTATION_FAILED') {
+if ([string]::IsNullOrWhiteSpace($output) -or $output -notmatch 'OK \(\d+ tests?\)' -or $output -match 'FAILURES!!!|INSTRUMENTATION_FAILED') {
     throw 'Biometric prompt acceptance did not pass.'
 }
