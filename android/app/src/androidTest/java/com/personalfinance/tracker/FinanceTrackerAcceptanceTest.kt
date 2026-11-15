@@ -161,6 +161,45 @@ class FinanceTrackerAcceptanceTest {
         assertTrue(runBlocking { repository.observeTransactions(null).first() }.isEmpty())
     }
 
+    @Test fun searchFiltersIncomeAndExpenseCommentsAndAmountsOnOperationsScreen() {
+        onboard()
+        val categories = runBlocking { repository.observeCategories().first() }.take(2)
+        val language = runBlocking { repository.observeProfile().first() }!!.languageTag
+        val firstCategoryName = if (language == "ru") categories[0].nameRu!! else categories[0].nameEn!!
+        val previousDate = LocalDate.now().minusDays(1)
+        runBlocking {
+            listOf(
+                FinanceTransaction(UUID.randomUUID().toString(), "Acceptance User", TransactionType.INCOME, previousDate, Money(12345, "USD"), null, "Salary unique"),
+                FinanceTransaction(UUID.randomUUID().toString(), "Acceptance User", TransactionType.INCOME, LocalDate.now(), Money(67890, "USD"), null, "Bonus unique"),
+                FinanceTransaction(UUID.randomUUID().toString(), "Acceptance User", TransactionType.EXPENSE, LocalDate.now(), Money(23456, "USD"), categories[0].id, "First expense unique"),
+                FinanceTransaction(UUID.randomUUID().toString(), "Acceptance User", TransactionType.EXPENSE, LocalDate.now(), Money(34567, "USD"), categories[1].id, "Second expense unique"),
+            ).forEach { repository.saveTransaction(it) }
+        }
+        navigate(R.string.navigation_operations)
+        click(R.string.operation_income)
+        awaitLiteral("Salary unique")
+        click(R.string.operation_search_open)
+        fill(R.string.operation_search, "Salary unique")
+        awaitLiteral("Salary unique")
+        ui.onNodeWithText("Bonus unique").assertDoesNotExist()
+        fill(R.string.operation_search, "678.90")
+        awaitLiteral("Bonus unique")
+        ui.onNodeWithText("Salary unique").assertDoesNotExist()
+        fill(R.string.operation_search, previousDate.format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")))
+        awaitLiteral("Salary unique")
+        ui.onNodeWithText("Bonus unique").assertDoesNotExist()
+        fill(R.string.operation_search, "expense unique")
+        click(R.string.operation_expenses)
+        awaitLiteral("Second expense unique")
+        click(R.string.operation_all_categories)
+        ui.onNode(hasText(firstCategoryName) and hasClickAction()).performClick()
+        awaitLiteral("First expense unique")
+        fill(R.string.operation_search, "Second expense unique")
+        awaitText(R.string.operation_search_empty)
+        fill(R.string.operation_search, "missing unique")
+        awaitText(R.string.operation_search_empty)
+    }
+
     @Test fun homeSummaryUsesThemeAndKeepsTransactionAndGoalDetails() {
         onboard()
         val profile = runBlocking { repository.observeProfile().first() }!!
