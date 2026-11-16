@@ -1,8 +1,8 @@
 # Finance Tracker — user guide
 
-## Version 1.24 — in development
+## Version 1.24 — released
 
-In personal reports, expand an expense category to see each date and converted amount on one line, with any comment below. If an expense was recorded in another currency, its original amount is also shown. Income and expense comparisons in personal and family reports use horizontal bars sized to the available width. The Forest after rain theme has a refreshed palette. These changes are being verified.
+In personal reports, expand an expense category to see each date and converted amount on one line, with any comment below. If an expense was recorded in another currency, its original amount is also shown. Income and expense comparisons in personal and family reports use horizontal bars sized to the available width. The Forest after rain theme has a refreshed palette. These changes are available in version 1.24.
 
 ## Version 1.23 — released
 

@@ -1,8 +1,8 @@
 # Finance Tracker — current product specification
 
-## Version 1.24 — in development
+## Version 1.24 — released
 
-Personal report expense details display date and converted amount on one row, with the optional comment below and a divider between operations; the original amount is retained for foreign-currency entries. Personal and family income/expense comparisons use width-adaptive labelled horizontal bars. The Forest after rain theme uses the Fresh Conifer palette. Verification, compatibility checks and release are in progress; see [1.24 verification](testing-1.24.md).
+Personal report expense details display date and converted amount on one row, with the optional comment below and a divider between operations; the original amount is retained for foreign-currency entries. Personal and family income/expense comparisons use width-adaptive labelled horizontal bars. The Forest after rain theme uses the Fresh Conifer palette. Version 1.24 is published; see [1.24 verification and limitations](testing-1.24.md).
 
 ## Version 1.23 — released
 
