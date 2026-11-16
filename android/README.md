@@ -2,7 +2,7 @@
 
 ## Version 1.24 — in development
 
-This checkout uses versionName 1.24 / versionCode 9. Release signing and in-place upgrade verification are outstanding; see [verification](../docs/testing-1.24.md).
+This checkout uses versionName 1.24 / versionCode 9. The owner-signed APK and the 1.23-to-1.24 in-place upgrade were checked on a test phone and emulator; see [verification and limitations](../docs/testing-1.24.md).
 
 ## Version 1.23 — released
 
