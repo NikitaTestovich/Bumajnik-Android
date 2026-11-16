@@ -1,6 +1,6 @@
 # Test coverage inventory (work in progress)
 
-This inventory is not a claim of complete coverage. References identify existing tests, not verified CI execution for every test type. Unit tests run in the current PR workflow; The PR workflow runs a three-class Android smoke suite on an emulator; it does not run the complete Android suite. Add negative cases, device requirements and remaining feature areas before treating this inventory as complete.
+This inventory is not a claim of complete coverage. References identify existing tests, not verified CI execution for every test type. Unit tests run in the current PR workflow. The PR workflow runs a three-class Android smoke suite on an emulator; it does not run the complete Android suite. Add negative cases, device requirements and remaining feature areas before treating this inventory as complete.
 
 | Behavior | Existing automated checks | Level | Known limitation / follow-up |
 | --- | --- | --- | --- |
@@ -24,7 +24,7 @@ This inventory is not a claim of complete coverage. References identify existing
 | Comparison chart at narrow width | `ResponsiveChartTest#allFamilyValuesFitWithoutHorizontalScrolling` | Android UI | More locales, large values, large fonts and real-screen rendering require additional verification. |
 | Forest palette | `ThemeSurfaceTest#forest theme uses fresh conifer surfaces and ink`, `#every theme has readable normal text and semantic errors on every used surface` | JVM | Visual inspection and other text/icon combinations remain necessary. |
 
-Outstanding inventory areas include onboarding, profile, real-screen transaction creation/edit/delete, calculator, currencies, category management, home widgets, real-screen goals, CSV/XLSX export, themes, app lock and biometrics, updates, family cleanup, full backup restoration and accessibility. Map each behavior, important failure case and environment to concrete tests before a release. A high line-coverage percentage cannot replace this review.
+The inventory below maps additional tests, but is not a complete audit of every behavior and failure case. A high line-coverage percentage cannot replace this review.
 
 ## Additional Android test inventory for 1.24
 
@@ -57,7 +57,7 @@ Family removal is covered at two complementary levels: `FinanceTrackerAcceptance
 
 Search screen follow-up: `FinanceTrackerAcceptanceTest#searchFiltersIncomeAndExpenseCommentsAndAmountsOnOperationsScreen` was added and compiled. Its emulator run on 2026-11-15 did not execute: ADB timed out obtaining emulator properties and Gradle reported unknown API level. It is not a passing test. Category-filter and date UI flows still require verification.
 
-Search UI test follow-up: the emulator responded again after restart, but Gradle produced an empty XML suite (zero tests), so its successful status is not a pass. Direct instrumentation then failed before the test because Android user 0 was locked and credential-encrypted preferences were unavailable. A subsequent clean emulator startup attempt did not resolve that condition. The test remains unverified.
+Search UI test follow-up: the emulator responded again after restart, but Gradle produced an empty XML suite (zero tests), so its successful status is not a pass. Direct instrumentation then failed before the test because Android user 0 was locked and credential-encrypted preferences were unavailable. A subsequent clean emulator startup attempt did not resolve that condition. That particular attempt did not verify the test; later successful runs are recorded below.
 
 On 2026-11-15 the search screen test above ran on a clean, unlocked FinanceSearch124 API 37 emulator and reported `OK (1 test)` via Android instrumentation. It covers comment and amount searches, both operation types, and no matches; date and category filter UI remain unverified by that test.
 
