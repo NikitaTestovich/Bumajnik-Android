@@ -1,26 +1,17 @@
 package com.personalfinance.tracker.ui.charts
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import com.personalfinance.tracker.ui.theme.LocalAppTheme
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -28,11 +19,8 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.Dp
 import com.personalfinance.tracker.R
-import com.personalfinance.tracker.ui.theme.financeColors
 import java.math.BigDecimal
 import java.text.NumberFormat
 
@@ -49,11 +37,11 @@ fun normalizedBarFraction(value: Long, maximum: Long): Float =
 
 object FinanceCharts {
     @Composable
-    fun GroupedColumnChart(groups: List<FinanceBarGroup>, modifier: Modifier = Modifier, barWidth: Dp = 80.dp) {
+    fun GroupedColumnChart(groups: List<FinanceBarGroup>, modifier: Modifier = Modifier) {
         val maximum = groups.flatMap { it.bars }.maxOfOrNull { it.valueMinorUnits } ?: 0L
         val chartDescription = stringResource(R.string.chart_income_expense_comparison)
-        if (LocalAppTheme.current.id == 9) {
-            Column(modifier.fillMaxWidth().testTag("comparison_horizontal"), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+
+        Column(modifier.fillMaxWidth().testTag("comparison_horizontal").semantics { contentDescription = chartDescription; isTraversalGroup = true }, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 groups.forEach { group ->
                     Text(group.label, style = MaterialTheme.typography.titleMedium)
                     group.bars.forEach { bar ->
@@ -65,53 +53,6 @@ object FinanceCharts {
                         }
                     }
                 }
-            }
-            return
-        }
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .semantics {
-                    contentDescription = chartDescription
-                    isTraversalGroup = true
-                }
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(24.dp),
-        ) {
-            groups.forEach { group ->
-                Column(
-                    modifier = Modifier.semantics {
-                        contentDescription = group.label
-                        isTraversalGroup = true
-                    },
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(group.label, style = MaterialTheme.typography.titleSmall)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        group.bars.forEach { bar ->
-                            val amount = formatChartAmount(bar.valueMinorUnits)
-                            val description = stringResource(R.string.chart_value_description, group.label, bar.label, amount)
-                            Column(
-                                modifier = Modifier.width(barWidth).clearAndSetSemantics { contentDescription = description },
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                Text(amount, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
-                                Box(Modifier.height(128.dp).width(32.dp), contentAlignment = Alignment.BottomCenter) {
-                                    Box(
-                                        Modifier.fillMaxWidth()
-                                            .height(128.dp * normalizedBarFraction(bar.valueMinorUnits, maximum))
-                                            .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
-                                            .background(bar.color),
-                                    )
-                                }
-                                Text(bar.label, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -143,7 +84,7 @@ object FinanceCharts {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         com.personalfinance.tracker.ui.categories.CategoryIcon(item.iconKey)
                         Text(item.label, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                        Text(amount, style = MaterialTheme.typography.bodyMedium)
+                        Text(amount, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.End)
                     }
                     LinearProgressIndicator(
                         progress = { normalizedBarFraction(item.valueMinorUnits, maximum) },

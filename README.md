@@ -1,15 +1,19 @@
 # Finance Tracker for Android
 
-## Version 1.23 — in development, not released
+## Version 1.24 — in development
 
-The 1.23 work introduces encrypted full backups protected by a separate backup password. When creating one, enter and confirm the password and keep it safe: the backup cannot be restored without it. This password is separate from the app access code. Older unencrypted full backups remain supported for restore; they remain readable files. Full restore replaces current data after confirmation and does not include app protection credentials. These changes and recovery scenarios still require release verification.
+The next version refreshes report details, adapts income and expense charts and updates the Forest after rain palette. Verification is in progress; see [test status](docs/testing-1.24.md). The latest published release is 1.23.
 
-The development build offers a separate XLSX report for spreadsheet viewing alongside exact CSV exchange and personal restore. Use CSV for family import or personal restore; spreadsheet editing can change its data. CSV and spreadsheet reports are not full backups. XLSX behavior and compatibility still require release verification.
+## Version 1.23 — released
+
+Version 1.23 introduced encrypted full backups protected by a separate backup password. When creating one, enter and confirm the password and keep it safe: the backup cannot be restored without it. This password is separate from the app access code. Older unencrypted full backups remain supported for restore; they remain readable files. Full restore replaces current data after confirmation and does not include app protection credentials. See [verification](docs/testing-1.23.md) for completed checks and limitations.
+
+Version 1.23 also offers a separate XLSX report for spreadsheet viewing alongside exact CSV exchange and personal restore. Use CSV for family import or personal restore; spreadsheet editing can change its data. CSV and spreadsheet reports are not full backups.
 
 
 ## Version 1.22 — released
 
-Version 1.22 adds overall personal balance, first-date report guidance, an amount calculator, ten category icons and three new themes. It is the latest published release. See [1.22 specification](docs/specs/version-1.22-proposal-ru.md) and [verification](docs/testing-1.22.md).
+Version 1.22 adds overall personal balance, first-date report guidance, an amount calculator, ten category icons and three new themes. See [1.22 specification](docs/specs/version-1.22-proposal-ru.md) and [verification](docs/testing-1.22.md).
 
 ## Version 1.21 — released November 3, 2026
 
@@ -67,7 +71,7 @@ Version 1.15 optional monthly expense widget, captured from the emulator with fi
 
 ## Privacy and backups
 
-The app has no account or live synchronization. Financial records are stored locally. CSV export and import use Android's file picker; the app does not fetch exchange rates. A personal CSV backup contains transactions but not all settings or saved family imports. The full backup in published versions is unencrypted and does not include app-lock credentials. The password-protected format is in development for 1.23; older unencrypted backups remain supported for restoration. Store backups securely and verify restoration before uninstalling or clearing storage; see the guide for details.
+The app has no account or live synchronization. Financial records are stored locally. CSV export and import use Android's file picker; the app does not fetch exchange rates. A personal CSV backup contains transactions but not all settings or saved family imports. Full backups created in 1.23 are encrypted with a separate password and do not include app-lock credentials; older unencrypted backups remain supported for restoration. Store backups securely and verify restoration before uninstalling or clearing storage; see the guide for details.
 
 No real financial data, local SDK paths, signing keys, APKs, or backup files belong in this repository. The screenshots above show demo screens.
 
@@ -83,7 +87,7 @@ The public APK download, checksum and signing certificate have been verified. A 
 
 ## Build from source
 
-The project supports **Android 8.0 (API 26) and newer**. The generated debug APK is kept locally at `android/app/build/outputs/apk/debug/app-debug.apk`; it is not committed to Git. The local root `AppAndroidBudjets.zip` contains the signed 1.22 release APK; running `:app:archiveDebugApk` replaces that archive with a debug build.
+The project supports **Android 8.0 (API 26) and newer**. The generated debug APK is kept locally at `android/app/build/outputs/apk/debug/app-debug.apk`; it is not committed to Git. The optional `:app:archiveDebugApk` task creates a local debug archive; use the signed APK from GitHub Releases for public installations.
 
 See [build and installation instructions](android/README.md) for JDK 21, Android SDK, and Gradle wrapper setup.
 

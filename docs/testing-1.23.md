@@ -1,6 +1,15 @@
-# Version 1.23 verification — in progress
+# Version 1.23 verification — released; follow-up observations
 
-Version 1.23 is not released. The results below do not establish completion of release or security verification.
+Version 1.23 has been released. The results below record completed checks and their limitations; release status does not establish completion of every security or regression check.
+
+## Owner feedback recorded on 2026-11-10
+
+- The owner confirms that version 1.23 works well on their personal phone; no functional problems were reported in this feedback.
+- The owner previously confirmed a successful update through the app's own update action and retained data after updating. This is user-reported evidence of the real in-app update flow, separate from the USB and emulator checks below; no complete record-by-record comparison was performed.
+- Google Play Protect displayed a warning during installation; the owner accepted it and completed the update. The warning remains unresolved and is not considered cleared by successful operation of the app.
+- This entry records owner feedback, not a new automated test run or independent verification on the personal phone. The historical results and limitations below remain applicable to their respective runs.
+
+## Recorded verification runs
 
 - After the biometric test-only change, `connectedDebugAndroidTest` was repeated on 2026-11-09 on a disposable API 37.0 emulator with a device PIN and no enrolled biometrics: 148 cases reported, 133 passed, 15 assumption-based skips and no failures; Gradle reported `BUILD SUCCESSFUL`. An earlier attempt in the same session was stopped after the emulator remained on the Android lock screen and multiple UI tests could not access the app; it is not a passing run. The successful retry started with the emulator unlocked and its screen kept awake. The six fingerprint-prompt cases and three process-restart cases were run separately as described below; other skipped cases need their special setup.
 
@@ -20,4 +29,4 @@ Version 1.23 is not released. The results below do not establish completion of r
 - After the cancellation fix, a newly signed 1.23 APK (SHA-256 `2b4097f5a579600c142eb0f9f8678117250b83cc001a5f37b7436f79ffaa3406`, versionCode 8, same signing certificate) was installed over the preceding 1.23 on FinanceExtended. The family totals and goal remained visible. Cancelling the password dialog left the Downloads listing unchanged. An encrypted backup was transferred to FinanceBackup running the same signed APK; its preview showed 420 family records, and after restoration the profile, family aggregate totals, 10,000 / 3,500 goal and Electric graphite theme were visible. This case contained no personal operations; individual family rows were not compared. Separately, on clean FinanceFinal, signed 1.22 was upgraded directly to this exact APK: one synthetic income of 123.45 USD and the displayed balance remained.
 - The owner selected CSV size limits and splitting oversized data into smaller exports. CSV currently enforces a 10 MiB input/output limit, up to 100,000 records and 65,536 characters per field. This records the chosen approach, not completion of every large-file or split-workflow test.
 
-Before release, assess the earlier intermittent Compose failure; verify skipped cases where applicable, broader upgrade data retention, backup recovery with family data and settings, XLSX in Microsoft Excel, and the remaining checks in the 1.23 plan. The physical-device check is limited to the scenarios described above.
+Remaining verification follow-up: assess the earlier intermittent Compose failure, skipped cases where applicable, broader upgrade data retention beyond the recorded scenarios, XLSX in Microsoft Excel, and outstanding checks in the 1.23 plan. Backup recovery with family data and selected settings was checked on emulators as described above, but not on the owner's personal phone. Physical-device evidence is limited to the checks and owner feedback described above.

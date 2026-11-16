@@ -23,5 +23,74 @@ jobs:
           java-version: '21'
       - name: Install Android SDK platform
         run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0"'
-      - name: Build debug APK and run unit tests
-        run: bash ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
+      - name: Build debug APK, run unit tests and Android lint
+        run: bash ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --no-daemon
+      - name: Check result parser
+        working-directory: .
+        run: python3 -m unittest discover -s scripts/ci -p 'test_summarize_test_results.py' -v
+      - name: Check unit test results
+        if: always()
+        working-directory: .
+        run: |
+          python3 scripts/ci/summarize-test-results.py --results android/app/build/test-results/testDebugUnitTest --allowed-skips scripts/ci/allowed-skips.json --profile pr --summary test-summary.md
+          cat test-summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload test and lint reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-unit-and-lint-reports
+          path: |
+            android/app/build/reports/tests/
+            android/app/build/test-results/
+            android/app/build/reports/lint-results-debug.*
+            test-summary.md
+          if-no-files-found: warn
+          retention-days: 14
+
+  windows-biometric-driver:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Test biometric driver on Windows
+        run: python -c "import unittest,sys; s=unittest.defaultTestLoader.discover('scripts/ci',pattern='test_biometric_driver.py'); r=unittest.TextTestRunner(verbosity=2).run(s); sys.exit(0 if r.wasSuccessful() and r.testsRun > 0 and not r.skipped else 1)"
+
+  android-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install compile SDK platform
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0"'
+      - name: Enable emulator hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run Android UI smoke tests
+        uses: ReactiveCircus/android-emulator-runner@324029e2f414c084d8b15ba075288885e74aef9c # v2.34.0
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: bash scripts/ci/run-emulator-smoke.sh
+      - name: Upload Android test reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-smoke-reports
+          path: |
+            ci-reports/
+            android/app/build/reports/androidTests/
+            android/app/build/outputs/androidTest-results/
+          if-no-files-found: warn
+          retention-days: 14

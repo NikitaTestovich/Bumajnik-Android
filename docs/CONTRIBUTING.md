@@ -20,7 +20,7 @@ Before publishing any new version:
 
 1. Update the [current product specification](specification.md) and each affected detailed specification in `docs/specs/` to match the delivered behavior.
 2. Update **both** the [English](user-guide-en.md) and [Russian](user-guide-ru.md) user guides. Refresh `README.md`, `android/README.md`, screenshots, and `CHANGELOG.md` when their content changes.
-3. Add meaningful automated tests for each new feature and behavior change. Run the relevant tests and the complete available suite. Record results and any untested physical-device behavior in `docs/testing-<version>.md`.
+3. Cover existing functionality, new features, behavior changes, and important failure cases with meaningful automated tests. Map behaviors and gaps in [the test coverage inventory](test-coverage-matrix.md). Run relevant tests and the complete available suite; record results, skipped tests, coverage gaps, and device limitations in `docs/testing-<version>.md`. Resolve coverage gaps before publishing, as required by `AGENTS.md`.
 4. Verify that an update over the previous compatible APK preserves data when the version, storage, package ID, or signing changes. Review the commit for personal information, secrets, local builds, and backup files.
 
 CSV files under `android/app/src/androidTest/assets/` are synthetic test fixtures; real exported CSV files are ignored by Git.

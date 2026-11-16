@@ -161,6 +161,45 @@ class FinanceTrackerAcceptanceTest {
         assertTrue(runBlocking { repository.observeTransactions(null).first() }.isEmpty())
     }
 
+    @Test fun searchFiltersIncomeAndExpenseCommentsAndAmountsOnOperationsScreen() {
+        onboard()
+        val categories = runBlocking { repository.observeCategories().first() }.take(2)
+        val language = runBlocking { repository.observeProfile().first() }!!.languageTag
+        val firstCategoryName = if (language == "ru") categories[0].nameRu!! else categories[0].nameEn!!
+        val previousDate = LocalDate.now().minusDays(1)
+        runBlocking {
+            listOf(
+                FinanceTransaction(UUID.randomUUID().toString(), "Acceptance User", TransactionType.INCOME, previousDate, Money(12345, "USD"), null, "Salary unique"),
+                FinanceTransaction(UUID.randomUUID().toString(), "Acceptance User", TransactionType.INCOME, LocalDate.now(), Money(67890, "USD"), null, "Bonus unique"),
+                FinanceTransaction(UUID.randomUUID().toString(), "Acceptance User", TransactionType.EXPENSE, LocalDate.now(), Money(23456, "USD"), categories[0].id, "First expense unique"),
+                FinanceTransaction(UUID.randomUUID().toString(), "Acceptance User", TransactionType.EXPENSE, LocalDate.now(), Money(34567, "USD"), categories[1].id, "Second expense unique"),
+            ).forEach { repository.saveTransaction(it) }
+        }
+        navigate(R.string.navigation_operations)
+        click(R.string.operation_income)
+        awaitLiteral("Salary unique")
+        click(R.string.operation_search_open)
+        fill(R.string.operation_search, "Salary unique")
+        awaitLiteral("Salary unique")
+        ui.onNodeWithText("Bonus unique").assertDoesNotExist()
+        fill(R.string.operation_search, "678.90")
+        awaitLiteral("Bonus unique")
+        ui.onNodeWithText("Salary unique").assertDoesNotExist()
+        fill(R.string.operation_search, previousDate.format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")))
+        awaitLiteral("Salary unique")
+        ui.onNodeWithText("Bonus unique").assertDoesNotExist()
+        fill(R.string.operation_search, "expense unique")
+        click(R.string.operation_expenses)
+        awaitLiteral("Second expense unique")
+        click(R.string.operation_all_categories)
+        ui.onNode(hasText(firstCategoryName) and hasClickAction()).performClick()
+        awaitLiteral("First expense unique")
+        fill(R.string.operation_search, "Second expense unique")
+        awaitText(R.string.operation_search_empty)
+        fill(R.string.operation_search, "missing unique")
+        awaitText(R.string.operation_search_empty)
+    }
+
     @Test fun homeSummaryUsesThemeAndKeepsTransactionAndGoalDetails() {
         onboard()
         val profile = runBlocking { repository.observeProfile().first() }!!
@@ -364,6 +403,20 @@ class FinanceTrackerAcceptanceTest {
         ui.onNodeWithText("C").performClick()
         ui.onNode(hasText(text(R.string.operation_cancel)) and hasAnyAncestor(isDialog())).performClick()
         ui.onNodeWithText("10").assertIsDisplayed()
+        ui.onNodeWithContentDescription(text(R.string.calculator_open)).performClick()
+        ui.onNodeWithText("C").performClick()
+        listOf("4", "+", "5").forEach { ui.onNodeWithText(it).performClick() }
+        ui.onNodeWithText("=").performClick()
+        ui.onNodeWithText(text(R.string.calculator_apply)).performClick()
+        ui.onNodeWithText("9.00").assertIsDisplayed()
+        click(R.string.operation_select_category)
+        val category = runBlocking { repository.observeCategories().first() }.first()
+        val profile = runBlocking { repository.observeProfile().first() }!!
+        ui.onNodeWithText(if (profile.languageTag == "ru") category.nameRu!! else category.nameEn!!).performClick()
+        saveTransaction()
+        val saved = runBlocking { repository.observeTransactions(null).first() }.single()
+        assertEquals(TransactionType.EXPENSE, saved.type)
+        assertEquals(900L, saved.money.minorUnits)
     }
 
     @Test fun reportScreenShowsFirstDateInHintAndInvalidRangeMessage() {
@@ -856,6 +909,11 @@ class FinanceTrackerAcceptanceTest {
             ui.onNodeWithContentDescription(text(R.string.chart_category_description, name, amount, share))
                 .performScrollTo().assertIsDisplayed()
         }
+        val personalId = UUID.randomUUID().toString()
+        runBlocking {
+            repository.saveTransaction(FinanceTransaction(personalId, "Acceptance User", TransactionType.INCOME,
+                LocalDate.now(), Money(12_300L, "USD"), null, "Personal must remain"))
+        }
         click(R.string.family_clear_member)
         awaitText(R.string.family_clear_title)
         click(R.string.operation_cancel)
@@ -863,7 +921,12 @@ class FinanceTrackerAcceptanceTest {
             PeriodRange(LocalDate.now().withDayOfMonth(1), LocalDate.now().plusDays(1))).first() }.size)
         click(R.string.family_clear_member)
         click(R.string.family_clear_confirm)
-        awaitText(R.string.family_no_records)
+        ui.waitUntil(10_000) { runBlocking { app.container.familyRepository.observeFamilyTransactions(
+            PeriodRange(LocalDate.now().withDayOfMonth(1), LocalDate.now().plusDays(1))).first().isEmpty() } }
+        awaitLiteral("123.00 USD")
+        val remainingPersonal = runBlocking { repository.observeTransactions(null).first() }
+        assertEquals(listOf(personalId), remainingPersonal.map { it.id })
+        assertEquals("Personal must remain", remainingPersonal.single().comment)
     }
 
     @Test fun familyWithForeignPersonalRecordsHidesChartsUntilRatesProvided() {

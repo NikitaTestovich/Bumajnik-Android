@@ -226,8 +226,7 @@ fun FamilyScreen(onBack: () -> Unit) {
                             FinanceBarGroup(stringResource(R.string.chart_expense), report.byOwner.map { (owner, totals) ->
                                 FinanceBar(owner, totals.expensesMinorUnits, financeColors.expense)
                             }),
-                        ), barWidth = 72.dp)
-                        Text(stringResource(R.string.family_chart_scroll), style = MaterialTheme.typography.bodySmall)
+                        ))
                     }
                 }
                 Card(Modifier.fillMaxWidth()) {

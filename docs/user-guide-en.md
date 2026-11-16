@@ -1,10 +1,14 @@
 # Finance Tracker — user guide
 
-## Version 1.23 — in development, not released
+## Version 1.24 — in development
 
-The 1.23 work introduces encrypted full backups protected by a separate backup password. When creating one, enter and confirm the password and keep it safe: the backup cannot be restored without it. This password is separate from the app access code. Older unencrypted full backups remain supported for restore; they remain readable files. Full restore replaces current data after confirmation and does not include app protection credentials. These changes and recovery scenarios still require release verification.
+In personal reports, expand an expense category to see each date and converted amount on one line, with any comment below. If an expense was recorded in another currency, its original amount is also shown. Income and expense comparisons in personal and family reports use horizontal bars sized to the available width. The Forest after rain theme has a refreshed palette. These changes are being verified.
 
-The development build offers a separate XLSX report for spreadsheet viewing alongside exact CSV exchange and personal restore. Use CSV for family import or personal restore; spreadsheet editing can change its data. CSV and spreadsheet reports are not full backups. XLSX behavior and compatibility still require release verification.
+## Version 1.23 — released
+
+Version 1.23 introduced encrypted full backups protected by a separate backup password. When creating one, enter and confirm the password and keep it safe: the backup cannot be restored without it. This password is separate from the app access code. Older unencrypted full backups remain supported for restore; they remain readable files. Full restore replaces current data after confirmation and does not include app protection credentials.
+
+The app offers a separate XLSX report for spreadsheet viewing alongside exact CSV exchange and personal restore. Use CSV for family import or personal restore; spreadsheet editing can change its data. CSV and spreadsheet reports are not full backups.
 
 CSV import accepts at most 10 MiB and 100,000 records per file, with fields up to 65,536 UTF-16 code units. Older CSV files exceeding these limits are rejected. To recover one, keep the original and use a trusted CSV-aware tool to split it into files within all limits, repeating the original header and preserving complete records and field values. Quoted fields may contain line breaks, so splitting by physical lines can corrupt data; this may require technical assistance. A single field above the field limit cannot be fixed by splitting records; preserving it requires an import tool or app version that supports it. Import each part separately and verify the results. CSV export is also subject to these limits; a shorter report period may help.
 
@@ -99,7 +103,7 @@ There is no shared account or live family sync. Each person exports a personal r
 4. Read **Added** and **Skipped duplicates**. Existing imported `record_id` values and repeated IDs within the file are skipped. Importing a revised row with the same ID does not update the saved row.
 5. Set **From** and **Through** (inclusive, `DD-MM-YYYY`) and tap **Apply period**. The start cannot precede the first available personal or imported record. Check the dates to include the records you want.
 
-**Family totals** include your personal entries and saved family entries for the period. **Family balance** shows income minus expenses: a positive amount has a green plus, a negative amount has a red minus, and zero is neutral. **By family member** compares all income columns first, followed by all expense columns on the same scale. Swipe the chart horizontally to see every member. Members are grouped by `owner`; use distinct names to keep members distinct.
+**Family totals** include your personal entries and saved family entries for the period. **Family balance** shows income minus expenses: a positive amount has a green plus, a negative amount has a red minus, and zero is neutral. **By family member** compares all income columns first, followed by all expense columns on the same scale. The comparison uses horizontal bars sized to the available width. Members are grouped by `owner`; use distinct names to keep members distinct.
 
 Expense categories are combined across the family. Matching names ignore case and extra spaces; Russian and English names of standard categories are also combined. Custom categories with different names remain separate. **Imported family members** lists saved imports even outside the selected period. **Clear member data** removes only that member's imported entries after confirmation; personal entries and other members' records remain. If the same record ID exists in both personal and family data for the period, the personal entry is counted once in preference to the imported copy.
 
@@ -143,7 +147,7 @@ To create a full backup, choose **Export full backup**, enter and confirm a sepa
 - **Export personal backup**: choose a writable destination in Android's file picker. Wait for **Personal backup saved.** This exports all personal transactions, their original amounts/currencies, and category names, regardless of report dates.
 - **Restore personal backup**: select the CSV. A successful restore shows added and skipped counts. It merges records into the existing personal list, skips IDs already present (including repeats within the file), and never deletes or replaces local records. A changed row with an existing ID is skipped. Categories are matched by name or created as needed; a blank expense category is restored as uncategorized.
 
-The backup excludes profile, language/settings, savings goal, exchange rates, family imports, and categories unused by exported transactions. On a new installation, complete onboarding first, restore the file, then set your preferences, goal, and rates again. Automatic Android app backup is disabled. Keep the exported file somewhere you can access independently of the app.
+The backup excludes profile, language/settings, savings goal, exchange rates, family imports, and categories unused by exported transactions. On a new installation, complete onboarding first, restore the file, then set your preferences, goal, and rates again. The app disables Android cloud backup; on some Android 12 or later devices, direct device-to-device transfer may still include app data depending on the manufacturer. Keep the exported file somewhere you can access independently of the app.
 
 An invalid backup is rejected as a whole with no records saved. For read/write failures, choose an accessible source or writable destination and retry. Canceling a system picker cancels that action. Restoring does not alter the family import list; importing a family CSV does not restore personal data.
 

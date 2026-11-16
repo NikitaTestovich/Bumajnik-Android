@@ -287,12 +287,13 @@ fun ReportsScreen() {
                                 val key = category.categoryId ?: "__uncategorized__"
                                 if (expandedCategory == key) category.details.forEach { detail ->
                                     val transaction = detail.transaction
-                                    Column(Modifier.fillMaxWidth().padding(start = 12.dp, bottom = 8.dp)) {
-                                        Text(FinanceDateFormat.format(transaction.date))
-                                        if (transaction.comment.isNotBlank()) Text(transaction.comment)
-                                        Text("${formatAmount(detail.convertedMinorUnits)} $baseCurrency")
-                                        if (transaction.money.currencyCode != baseCurrency) Text("${formatAmount(transaction.money.minorUnits)} ${transaction.money.currencyCode}", style = MaterialTheme.typography.bodySmall)
-                                    }
+                                    ReportExpenseDetail(
+                                        date = FinanceDateFormat.format(transaction.date),
+                                        amount = "${formatAmount(detail.convertedMinorUnits)} $baseCurrency",
+                                        comment = transaction.comment,
+                                        originalAmount = if (transaction.money.currencyCode != baseCurrency)
+                                            "${formatAmount(transaction.money.minorUnits)} ${transaction.money.currencyCode}" else null,
+                                    )
                                 }
                                 },
                             )

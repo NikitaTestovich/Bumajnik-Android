@@ -39,3 +39,5 @@ Thumbs.db
 .superpowers/
 docs/superpowers/
 *.hprof
+__pycache__/
+*.py[cod]
