@@ -1,3 +1,3 @@
-# Version 1.24 specification — in development
+# Version 1.24 specification — released
 
 See the current [product specification](../specification.md) for report layout, adaptive charts and the refreshed Forest after rain palette. The package ID and data model remain unchanged. The proposed version is 1.24 / versionCode 9; the revised owner-signed candidate was checked as an in-place 1.23-to-1.24 upgrade on an emulator, with the scope and earlier phone results recorded in [testing-1.24.md](../testing-1.24.md). CI expands lint, reporting and an Android emulator smoke suite; the function-to-test inventory records known gaps and device limits, and the available regression suite has been run with the skips documented in the test report.

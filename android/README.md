@@ -1,6 +1,6 @@
 # Finance Tracker for Android
 
-## Version 1.24 — in development
+## Version 1.24 — released
 
 This checkout uses versionName 1.24 / versionCode 9. The owner-signed APK and the 1.23-to-1.24 in-place upgrade were checked on a test phone and emulator; see [verification and limitations](../docs/testing-1.24.md).
 

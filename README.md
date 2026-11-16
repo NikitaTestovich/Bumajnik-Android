@@ -1,8 +1,8 @@
 # Finance Tracker for Android
 
-## Version 1.24 — in development
+## Version 1.24 — released
 
-The next version refreshes report details, adapts income and expense charts and updates the Forest after rain palette. Verification is in progress; see [test status](docs/testing-1.24.md). The latest published release is 1.23.
+Version 1.24 refreshes report details, adapts income and expense charts and updates the Forest after rain palette. See [verification and limitations](docs/testing-1.24.md) and the [published release](https://github.com/NikitaTestovich/Bumajnik-Android/releases/tag/v1.24).
 
 ## Version 1.23 — released
 

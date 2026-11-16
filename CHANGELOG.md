@@ -1,10 +1,10 @@
 # Changelog
 
-## 1.24 — in development
+## 1.24 — released
 
 - Align date and amount in personal report expense details, with comments and separators.
 - Fit personal and family income/expense comparisons to the screen using labelled horizontal bars.
-- Refresh the Forest after rain theme and expand CI checks; release verification remains in progress.
+- Refresh the Forest after rain theme and expand CI checks; see `docs/testing-1.24.md` for results and limitations.
 
 ## 1.23 — released
 
