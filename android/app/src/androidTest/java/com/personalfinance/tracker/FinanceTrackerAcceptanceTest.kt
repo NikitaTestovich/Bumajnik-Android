@@ -895,6 +895,11 @@ class FinanceTrackerAcceptanceTest {
             ui.onNodeWithContentDescription(text(R.string.chart_category_description, name, amount, share))
                 .performScrollTo().assertIsDisplayed()
         }
+        val personalId = UUID.randomUUID().toString()
+        runBlocking {
+            repository.saveTransaction(FinanceTransaction(personalId, "Acceptance User", TransactionType.INCOME,
+                LocalDate.now(), Money(12_300L, "USD"), null, "Personal must remain"))
+        }
         click(R.string.family_clear_member)
         awaitText(R.string.family_clear_title)
         click(R.string.operation_cancel)
@@ -902,7 +907,12 @@ class FinanceTrackerAcceptanceTest {
             PeriodRange(LocalDate.now().withDayOfMonth(1), LocalDate.now().plusDays(1))).first() }.size)
         click(R.string.family_clear_member)
         click(R.string.family_clear_confirm)
-        awaitText(R.string.family_no_records)
+        ui.waitUntil(10_000) { runBlocking { app.container.familyRepository.observeFamilyTransactions(
+            PeriodRange(LocalDate.now().withDayOfMonth(1), LocalDate.now().plusDays(1))).first().isEmpty() } }
+        awaitLiteral("123.00 USD")
+        val remainingPersonal = runBlocking { repository.observeTransactions(null).first() }
+        assertEquals(listOf(personalId), remainingPersonal.map { it.id })
+        assertEquals("Personal must remain", remainingPersonal.single().comment)
     }
 
     @Test fun familyWithForeignPersonalRecordsHidesChartsUntilRatesProvided() {
