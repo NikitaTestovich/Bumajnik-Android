@@ -403,6 +403,20 @@ class FinanceTrackerAcceptanceTest {
         ui.onNodeWithText("C").performClick()
         ui.onNode(hasText(text(R.string.operation_cancel)) and hasAnyAncestor(isDialog())).performClick()
         ui.onNodeWithText("10").assertIsDisplayed()
+        ui.onNodeWithContentDescription(text(R.string.calculator_open)).performClick()
+        ui.onNodeWithText("C").performClick()
+        listOf("4", "+", "5").forEach { ui.onNodeWithText(it).performClick() }
+        ui.onNodeWithText("=").performClick()
+        ui.onNodeWithText(text(R.string.calculator_apply)).performClick()
+        ui.onNodeWithText("9.00").assertIsDisplayed()
+        click(R.string.operation_select_category)
+        val category = runBlocking { repository.observeCategories().first() }.first()
+        val profile = runBlocking { repository.observeProfile().first() }!!
+        ui.onNodeWithText(if (profile.languageTag == "ru") category.nameRu!! else category.nameEn!!).performClick()
+        saveTransaction()
+        val saved = runBlocking { repository.observeTransactions(null).first() }.single()
+        assertEquals(TransactionType.EXPENSE, saved.type)
+        assertEquals(900L, saved.money.minorUnits)
     }
 
     @Test fun reportScreenShowsFirstDateInHintAndInvalidRangeMessage() {
