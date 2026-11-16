@@ -27,7 +27,7 @@ jobs:
         run: bash ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --no-daemon
       - name: Check result parser
         working-directory: .
-        run: python3 -m unittest discover -s scripts/ci -p 'test_*.py'
+        run: python3 -m unittest discover -s scripts/ci -p 'test_summarize_test_results.py' -v
       - name: Check unit test results
         if: always()
         working-directory: .
@@ -46,6 +46,16 @@ jobs:
             test-summary.md
           if-no-files-found: warn
           retention-days: 14
+
+  windows-biometric-driver:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Test biometric driver on Windows
+        run: python -c "import unittest,sys; s=unittest.defaultTestLoader.discover('scripts/ci',pattern='test_biometric_driver.py'); r=unittest.TextTestRunner(verbosity=2).run(s); sys.exit(0 if r.wasSuccessful() and r.testsRun > 0 and not r.skipped else 1)"
 
   android-smoke:
     runs-on: ubuntu-latest

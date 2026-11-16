@@ -84,7 +84,7 @@ object FinanceCharts {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         com.personalfinance.tracker.ui.categories.CategoryIcon(item.iconKey)
                         Text(item.label, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                        Text(amount, style = MaterialTheme.typography.bodyMedium)
+                        Text(amount, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.End)
                     }
                     LinearProgressIndicator(
                         progress = { normalizedBarFraction(item.valueMinorUnits, maximum) },

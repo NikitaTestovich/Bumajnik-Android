@@ -17,15 +17,15 @@ fun themeColorScheme(theme: AppTheme): ColorScheme {
     val background = when(theme.id) { 8 -> Color(0xFFF2EDFF); 6,9 -> Color(0xFF181818); 10 -> Color(0xFFFFF5EB); 11 -> Color(0xFFF2F6F3); 12 -> Color(0xFFFFF6F3); else -> Color(0xFFF5F3EE) }
     val surface = if (dark) Color(0xFF272727) else when(theme.id) { 8 -> Color(0xFFFFFCFF); 10 -> Color(0xFFFFFBF7); 11 -> Color.White; 12 -> Color(0xFFFFFFFF); else -> Color(0xFFFFFEFA) }
     val primary = when(theme.id) { 6 -> Color(0xFF9AAEFF); 8 -> Color(0xFF6744CB); 9 -> Color(0xFF68DCCD); 10 -> Color(0xFF703B59); 11 -> Color(0xFF285746); 12 -> Color(0xFFAE4036); else -> Color(0xFF445C77) }
-    val secondary = when(theme.id) { 6 -> Color(0xFFA7EFB5); 8 -> Color(0xFF705516); 9 -> Color(0xFFFFC078); 10 -> Color(0xFF8A4C20); 11 -> Color(0xFF456B59); 12 -> Color(0xFF2F668F); else -> Color(0xFF946536) }
+    val secondary = when(theme.id) { 6 -> Color(0xFFA7EFB5); 8 -> Color(0xFF705516); 9 -> Color(0xFFFFC078); 10 -> Color(0xFF8A4C20); 11 -> Color(0xFF668C78); 12 -> Color(0xFF2F668F); else -> Color(0xFF946536) }
     val container = when(theme.id) { 6,9 -> Color(0xFF313131); 8 -> Color(0xFFE5DCFF); 10 -> Color(0xFFFFE7DC); 11 -> Color(0xFFE3EEE7); 12 -> Color(0xFFFFE4DD); else -> surface }
     val secondaryContainer = if(dark) Color(0xFF353C43) else when(theme.id) { 8 -> Color(0xFFEADF7E); 10 -> Color(0xFFFFD4B4); 11 -> Color(0xFFD6E8DC); 12 -> Color(0xFFFFD5C8); else -> Color(0xFFEAE3D6) }
     val scheme = if(dark) darkColorScheme() else lightColorScheme()
     return scheme.copy(primary = primary, onPrimary = if(dark) Color(0xFF181818) else Color.White,
         primaryContainer = container, onPrimaryContainer = ink,
-        secondary = secondary, onSecondary = if(dark) Color(0xFF181818) else Color.White,
+        secondary = secondary, onSecondary = if(dark) Color(0xFF181818) else if (theme.id == 11) Color.Black else Color.White,
         secondaryContainer = secondaryContainer, onSecondaryContainer = ink,
-        tertiary = secondary, onTertiary = if(dark) Color(0xFF181818) else Color.White,
+        tertiary = secondary, onTertiary = if(dark) Color(0xFF181818) else if (theme.id == 11) Color.Black else Color.White,
         tertiaryContainer = secondaryContainer, onTertiaryContainer = ink,
         background = background, onBackground = ink, surface = surface, onSurface = ink,
         surfaceVariant = container, onSurfaceVariant = muted, surfaceDim = background, surfaceBright = surface,

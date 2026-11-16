@@ -36,6 +36,31 @@ class ResponsiveChartTest {
             assertTrue("$group has no visible width", bar.width > 0f)
         }
     }
+    @Test fun categoryLabelRemainsVisibleBesideLargeAmount() {
+        ui.setContent {
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density, 1.6f),
+            ) {
+                FinanceTheme(AppThemeRegistry.resolve(11)) {
+                    FinanceCharts.CategoryBreakdownBars(
+                        listOf(CategoryBreakdownItem("Здоровье", 9223372036854775807L, 1f)),
+                        Modifier.width(200.dp).testTag("category_chart"),
+                    )
+                }
+            }
+        }
+        val label = ui.onNodeWithText("Здоровье", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        assertTrue("category label must retain visible width", label.width > 1f)
+        val amount = ui.onNodeWithText("92233720368547758.07", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        assertTrue("category amount must retain visible width", amount.width > 1f)
+        listOf("Здоровье", "92233720368547758.07").forEach { value ->
+            val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+            ui.onNodeWithText(value, useUnmergedTree = true)
+                .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) { it(layouts) }
+            assertTrue("$value must not be clipped", !layouts.single().hasVisualOverflow)
+        }
+    }
     @Test fun allFamilyValuesFitWithoutHorizontalScrolling() {
         ui.setContent {
             FinanceTheme(AppThemeRegistry.resolve(2)) {

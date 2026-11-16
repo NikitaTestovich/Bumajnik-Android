@@ -9,7 +9,9 @@ class ThemeSurfaceTest {
   assertEquals(Color(0xFFF2F6F3), c.background)
   assertEquals(Color.White, c.surface)
   assertEquals(Color(0xFF285746), c.primary)
+  assertEquals(Color(0xFF668C78), c.secondary)
   assertEquals(Color(0xFF20352D), c.onSurface)
+  assertTrue(financeColors(AppThemeRegistry.resolve(11)).chart.contains(Color(0xFF926700)))
  }
  @Test fun `preview radio colors have contrast on their own card`() {
    AppThemeRegistry.available.forEach { preview ->
