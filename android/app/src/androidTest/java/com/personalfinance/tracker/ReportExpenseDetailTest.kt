@@ -33,6 +33,22 @@ class ReportExpenseDetailTest {
         ui.onNodeWithText("10,00 USD").assertExists()
     }
 
+    @Test fun longCommentWrapsBeforeDividerOnNarrowLargeTextScreen() {
+        val comment = "Long medical expense comment with many words to verify wrapping across several lines"
+        ui.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, 1.6f)) {
+                androidx.compose.foundation.layout.Box(Modifier.width(200.dp)) {
+                    ReportExpenseDetail("14-11-2026", "30,00 BYN", comment, null)
+                }
+            }
+        }
+        val date = ui.onNodeWithText("14-11-2026").fetchSemanticsNode().boundsInRoot
+        val commentBounds = ui.onNodeWithTag("expense_detail_comment").fetchSemanticsNode().boundsInRoot
+        val divider = ui.onNodeWithTag("expense_detail_separator").fetchSemanticsNode().boundsInRoot
+        assertTrue("long comment should wrap", commentBounds.height > date.height * 1.5f)
+        assertTrue("divider must follow the comment", divider.top >= commentBounds.bottom)
+    }
     @Test fun largeAmountDoesNotHideDateOnNarrowScreen() {
         val amount = "92233720368547758.07 BYN"
         ui.setContent {
